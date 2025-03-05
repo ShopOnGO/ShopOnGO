@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+
+  shop_on_go_container:
+    container_name: shop_on_go_container
+    build: ./
+    command: ./wait-for-db.sh ./shop_on_go
+    depends_on:
+      - postgres
+    ports:
+      - "8081:8081"
+
+  postgres:
+    container_name: go_shop_postgres
+    image: postgres:16.4
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: my_pass
+      PGDATA: /data/postgres
+    volumes:
+      - ./postgres-data:/data/postgres
+    ports:
+      - "5432:5432"
