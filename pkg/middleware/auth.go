@@ -22,13 +22,22 @@ func writeUnauthed(w http.ResponseWriter) {
 func IsAuthed(next http.Handler, config *configs.Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authedHeader := r.Header.Get("Authorization")
-		if !strings.HasPrefix(authedHeader, "Bearer") {
+		if !strings.HasPrefix(authedHeader, "Bearer") { // нужен ли пробел после Bearer?
 			writeUnauthed(w)
 			return
 		}
 		token := strings.TrimPrefix(authedHeader, "Bearer ")
 		isValid, data, err := jwt.NewJWT(config.Auth.Secret).Parse(token) //приходящие параметры это валидность и data
-		if !isValid || err != nil { //или лучше отдельно...
+		if err != nil {
+			if strings.Contains(err.Error(), "expired") {
+				http.Error(w, "Token expired", http.StatusUnauthorized)
+				return
+			}
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		if !isValid {
 			writeUnauthed(w)
 			return
 		}
