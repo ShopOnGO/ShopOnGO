@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/jwt"
@@ -25,30 +26,46 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	}
 	router.HandleFunc("POST /auth/login", handler.Login())
 	router.HandleFunc("POST /auth/register", handler.Register())
-
 }
+
 func (h *AuthHandler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[LoginRequest](&w, r)
 		if err != nil {
 			return
 		}
+
 		email, err := h.AuthService.Login(body.Email, body.Password)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		token, err := jwt.NewJWT(h.Config.Auth.Secret).Create(jwt.JWTData{
-			Email: email,
-		})
+
+		tokenManager := jwt.NewJWT(h.Config.Auth.Secret)
+		
+		jwtToken, err := tokenManager.Create(jwt.JWTData{Email: email}, time.Hour)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
-
 		}
-		//fmt.Println(h.Config.Auth.Secret)
+
+		refreshToken, err := tokenManager.NewRefreshToken()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Отправка refresh-токена в cookie
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    refreshToken,
+			HttpOnly: true,
+			Path:     "/",
+			Expires:  time.Now().Add(30 * 24 * time.Hour), //типа месяц
+		})
+
 		data := LoginResponse{
-			Token: token,
+			Token: jwtToken,
 		}
 		res.Json(w, data, 200)
 	}
@@ -65,17 +82,32 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		token, err := jwt.NewJWT(h.Config.Auth.Secret).Create(jwt.JWTData{
-			Email: email,
-		})
+		tokenManager := jwt.NewJWT(h.Config.Auth.Secret)
+
+		jwtToken, err := tokenManager.Create(jwt.JWTData{Email: email}, time.Hour)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 
 		}
+
+		refreshToken, err := tokenManager.NewRefreshToken()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    refreshToken,
+			HttpOnly: true,
+			Path:     "/",
+			Expires:  time.Now().Add(30 * 24 * time.Hour),
+		})
+
 		//fmt.Println(h.Config.Auth.Secret)
 		data := LoginResponse{
-			Token: token,
+			Token: jwtToken,
 		}
 		res.Json(w, data, 201)
 	}
