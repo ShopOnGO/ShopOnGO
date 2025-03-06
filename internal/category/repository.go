@@ -8,7 +8,7 @@ type CategoryRepository struct {
 	Database *db.Db
 }
 
-func NewUserRepository(database *db.Db) *CategoryRepository {
+func NewCategoryRepository(database *db.Db) *CategoryRepository {
 	return &CategoryRepository{
 		Database: database,
 	}
@@ -20,15 +20,22 @@ func (repo *CategoryRepository) Create(category *Category) (*Category, error) {
 	}
 	return category, nil
 }
-func (repo *CategoryRepository) GetCategories() ([]Category, error) {
+func (repo *CategoryRepository) GetFeaturedCategories(amount int) ([]Category, error) {
 	var categories []Category
+	query := repo.Database.DB
 
-	result := repo.Database.DB.Find(&categories) // table should be named categories
+	if amount > 0 {
+		query = query.Limit(amount)
+	}
+
+	result := query.Find(&categories)
 	if result.Error != nil {
 		return nil, result.Error
 	}
+
 	return categories, nil
 }
+
 func (repo *CategoryRepository) FindByName(name string) (*Category, error) {
 	var category Category
 	result := repo.Database.DB.First(&category, "name = ?", name)
