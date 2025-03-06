@@ -35,19 +35,19 @@ volumes:
 нынешний функционал и архитектура:
 
 repo: (entities)
+repo: (entities)
 repo- link : Create(link),GetByHash(hash),Update(link),Delete(id),GetById(id)  && queries: Count(),GetAll(limit, offset int)
 repo- user : Create(user *User), FindByEmail(email string)
 repo- stat : AddClick(linkId uint), GetStats(by string, from, to time.Time)
-repo- products :  Create(product *Product)
-                  GetByCategory(category *category.Category)
-                  GetFeaturedProducts(amount uint, random bool) ([]Product, error)
-                  GetByName(name string) ([]Product, error)
-repo- category : Create(category *Category), GetCategories(),
+repo- products :  Create(product *Product), GetByCategory(category *category.Category)
+repo- category : Create(category *Category), GetCategories()
 
 handlers:
 auth-handler : login(), register()
 link-handler : CRUD,GetAll()
 stat-handler : GetStat()
+
+
 
 mv:
 Chain : CORS,validator(in request),logger
