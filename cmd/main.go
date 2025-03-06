@@ -24,8 +24,8 @@ func App() http.Handler {
 	linkRepository := link.NewLinkRepository(db)
 	userRepository := user.NewUserRepository(db)
 	statRepository := stat.NewStatRepository(db)
-	//categoryRepository := category.NewUserRepository(db)
-	//productsRepository := product.NewUserRepository(db)
+	//categoryRepository := category.NewCategoryRepository(db)
+	//productsRepository := product.NewProductRepository(db)
 
 	// Services
 	authService := auth.NewAuthService(userRepository)
