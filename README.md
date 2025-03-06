@@ -16,15 +16,18 @@ docker exec -i go_shop_postgres psql -U postgres -d link < backup.sql
 
 нынешний функционал и архитектура:
 
-repo:
+repo: (entities)
 repo- link : Create(link),GetByHash(hash),Update(link),Delete(id),GetById(id)  && queries: Count(),GetAll(limit, offset int)
-repo- user : Create(user *User),FindByEmail(email string)
-repo- stat : AddClick(linkId uint),GetStats(by string, from, to time.Time)
+repo- user : Create(user *User), FindByEmail(email string)
+repo- stat : AddClick(linkId uint), GetStats(by string, from, to time.Time)
+repo- products :  Create(product *Product), GetByCategory(category *category.Category)
+repo- category : Create(category *Category), GetCategories()
 
 handlers:
 auth-handler : login(), register()
 link-handler : CRUD,GetAll()
 stat-handler : GetStat()
+
 
 
 mv:
