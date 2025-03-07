@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
+	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/event"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/req"
@@ -32,10 +33,21 @@ func NewLinkHandler(router *http.ServeMux, deps LinkHandlerDeps) {
 	router.Handle("POST /link", middleware.IsAuthed(handler.Create(), deps.Config))
 	router.Handle("PATCH /link/{id}", middleware.IsAuthed(handler.Update(), deps.Config)) // mv для одного типа запросов
 	router.Handle("DELETE /link/{id}", middleware.IsAuthed(handler.Delete(), deps.Config))
-	router.HandleFunc("GET /{hash}", handler.GoTo())
+	router.HandleFunc("GET /goto/{hash}", handler.GoTo()) //CHANGED!!!
 	router.Handle("GET /link", middleware.IsAuthed(handler.GetAll(), deps.Config))
 
 }
+
+// Create создает новую короткую ссылку
+// @Summary        Создание короткой ссылки
+// @Description    Генерирует короткую ссылку по переданному URL и сохраняет ее в базе
+// @Tags          links
+// @Accept        json
+// @Produce       json
+// @Param         link body LinkCreateRequest true "Данные для создания ссылки"
+// @Success       201 {object} Link
+// @Failure       400 {string} string "Некорректный запрос"
+// @Router        /links [post]
 func (h *LinkHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[LinkCreateRequest](&w, r)
@@ -61,6 +73,18 @@ func (h *LinkHandler) Create() http.HandlerFunc {
 	}
 }
 
+// Update обновляет существующую короткую ссылку
+// @Summary        Обновление ссылки
+// @Description    Изменяет URL или хеш существующей короткой ссылки
+// @Tags          links
+// @Accept        json
+// @Produce       json
+// @Param         id path int true "ID ссылки"
+// @Param         link body LinkUpdateRequest true "Данные для обновления ссылки"
+// @Success       200 {object} Link
+// @Failure       400 {string} string "Некорректный запрос"
+// @Failure       404 {string} string "Ссылка не найдена"
+// @Router        /links/{id} [put]
 func (h *LinkHandler) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		email, ok := r.Context().Value(middleware.ContextEmailKey).(string)
@@ -91,6 +115,16 @@ func (h *LinkHandler) Update() http.HandlerFunc {
 	}
 }
 
+// Delete удаляет короткую ссылку по ID
+// @Summary        Удаление ссылки
+// @Description    Удаляет существующую короткую ссылку из базы данных
+// @Tags          links
+// @Param         id path int true "ID ссылки"
+// @Success       200 {string} string "Ссылка успешно удалена"
+// @Failure       400 {string} string "Некорректный ID"
+// @Failure       404 {string} string "Ссылка не найдена"
+// @Failure       500 {string} string "Ошибка сервера"
+// @Router        /links/{id} [delete]
 func (h *LinkHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idString := r.PathValue("id")
@@ -113,6 +147,14 @@ func (h *LinkHandler) Delete() http.HandlerFunc {
 	}
 }
 
+// GoTo перенаправляет пользователя на оригинальный URL по хешу ссылки
+// @Summary        Редирект по хешу
+// @Description    Ищет короткую ссылку в базе по хешу и выполняет перенаправление
+// @Tags          links
+// @Param         hash path string true "Хеш ссылки"
+// @Success       307 {string} string "Перенаправление"
+// @Failure       404 {string} string "Ссылка не найдена"
+// @Router        /{hash} [get]
 func (h *LinkHandler) GoTo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		hash := r.PathValue("hash")
@@ -130,6 +172,17 @@ func (h *LinkHandler) GoTo() http.HandlerFunc {
 	}
 }
 
+// GetAll возвращает список коротких ссылок с пагинацией
+// @Summary        Получить все ссылки
+// @Description    Возвращает список всех коротких ссылок с возможностью пагинации
+// @Tags          links
+// @Accept        json
+// @Produce       json
+// @Param         limit  query int false "Количество ссылок (по умолчанию 10)"
+// @Param         offset query int false "Смещение (по умолчанию 0)"
+// @Success       200 {object} GetAllLinksResponse
+// @Failure       400 {string} string "Некорректные параметры limit/offset"
+// @Router        /links [get]
 func (h *LinkHandler) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit, err := strconv.Atoi(r.URL.Query().Get("limit"))

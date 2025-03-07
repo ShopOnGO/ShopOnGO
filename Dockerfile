@@ -43,5 +43,8 @@ COPY --from=builder /app/shop_on_go /app/shop_on_go
 COPY --from=builder /app/wait-for-db.sh /app/wait-for-db.sh
 RUN chmod +x /app/wait-for-db.sh
 
+# 🔥 Копируем папку docs для Swagger
+COPY --from=builder /app/docs /app/docs
+
 # Запуск приложения
 CMD ["/app/shop_on_go"]
