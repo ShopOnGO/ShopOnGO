@@ -29,6 +29,8 @@ require (
 	github.com/swaggo/swag v1.16.4 // indirect
 	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/tools v0.31.0 // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
+	golang.org/x/sys v0.28.0 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

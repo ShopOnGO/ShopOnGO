@@ -1,9 +1,8 @@
 package configs
 
 import (
-	"log"
 	"os"
-
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -21,8 +20,7 @@ type AuthConfig struct {
 func LoadConfig() *Config {
 	err := godotenv.Load() //loading from .env
 	if err != nil {
-		log.Println("Error loading .env file, using dwfault config")
-		log.Println(err.Error())
+		logger.Error("Error loading .env file, using default config", err.Error())
 	}
 	return &Config{
 		Db: DbConfig{

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
@@ -15,6 +14,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 	"github.com/ShopOnGO/ShopOnGO/prod/migrations"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/event"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 )
@@ -72,7 +72,6 @@ func App() http.Handler {
 	//Middlewares
 	stack := middleware.Chain(
 		middleware.CORS,
-		middleware.Logging,
 	)
 	return stack(router)
 }
@@ -84,7 +83,7 @@ func main() {
 		Handler: app,
 	}
 
-	fmt.Println("dd")
+	logger.Info("Server started")
 	server.ListenAndServe()
 
 }
