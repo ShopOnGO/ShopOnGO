@@ -1,0 +1,404 @@
+definitions:
+  auth.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  auth.LoginResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  auth.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  category.Category:
+    properties:
+      description:
+        type: string
+      image_url:
+        description: Ссылка на изображение категории
+        type: string
+      name:
+        type: string
+    type: object
+  home.HomeData:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/category.Category'
+        type: array
+      featured_products:
+        items:
+          $ref: '#/definitions/product.Product'
+        type: array
+    type: object
+  link.GetAllLinksResponse:
+    properties:
+      count:
+        type: integer
+      links:
+        items:
+          $ref: '#/definitions/link.Link'
+        type: array
+    type: object
+  link.Link:
+    properties:
+      hash:
+        type: string
+      stats:
+        items:
+          $ref: '#/definitions/stat.Stat'
+        type: array
+      url:
+        type: string
+    type: object
+  link.LinkCreateRequest:
+    properties:
+      url:
+        type: string
+    required:
+    - url
+    type: object
+  link.LinkUpdateRequest:
+    properties:
+      hash:
+        type: string
+      url:
+        type: string
+    required:
+    - url
+    type: object
+  product.Product:
+    properties:
+      color:
+        type: string
+      description:
+        type: string
+      discount:
+        description: |-
+          CategoryID  uint   `gorm:"not null" json:"category_id"`//foreign key
+          BrandID      uint    `gorm:"not null"  json:"brand_id"`
+          Price        float64 `gorm:"not null"  json:"price"`
+        type: number
+      gallery:
+        description: JSON хранящий ссылки на изображения
+        type: string
+      gender:
+        type: string
+      is_available:
+        description: доступен
+        type: boolean
+      material:
+        type: string
+      name:
+        type: string
+      rating:
+        description: VendorCode   string  `gorm:"type:varchar(100);unique;not null"json:"vendor_code"`//артикул
+        type: number
+      reviews_count:
+        description: количество отзывов
+        type: integer
+      season:
+        type: string
+      size:
+        type: string
+      stock:
+        description: количество в наличии
+        type: integer
+      video_url:
+        description: ImageURL    string  `gorm:"type:varchar(255)" json:"image_url"`
+        type: string
+    type: object
+  stat.GetStatResponse:
+    properties:
+      period:
+        type: string
+      sum:
+        type: integer
+    type: object
+  stat.Stat:
+    properties:
+      clicks:
+        type: integer
+      date:
+        description: поддерживается в postgres
+        format: date
+        type: string
+      link_id:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /{hash}:
+    get:
+      description: Ищет короткую ссылку в базе по хешу и выполняет перенаправление
+      parameters:
+      - description: Хеш ссылки
+        in: path
+        name: hash
+        required: true
+        type: string
+      responses:
+        "307":
+          description: Перенаправление
+          schema:
+            type: string
+        "404":
+          description: Ссылка не найдена
+          schema:
+            type: string
+      summary: Редирект по хешу
+      tags:
+      - links
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Аутентифицирует пользователя по email и паролю, возвращает JWT
+        токен
+      parameters:
+      - description: Данные для входа
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный вход, возвращает JWT токен
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "401":
+          description: Неверные учетные данные
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера при создании токена
+          schema:
+            type: string
+      summary: Вход в систему
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Создает учетную запись пользователя и возвращает JWT токен для
+        аутентификации
+      parameters:
+      - description: Данные для регистрации
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Успешная регистрация, возвращает JWT токен
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: Некорректные данные для регистрации
+          schema:
+            type: string
+        "409":
+          description: Пользователь с таким email уже существует
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера при создании токена
+          schema:
+            type: string
+      summary: Регистрация нового пользователя
+      tags:
+      - auth
+  /home:
+    get:
+      description: Получает информацию о популярных товарах, категориях потом и акциях
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/home.HomeData'
+      summary: Главная страница
+      tags:
+      - home
+  /links:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список всех коротких ссылок с возможностью пагинации
+      parameters:
+      - description: Количество ссылок (по умолчанию 10)
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение (по умолчанию 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/link.GetAllLinksResponse'
+        "400":
+          description: Некорректные параметры limit/offset
+          schema:
+            type: string
+      summary: Получить все ссылки
+      tags:
+      - links
+    post:
+      consumes:
+      - application/json
+      description: Генерирует короткую ссылку по переданному URL и сохраняет ее в
+        базе
+      parameters:
+      - description: Данные для создания ссылки
+        in: body
+        name: link
+        required: true
+        schema:
+          $ref: '#/definitions/link.LinkCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/link.Link'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+      summary: Создание короткой ссылки
+      tags:
+      - links
+  /links/{id}:
+    delete:
+      description: Удаляет существующую короткую ссылку из базы данных
+      parameters:
+      - description: ID ссылки
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: Ссылка успешно удалена
+          schema:
+            type: string
+        "400":
+          description: Некорректный ID
+          schema:
+            type: string
+        "404":
+          description: Ссылка не найдена
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Удаление ссылки
+      tags:
+      - links
+    put:
+      consumes:
+      - application/json
+      description: Изменяет URL или хеш существующей короткой ссылки
+      parameters:
+      - description: ID ссылки
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные для обновления ссылки
+        in: body
+        name: link
+        required: true
+        schema:
+          $ref: '#/definitions/link.LinkUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/link.Link'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "404":
+          description: Ссылка не найдена
+          schema:
+            type: string
+      summary: Обновление ссылки
+      tags:
+      - links
+  /stats:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает агрегированную статистику по количеству переходов, сгруппированную
+        по дням или месяцам
+      parameters:
+      - description: 'Начальная дата (формат: YYYY-MM-DD)'
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: 'Конечная дата (формат: YYYY-MM-DD)'
+        in: query
+        name: to
+        required: true
+        type: string
+      - description: 'Группировка (допустимые значения: day, month)'
+        in: query
+        name: by
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный ответ со статистикой
+          schema:
+            items:
+              $ref: '#/definitions/stat.GetStatResponse'
+            type: array
+        "400":
+          description: Некорректные параметры запроса
+          schema:
+            type: string
+      summary: Получить статистику переходов
+      tags:
+      - statistics
+swagger: "2.0"

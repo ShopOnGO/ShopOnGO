@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
+	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/jwt"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/req"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
@@ -28,6 +29,17 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	router.HandleFunc("POST /auth/register", handler.Register())
 }
 
+// Login аутентифицирует пользователя и выдает JWT токен
+// @Summary        Вход в систему
+// @Description    Аутентифицирует пользователя по email и паролю, возвращает JWT токен
+// @Tags          auth
+// @Accept        json
+// @Produce       json
+// @Param         body body LoginRequest true "Данные для входа"
+// @Success       200 {object} LoginResponse "Успешный вход, возвращает JWT токен"
+// @Failure       401 {string} string "Неверные учетные данные"
+// @Failure       500 {string} string "Ошибка сервера при создании токена"
+// @Router        /auth/login [post]
 func (h *AuthHandler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[LoginRequest](&w, r)
@@ -71,6 +83,18 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 	}
 }
 
+// Register регистрирует нового пользователя и возвращает JWT токен
+// @Summary        Регистрация нового пользователя
+// @Description    Создает учетную запись пользователя и возвращает JWT токен для аутентификации
+// @Tags          auth
+// @Accept        json
+// @Produce       json
+// @Param         body body RegisterRequest true "Данные для регистрации"
+// @Success       201 {object} LoginResponse "Успешная регистрация, возвращает JWT токен"
+// @Failure       400 {string} string "Некорректные данные для регистрации"
+// @Failure       409 {string} string "Пользователь с таким email уже существует"
+// @Failure       500 {string} string "Ошибка сервера при создании токена"
+// @Router        /auth/register [post]
 func (h *AuthHandler) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[RegisterRequest](&w, r)
