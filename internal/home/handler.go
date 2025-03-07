@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
+	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
 )
 
@@ -22,18 +22,27 @@ func NewHomeHandler(router *http.ServeMux, deps HomeHandlerDeps) {
 		Config:      deps.Config,
 		HomeService: deps.HomeService,
 	}
-	router.HandleFunc("GET /{hash}", handler.GoTo())
-	router.Handle("GET /link", middleware.IsAuthed(handler.GetAll(), deps.Config))
-	router.Handle("GET /", handler.GetHomePage()) // mb Handle
+	//router.HandleFunc("GET /{hash}", handler.GoTo())
+	//router.Handle("GET /link", middleware.IsAuthed(handler.GetAll(), deps.Config))
+	router.Handle("GET /home", handler.GetHomePage()) // mb Handle
 
 }
-func (h *HomeHandler) GetAll() http.Handler {
-	panic("unimplemented")
-}
 
-func (h *HomeHandler) GoTo() func(w http.ResponseWriter, r *http.Request) {
-	panic("unimplemented")
-}
+// func (h *HomeHandler) GetAll() http.Handler {
+// 	panic("unimplemented")
+// }
+
+// func (h *HomeHandler) GoTo() func(w http.ResponseWriter, r *http.Request) {
+// 	panic("unimplemented")
+// }
+
+// GetHomePage возвращает данные для главной страницы магазина
+// @Summary        Главная страница
+// @Description    Получает информацию о популярных товарах, категориях потом и акциях
+// @Tags          home
+// @Produce       json
+// @Success       200 {object} HomeData
+// @Router        /home [get]
 func (h *HomeHandler) GetHomePage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) { //ctx
 

@@ -23,7 +23,7 @@ type IProductRepository interface {
 }
 
 type ICategoryRepository interface {
-	Create(product *product.Product) (*product.Product, error)
+	Create(category *category.Category) (*category.Category, error)
 	GetFeaturedCategories(amount int) ([]category.Category, error)
 	FindByName(name string) (*category.Category, error)
 }
