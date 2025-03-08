@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/di"
@@ -13,13 +12,11 @@ import (
 
 type AuthService struct {
 	UserRepository di.IUserRepository // измненено с *user.UserRepository для тестирования
-	AuthRepository di.IAuthRepository // Новый репозиторий для работы с refresh-токенами
 }
 
-func NewAuthService(userRepository di.IUserRepository, authRepository di.IAuthRepository) *AuthService {
+func NewAuthService(userRepository di.IUserRepository) *AuthService {
 	return &AuthService{
 		UserRepository: userRepository,
-		AuthRepository: authRepository,
 	}
 }
 
@@ -59,21 +56,3 @@ func (service *AuthService) Login(email, password string) (string, error) {
 	}
 	return email, nil
 }
-
-func (service *AuthService) Refresh(refreshToken string) (string, error) {
-    record, err := service.AuthRepository.GetRefreshToken(refreshToken)
-    if err != nil {
-        return "", err
-    }
-
-    if time.Now().After(record.ExpiresAt) {
-        return "", errors.New("refresh token expired")
-    }
-
-    if record.IsRevoked {
-        return "", errors.New("refresh token is revoked")
-    }
-
-    return record.Email, nil
-}
-

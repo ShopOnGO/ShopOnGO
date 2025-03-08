@@ -10,7 +10,6 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/home"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/link"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/refresh"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/stat"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 	"github.com/ShopOnGO/ShopOnGO/prod/migrations"
@@ -18,6 +17,9 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/event"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
+
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2manager"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2server"
 )
 
 func App() http.Handler {
@@ -36,20 +38,29 @@ func App() http.Handler {
 	statRepository := stat.NewStatRepository(db)
 	categoryRepository := category.NewCategoryRepository(db)
 	productsRepository := product.NewProductRepository(db)
-	refreshRepository := refresh.NewAuthRepository(db)
 
 	// Services
-	authService := auth.NewAuthService(userRepository, refreshRepository)
+	authService := auth.NewAuthService(userRepository)
 	homeService := home.NewHomeService(categoryRepository, productsRepository)
 	statService := stat.NewStatService(&stat.StatServiceDeps{
 		StatRepository: statRepository,
 		EventBus:       eventBus,
 	})
 
+	// Инициализируем OAuth2 менеджер с Redis (параметры можно получить из конфигурации)
+	oauth2Manager := oauth2manager.NewOAuth2Manager("localhost:6379", "", 0)
+	oauth2Server := oauth2server.NewOAuth2Server(oauth2Manager)
+
+	// Регистрируем эндпоинты OAuth2
+	// Например, для выдачи токенов и авторизации
+	router.HandleFunc("/oauth/token", oauth2Server.HandleToken)
+	router.HandleFunc("/oauth/authorize", oauth2Server.HandleAuthorize)
+
 	//Handlers
 	auth.NewAuthHandler(router, auth.AuthHandlerDeps{
 		Config:      conf,
 		AuthService: authService,
+		OAuth2Manager: oauth2Manager,
 	})
 	link.NewLinkHandler(router, link.LinkHandlerDeps{
 		LinkRepository: linkRepository,
