@@ -20,12 +20,6 @@ type AuthHandler struct { // это уже рабоая структура
 	*AuthService
 }
 
-// Допустим, refreshInput используется, если вы хотите принимать refresh-токен из JSON.
-// Если же вы берёте его из cookie, то структура не обязательна.
-type refreshInput struct {
-	Token string `json:"token"`
-}
-
 func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	handler := &AuthHandler{
 		Config:      deps.Config,
@@ -149,7 +143,7 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 
 // Refresh обновляет JWT токен, используя refresh-токен
 // @Summary        Обновление токенов
-// @Description    Принимает refresh-токен (например, из cookie), проверяет его и возвращает новый JWT токен
+// @Description    Принимает refresh-токен (из cookie), проверяет его и возвращает новый JWT токен
 // @Tags           auth
 // @Accept         json
 // @Produce        json
@@ -160,7 +154,7 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 // @Router         /auth/refresh [post]
 func (h *AuthHandler) Refresh() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Извлекаем refresh-токен из cookie как пример
+		// Извлекаем refresh-токен из cookie
 		cookie, err := r.Cookie("refresh_token")
 		if err != nil || cookie.Value == "" {
 			http.Error(w, "Refresh token not found", http.StatusUnauthorized)
@@ -168,12 +162,7 @@ func (h *AuthHandler) Refresh() http.HandlerFunc {
 		}
 		refreshToken := cookie.Value
 
-		// Проверка refresh-токена.
-		// Здесь необходимо реализовать логику валидации refresh-токена.
-		// Например, можно добавить метод h.AuthService.Refresh(refreshToken) который:
-		// - Проверяет, существует ли такой токен в БД
-		// - Возвращает email или идентификатор пользователя, если токен действителен
-		// - Если токен недействителен, обработчик возвращает 401.
+		// Проверяем что есть такой refresh-токен
 		email, err := h.AuthService.Refresh(refreshToken)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)

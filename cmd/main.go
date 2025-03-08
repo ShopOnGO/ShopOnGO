@@ -10,12 +10,13 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/home"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/link"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/refresh"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/stat"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 	"github.com/ShopOnGO/ShopOnGO/prod/migrations"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/event"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 )
 
@@ -35,9 +36,10 @@ func App() http.Handler {
 	statRepository := stat.NewStatRepository(db)
 	categoryRepository := category.NewCategoryRepository(db)
 	productsRepository := product.NewProductRepository(db)
+	refreshRepository := refresh.NewAuthRepository(db)
 
 	// Services
-	authService := auth.NewAuthService(userRepository)
+	authService := auth.NewAuthService(userRepository, refreshRepository)
 	homeService := home.NewHomeService(categoryRepository, productsRepository)
 	statService := stat.NewStatService(&stat.StatServiceDeps{
 		StatRepository: statRepository,

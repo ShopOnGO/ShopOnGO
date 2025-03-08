@@ -1,8 +1,11 @@
 package di
 
 import (
+	"time"
+
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/refresh"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 )
 
@@ -26,4 +29,10 @@ type ICategoryRepository interface {
 	Create(category *category.Category) (*category.Category, error)
 	GetFeaturedCategories(amount int) ([]category.Category, error)
 	FindByName(name string) (*category.Category, error)
+}
+
+type IAuthRepository interface {
+	GetRefreshToken(token string) (*refresh.RefreshTokenRecord, error) // Получить токен
+	RevokeRefreshToken(token string) error                         // Отозвать токен
+	SaveRefreshToken(token string, email string, expiresAt time.Time) error // Сохранить новый токен
 }

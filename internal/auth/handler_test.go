@@ -9,6 +9,7 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/auth"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/refresh"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
 
@@ -28,12 +29,15 @@ func bootstrap() (*auth.AuthHandler, sqlmock.Sqlmock, error) {
 	userRepo := user.NewUserRepository(&db.Db{
 		DB: gormDb,
 	})
+	authRepo := refresh.NewAuthRepository(&db.Db{
+		DB: gormDb,
+	})
 	handler := auth.AuthHandler{
 		Config: &configs.Config{
 			Auth: configs.AuthConfig{
 				Secret: "Secret",
 			},
-		}, AuthService: auth.NewAuthService(userRepo),
+		}, AuthService: auth.NewAuthService(userRepo, authRepo),
 	}
 	return &handler, mock, nil
 }

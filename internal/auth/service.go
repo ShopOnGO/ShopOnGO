@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/di"
@@ -9,12 +10,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+
 type AuthService struct {
 	UserRepository di.IUserRepository // измненено с *user.UserRepository для тестирования
+	AuthRepository di.IAuthRepository // Новый репозиторий для работы с refresh-токенами
 }
 
-func NewAuthService(userRepository di.IUserRepository) *AuthService {
-	return &AuthService{UserRepository: userRepository}
+func NewAuthService(userRepository di.IUserRepository, authRepository di.IAuthRepository) *AuthService {
+	return &AuthService{
+		UserRepository: userRepository,
+		AuthRepository: authRepository,
+	}
 }
 
 // Methods
@@ -54,7 +60,20 @@ func (service *AuthService) Login(email, password string) (string, error) {
 	return email, nil
 }
 
-//пока что просто заглушка, надо решить как реализовать
 func (service *AuthService) Refresh(refreshToken string) (string, error) {
-	return "12345", nil
+    record, err := service.AuthRepository.GetRefreshToken(refreshToken)
+    if err != nil {
+        return "", err
+    }
+
+    if time.Now().After(record.ExpiresAt) {
+        return "", errors.New("refresh token expired")
+    }
+
+    if record.IsRevoked {
+        return "", errors.New("refresh token is revoked")
+    }
+
+    return record.Email, nil
 }
+
