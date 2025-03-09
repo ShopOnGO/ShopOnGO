@@ -54,4 +54,3 @@ func (j *JWT) Parse(token string) (bool, *JWTData, error) {
 		Email: email.(string),
 	}, nil
 
-}

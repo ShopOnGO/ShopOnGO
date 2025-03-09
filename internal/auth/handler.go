@@ -24,6 +24,12 @@ type AuthHandler struct { // это уже рабоая структура
 	OAuth2Manager oauth2manager.OAuth2Manager
 }
 
+// Допустим, refreshInput используется, если вы хотите принимать refresh-токен из JSON.
+// Если же вы берёте его из cookie, то структура не обязательна.
+type refreshInput struct {
+	Token string `json:"token"`
+}
+
 func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	handler := &AuthHandler{
 		Config:      deps.Config,
@@ -143,6 +149,7 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 // @Router         /auth/refresh [post]
 func (h *AuthHandler) Refresh() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		// Извлекаем refresh-токен из cookie
 		cookie, err := r.Cookie("refresh_token")
 		if err != nil || cookie.Value == "" {
@@ -153,6 +160,7 @@ func (h *AuthHandler) Refresh() http.HandlerFunc {
 
 		// Используем OAuth2 менеджер для обновления токенов
 		accessToken, newRefreshToken, err := h.OAuth2Manager.RefreshTokens(r.Context(), refreshToken)
+    
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
@@ -174,3 +182,4 @@ func (h *AuthHandler) Refresh() http.HandlerFunc {
 		res.Json(w, data, http.StatusOK)
 	}
 }
+

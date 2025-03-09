@@ -27,7 +27,6 @@ require (
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
