@@ -29,6 +29,7 @@ func App() http.Handler {
 
 	conf := configs.LoadConfig()
 	db := db.NewDB(conf)
+	//cache := cache.NewRedis(conf)
 	router := http.NewServeMux()
 	eventBus := event.NewEventBus() // передаем как зависимость в handle
 
@@ -85,6 +86,7 @@ func App() http.Handler {
 	//Middlewares
 	stack := middleware.Chain(
 		middleware.CORS,
+		middleware.Logging,
 	)
 	return stack(router)
 }

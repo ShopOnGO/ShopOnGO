@@ -1,7 +1,6 @@
 package migrations
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
@@ -9,6 +8,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/stat"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
@@ -18,9 +18,9 @@ import (
 func CheckForMigrations() error {
 
 	if len(os.Args) > 1 && os.Args[1] == "migrate" {
-		fmt.Print("🚀 starting migrations...")
+		logger.Info("🚀 Starting migrations...")
 		if err := RunMigrations(); err != nil {
-			return fmt.Errorf("error processing migrations: %w", err)
+			logger.Errorf("Error processing migrations: %v", err)
 		}
 		return nil
 	}
@@ -45,6 +45,6 @@ func RunMigrations() error {
 		return err
 	}
 
-	fmt.Println("✅")
+	logger.Info("✅")
 	return nil
 }

@@ -26,11 +26,17 @@ auto-migrations:
 стало : command: ./wait-for-db.sh ./shop_on_go "migrate"
 
 database :
+postgres:
 Теперь, даже если вы удалите контейнер (docker-compose down), все данные останутся в postgres-data,
 и при следующем запуске PostgreSQL сможет восстановить их
 volumes:
       - ./postgres-data:/data/postgres
 (я пока что отключаю)
+
+redis:
+volumes:
+      - redis_data:/data
+(пока что отключаю)
 
 нынешний функционал и архитектура:
 

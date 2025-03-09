@@ -43,7 +43,6 @@ COPY --from=builder /app/shop_on_go /app/shop_on_go
 COPY --from=builder /app/wait-for-db.sh /app/wait-for-db.sh
 RUN chmod +x /app/wait-for-db.sh
 
-
 # Преобразуем формат строки в скрипте wait-for-db.sh в Unix-формат
 RUN dos2unix /app/wait-for-db.sh
 
