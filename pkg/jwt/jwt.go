@@ -1,7 +1,17 @@
 package jwt
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"errors"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
+)
+
+// TokenManager интерфейс для работы с JWT
+type TokenManager interface {
+	NewJWT(data JWTData, ttl time.Duration) (string, error)
+	Parse(accessToken string) (bool, *JWTData, error)
+}
 type JWTData struct {
 	Email string
 }
@@ -15,28 +25,32 @@ func NewJWT(secret string) *JWT {
 	}
 }
 
-func (j *JWT) Create(data JWTData) (string, error) {
-	//метод шифрования
-	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": data.Email,
-		//данные
-	})
-	s, err := t.SignedString([]byte(j.Secret)) // подпись
-	if err != nil {
-		return "", err
-	}
-	return s, nil
-}
-func (j *JWT) Parse(token string) (bool, *JWTData) {
+// func (j *JWT) Create(data JWTData, ttl time.Duration) (string, error) {
+// 	//метод шифрования
+// 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+// 		"email": data.Email,
+// 		"exp":   time.Now().Add(ttl).Unix(), // добавляем время жизни токена
+// 		//данные
+// 	})
+// 	s, err := t.SignedString([]byte(j.Secret)) // подпись
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return s, nil
+// }
+
+func (j *JWT) Parse(token string) (bool, *JWTData, error) {
 	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		return []byte(j.Secret), nil // передача секрета для парсинга токена
 	})
 	if err != nil {
-		return false, nil
+		return false, nil, err
 	}
-	email := t.Claims.(jwt.MapClaims)["email"]
+	email, ok := t.Claims.(jwt.MapClaims)["email"]
+	if !ok {
+		return false, nil, errors.New("invalid token claims")
+	}
 	return t.Valid, &JWTData{
 		Email: email.(string),
-	}
+	}, nil
 
-}

@@ -41,6 +41,7 @@ volumes:
 нынешний функционал и архитектура:
 
 repo: (entities)
+repo: (entities)
 repo- link : Create(link),GetByHash(hash),Update(link),Delete(id),GetById(id)  && queries: Count(),GetAll(limit, offset int)
 repo- user : Create(user *User), FindByEmail(email string)
 repo- stat : AddClick(linkId uint), GetStats(by string, from, to time.Time)
