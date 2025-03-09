@@ -9,12 +9,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+
 type AuthService struct {
 	UserRepository di.IUserRepository // измненено с *user.UserRepository для тестирования
 }
 
 func NewAuthService(userRepository di.IUserRepository) *AuthService {
-	return &AuthService{UserRepository: userRepository}
+	return &AuthService{
+		UserRepository: userRepository,
+	}
 }
 
 // Methods
@@ -52,4 +55,9 @@ func (service *AuthService) Login(email, password string) (string, error) {
 		return "", errors.New(ErrWrongCredentials)
 	}
 	return email, nil
+}
+
+//пока что просто заглушка, надо решить как реализовать
+func (service *AuthService) Refresh(refreshToken string) (string, error) {
+	return "12345", nil
 }
