@@ -14,9 +14,12 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 	"github.com/ShopOnGO/ShopOnGO/prod/migrations"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/event"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
+
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2manager"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2server"
 )
 
 func App() http.Handler {
@@ -44,10 +47,20 @@ func App() http.Handler {
 		EventBus:       eventBus,
 	})
 
+	// Инициализируем OAuth2 менеджер с Redis (параметры можно получить из конфигурации)
+	oauth2Manager := oauth2manager.NewOAuth2Manager("localhost:6379", "", 0)
+	oauth2Server := oauth2server.NewOAuth2Server(oauth2Manager)
+
+	// Регистрируем эндпоинты OAuth2
+	// Например, для выдачи токенов и авторизации
+	router.HandleFunc("/oauth/token", oauth2Server.HandleToken)
+	router.HandleFunc("/oauth/authorize", oauth2Server.HandleAuthorize)
+
 	//Handlers
 	auth.NewAuthHandler(router, auth.AuthHandlerDeps{
 		Config:      conf,
 		AuthService: authService,
+		OAuth2Manager: oauth2Manager,
 	})
 	link.NewLinkHandler(router, link.LinkHandlerDeps{
 		LinkRepository: linkRepository,

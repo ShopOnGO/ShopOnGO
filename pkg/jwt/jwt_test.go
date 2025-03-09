@@ -1,11 +1,9 @@
 package jwt_test
 
-import (
-	"testing"
-	"time"
-
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/jwt"
-)
+// import (
+// 	"testing"
+// 	"time"
+// )
 
 func TestJWTCreate(t *testing.T) {
 	const email = "a2@a.ru"
