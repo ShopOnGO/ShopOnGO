@@ -2,19 +2,27 @@ package configs
 
 import (
 	"os"
+
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Db   DbConfig
-	Auth AuthConfig
+	Db    DbConfig
+	Auth  AuthConfig
+	Redis RedisConfig
 }
 type DbConfig struct {
 	Dsn string
 }
 type AuthConfig struct {
 	Secret string
+}
+
+type RedisConfig struct {
+	Addr     string
+	Password string
+	DB       int
 }
 
 func LoadConfig() *Config {
@@ -28,6 +36,11 @@ func LoadConfig() *Config {
 		},
 		Auth: AuthConfig{
 			Secret: os.Getenv("SECRET"),
+		},
+		Redis: RedisConfig{
+			Addr:     os.Getenv("REDIS_ADDRESS"),
+			Password: os.Getenv("REDIS_PASSWORD"),
+			DB:       0,
 		},
 	}
 }

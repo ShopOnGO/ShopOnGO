@@ -53,7 +53,7 @@ func (repo *ProductRepository) GetFeaturedProducts(amount uint, random bool) ([]
 	query := repo.Database.DB
 
 	if random {
-		query = query.Order("RAND()")
+		query = query.Order("RANDOM()")
 	} else {
 		// Получение товаров по популярности НЕ РАБОТАЕТ ЕЩЕ!!
 		query = query.Order("popularity DESC")
