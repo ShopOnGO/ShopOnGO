@@ -2,7 +2,7 @@ package jwt_test
 
 // import (
 // 	"testing"
-// 	"time"
+// 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/jwt"
 // )
 
 // func TestJWTCreate(t *testing.T) {

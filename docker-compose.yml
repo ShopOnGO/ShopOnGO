@@ -14,8 +14,16 @@ services:
     container_name: go_shop_postgres
     image: postgres:16.4
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: my_pass
-      PGDATA: /data/postgres
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=/data/postgres
     ports:
       - "5432:5432"
+  redis:
+    container_name: redis_container
+    image: redis:latest
+    restart: always
+    environment:
+    - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"

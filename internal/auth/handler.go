@@ -6,11 +6,10 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/jwt"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/req"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2manager"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2manager"
 )
 
 type AuthHandlerDeps struct { // содержит все необходимые элементы заполнения. это DC
@@ -26,14 +25,14 @@ type AuthHandler struct { // это уже рабоая структура
 
 // Допустим, refreshInput используется, если вы хотите принимать refresh-токен из JSON.
 // Если же вы берёте его из cookie, то структура не обязательна.
-type refreshInput struct {
-	Token string `json:"token"`
-}
+// type refreshInput struct {
+// 	Token string `json:"token"`
+// }
 
 func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	handler := &AuthHandler{
-		Config:      deps.Config,
-		AuthService: deps.AuthService,
+		Config:        deps.Config,
+		AuthService:   deps.AuthService,
 		OAuth2Manager: deps.OAuth2Manager,
 	}
 	router.HandleFunc("POST /auth/login", handler.Login())
@@ -66,7 +65,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			return
 		}
 
-		jwtToken, refreshToken, err := h.OAuth2Manager.GenerateTokens(jwt.JWTData{Email: email})
+		jwtToken, refreshToken, err := h.OAuth2Manager.GenerateTokens(email)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -112,7 +111,7 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 			return
 		}
 
-		jwtToken, refreshToken, err := h.OAuth2Manager.GenerateTokens(jwt.JWTData{Email: email})
+		jwtToken, refreshToken, err := h.OAuth2Manager.GenerateTokens(email)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -133,8 +132,6 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 		res.Json(w, data, 201)
 	}
 }
-
-
 
 // Refresh обновляет JWT токен, используя refresh-токен
 // @Summary        Обновление токенов
@@ -160,7 +157,7 @@ func (h *AuthHandler) Refresh() http.HandlerFunc {
 
 		// Используем OAuth2 менеджер для обновления токенов
 		accessToken, newRefreshToken, err := h.OAuth2Manager.RefreshTokens(r.Context(), refreshToken)
-    
+
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
@@ -182,4 +179,3 @@ func (h *AuthHandler) Refresh() http.HandlerFunc {
 		res.Json(w, data, http.StatusOK)
 	}
 }
-
