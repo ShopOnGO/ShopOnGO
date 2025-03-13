@@ -44,6 +44,7 @@ func NewLinkHandler(router *http.ServeMux, deps LinkHandlerDeps) {
 // @Tags          links
 // @Accept        json
 // @Produce       json
+// @Security      ApiKeyAuth
 // @Param         link body LinkCreateRequest true "Данные для создания ссылки"
 // @Success       201 {object} Link
 // @Failure       400 {string} string "Некорректный запрос"
@@ -79,6 +80,7 @@ func (h *LinkHandler) Create() http.HandlerFunc {
 // @Tags          links
 // @Accept        json
 // @Produce       json
+// @Security      ApiKeyAuth
 // @Param         id path int true "ID ссылки"
 // @Param         link body LinkUpdateRequest true "Данные для обновления ссылки"
 // @Success       200 {object} Link
@@ -119,6 +121,7 @@ func (h *LinkHandler) Update() http.HandlerFunc {
 // @Summary        Удаление ссылки
 // @Description    Удаляет существующую короткую ссылку из базы данных
 // @Tags          links
+// @Security      ApiKeyAuth
 // @Param         id path int true "ID ссылки"
 // @Success       200 {string} string "Ссылка успешно удалена"
 // @Failure       400 {string} string "Некорректный ID"
@@ -178,6 +181,7 @@ func (h *LinkHandler) GoTo() http.HandlerFunc {
 // @Tags          links
 // @Accept        json
 // @Produce       json
+// @Security      ApiKeyAuth
 // @Param         limit  query int false "Количество ссылок (по умолчанию 10)"
 // @Param         offset query int false "Смещение (по умолчанию 0)"
 // @Success       200 {object} GetAllLinksResponse

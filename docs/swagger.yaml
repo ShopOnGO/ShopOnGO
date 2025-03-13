@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   auth.LoginRequest:
     properties:
@@ -143,8 +144,20 @@ definitions:
       link_id:
         type: integer
     type: object
+host: localhost:8081
 info:
-  contact: {}
+  contact:
+    email: support@shopongo.com
+    name: Support Team
+    url: http://shopongo.com/support
+  description: API сервиса ShopOnGO, обеспечивающего авторизацию, управление пользователями,
+    товарами и аналитикой.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://shopongo.com/terms/
+  title: ShopOnGO API
+  version: "1.0"
 paths:
   /{hash}:
     get:
@@ -196,6 +209,34 @@ paths:
           schema:
             type: string
       summary: Вход в систему
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Принимает refresh-токен (из cookie), проверяет его и возвращает
+        новый JWT токен
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Новый JWT токен
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "401":
+          description: Неверный или просроченный refresh-токен
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера при создании токена
+          schema:
+            type: string
+      summary: Обновление токенов
       tags:
       - auth
   /auth/register:
@@ -401,4 +442,11 @@ paths:
       summary: Получить статистику переходов
       tags:
       - statistics
+schemes:
+- http
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

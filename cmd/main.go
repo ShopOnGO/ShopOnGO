@@ -1,3 +1,22 @@
+// @title ShopOnGO API
+// @version 1.0
+// @description API сервиса ShopOnGO, обеспечивающего авторизацию, управление пользователями, товарами и аналитикой.
+// @termsOfService http://shopongo.com/terms/
+
+// @contact.name Support Team
+// @contact.url http://shopongo.com/support
+// @contact.email support@shopongo.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8081
+// @BasePath /
+// @schemes http
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 package main
 
 import (
@@ -20,6 +39,7 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2manager"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2server"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func App() http.Handler {
@@ -78,7 +98,7 @@ func App() http.Handler {
 	})
 
 	// swagger
-	router.Handle("/swagger/", http.StripPrefix("/swagger/", http.FileServer(http.Dir("./docs"))))
+	router.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	//обработчик подписки ( бесконечно сидит отдельно и ждёт пока не придут сообщения)
 	go statService.AddClick()
