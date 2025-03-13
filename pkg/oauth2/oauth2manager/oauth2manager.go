@@ -3,15 +3,18 @@ package oauth2manager
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/go-oauth2/oauth2/v4"
-	"github.com/go-oauth2/oauth2/v4/generates"
 	"github.com/go-oauth2/oauth2/v4/manage"
-	_ "github.com/go-oauth2/oauth2/v4/store"
-	redisStore "github.com/go-oauth2/redis/v4"
+	"github.com/go-oauth2/oauth2/v4/models"
+	"github.com/go-oauth2/oauth2/v4/store"
 	"github.com/go-redis/redis/v8"
 )
+
+var ctx = context.Background()
 
 // OAuth2Manager описывает интерфейс для генерации/обновления токенов.
 // Здесь можно задать любые методы, которые вам нужны.
@@ -22,49 +25,42 @@ type OAuth2Manager interface {
 
 type OAuth2ManagerImpl struct {
 	Manager *manage.Manager
+	RedisClient *redis.Client
 }
 
 // NewOAuth2Manager создает менеджер OAuth2 с использованием Redis для хранения токенов.
 func NewOAuth2Manager(redisAddr, redisPassword string, redisDB int) *OAuth2ManagerImpl {
-	// Создаем менеджер с настройками по умолчанию
-	m := manage.NewDefaultManager()
-
-	// Инициализируем redis-клиент
-	rdb := redis.NewClient(&redis.Options{
+	client := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
 		Password: redisPassword,
 		DB:       redisDB,
 	})
 
-	// Создаем redis-хранилище
-	// Вторым параметром ("oauth2:") указываем префикс для ключей в Redis (необязательно).
-	tokenStore := redisStore.NewRedisStoreWithCli(rdb, "oauth2:")
+	manager := manage.NewDefaultManager()
+	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
 
-	// Привязываем хранилище токенов к менеджеру
-	m.MapTokenStorage(tokenStore)
-
-	// Настраиваем конфиг (время жизни токенов, генерация refresh-токена и т.д.)
-	cfg := &manage.Config{
-		AccessTokenExp:    time.Hour,           // access-токен живет 1 час
-		RefreshTokenExp:   30 * 24 * time.Hour, // refresh-токен живет 30 дней
-		IsGenerateRefresh: true,                // генерировать refresh-токен
+	tokenStore, err := store.NewMemoryTokenStore()
+	if err != nil {
+		log.Fatalf("failed to create token store: %v", err)
 	}
+	manager.MustTokenStorage(tokenStore, err)
 
-	// Выберите нужный flow. Например, Password Credentials:
-	m.SetPasswordTokenCfg(cfg)
-	// Для Client Credentials flow:
-	// m.SetClientTokenCfg(cfg)
-	// Для Authorization Code flow:
-	// m.SetAuthorizeCodeTokenCfg(cfg)
+	// ⚠️ Добавляем пустой clientStore, но не используем ClientID
+	clientStore := store.NewClientStore()
+	clientStore.Set("default", &models.Client{
+		ID:     "default",
+		Secret: "", // Можно оставить пустым
+		Domain: "", // Необязательно
+	})
 
-	// Генератор access-токена (по умолчанию Bearer Token).
-	// Можно заменить на генерацию JWT, используя generates.NewJWTAccessGenerate(...)
-	m.MapAccessGenerate(generates.NewAccessGenerate())
+manager.MapClientStorage(clientStore)
 
 	return &OAuth2ManagerImpl{
-		Manager: m,
+		Manager:    manager,
+		RedisClient: client,
 	}
 }
+
 
 // GenerateTokens генерирует access и refresh токены, используя Password Flow.
 func (o *OAuth2ManagerImpl) GenerateTokens(data interface{}) (string, string, error) {
@@ -76,23 +72,34 @@ func (o *OAuth2ManagerImpl) GenerateTokens(data interface{}) (string, string, er
 		return "", "", errors.New("invalid token data type")
 	}
 
+	log.Println("Генерация токена для пользователя:", userID)
+
 	// Создаём запрос на генерацию токена
 	tgr := &oauth2.TokenGenerateRequest{
-		ClientID: "default", // Укажите client_id
-		UserID:   userID,    // ID пользователя
-		Scope:    "",
+		ClientID: "default", // Должен совпадать с clientStore
+		UserID:   userID,
 	}
 
 	// Генерируем токен
 	ti, err := o.Manager.GenerateAccessToken(ctx, oauth2.PasswordCredentials, tgr)
 	if err != nil {
+		log.Println("Ошибка при генерации токена:", err)
 		return "", "", err
 	}
 
+	log.Println("Токен сгенерирован:", ti.GetAccess(), ti.GetRefresh())
 	accessToken := ti.GetAccess()
 	refreshToken := ti.GetRefresh()
+
+	// Сохраняем refresh_token в Redis
+	err = o.StoreRefreshToken(userID, refreshToken, 30*24*time.Hour)
+	if err != nil {
+		return "", "", err
+	}
+
 	return accessToken, refreshToken, nil
 }
+
 
 // RefreshTokens обновляет access-токен с использованием refresh-токена.
 func (o *OAuth2ManagerImpl) RefreshTokens(ctx context.Context, refreshToken string) (string, string, error) {
@@ -119,4 +126,28 @@ func (o *OAuth2ManagerImpl) RefreshTokens(ctx context.Context, refreshToken stri
 	accessToken := ti.GetAccess()
 	newRefreshToken := ti.GetRefresh()
 	return accessToken, newRefreshToken, nil
+}
+
+
+func (o *OAuth2ManagerImpl) GetUserIDByRefreshToken(refreshToken string) (string, error) {
+	key := fmt.Sprintf("refresh:%s", refreshToken)
+	userID, err := o.RedisClient.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return "", fmt.Errorf("refresh token not found")
+	}
+	return userID, err
+}
+
+
+// Сохранение refresh_token -> user_id в Redis
+func (o *OAuth2ManagerImpl) StoreRefreshToken(userID, refreshToken string, expiresIn time.Duration) error {
+	key := fmt.Sprintf("refresh:%s", refreshToken)
+	return o.RedisClient.Set(ctx, key, userID, expiresIn).Err()
+}
+
+
+// Удаление refresh_token (при разлогине)
+func (o *OAuth2ManagerImpl) DeleteRefreshToken(refreshToken string) error {
+	key := fmt.Sprintf("refresh:%s", refreshToken)
+	return o.RedisClient.Del(ctx, key).Err()
 }
