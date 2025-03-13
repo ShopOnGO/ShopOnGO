@@ -55,3 +55,8 @@ func (service *AuthService) Login(email, password string) (string, error) {
 	}
 	return email, nil
 }
+
+// //пока что просто заглушка, надо решить как реализовать
+// func (service *AuthService) Refresh(refreshToken string) (string, error) {
+// 	return "12345", nil
+// }

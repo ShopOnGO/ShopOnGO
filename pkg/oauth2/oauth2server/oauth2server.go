@@ -3,9 +3,11 @@ package oauth2server
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2manager"
 	"github.com/go-oauth2/oauth2/v4/errors"
+	"github.com/go-oauth2/oauth2/v4/models"
 	"github.com/go-oauth2/oauth2/v4/server"
 )
 
@@ -34,13 +36,68 @@ func NewOAuth2Server(manager *oauth2manager.OAuth2ManagerImpl) *OAuth2Server {
 	}
 }
 
-// HandleToken выдаёт Access и Refresh токены по grant_type (password, refresh_token и т. д.).
+
 func (s *OAuth2Server) HandleToken(w http.ResponseWriter, r *http.Request) {
 	err := s.server.HandleTokenRequest(w, r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		// Если куки нет или возникла ошибка, можно вернуть ошибку или просто игнорировать
+		if err == http.ErrNoCookie {
+			http.Error(w, "Refresh token cookie not found", http.StatusUnauthorized)
+		} else {
+			http.Error(w, "Error reading refresh token cookie", http.StatusInternalServerError)
+		}
+		return
+	}
+	refreshToken := cookie.Value
+
+	// Проверяем, есть ли такой refresh_token в Redis
+	userID, err := s.oauthManager.GetUserIDByRefreshToken(refreshToken)
+	if err != nil {
+		http.Error(w, "Invalid or expired refresh token", http.StatusUnauthorized)
+		return
+	}
+
+	// Генерируем новые токены
+	accessToken, newRefreshToken, err := s.oauthManager.GenerateTokens(
+		&models.Token{
+			UserID: userID,
+		},
+	)
+	if err != nil {
+		http.Error(w, "Failed to generate new tokens", http.StatusInternalServerError)
+		return
+	}
+
+	// Обновляем refresh_token в Redis
+	err = s.oauthManager.StoreRefreshToken(userID, newRefreshToken, 30*24*time.Hour)
+	if err != nil {
+		http.Error(w, "Failed to store refresh token", http.StatusInternalServerError)
+		return
+	}
+
+	// Устанавливаем новый refresh_token в куку
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    newRefreshToken,
+		HttpOnly: true,
+		Path:     "/",
+		Expires:  time.Now().Add(30 * 24 * time.Hour),
+	})
+
+	// Возвращаем новый access_token клиенту
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(fmt.Sprintf(`{"access_token": "%s"}`, accessToken)))
 }
+
+
+
 
 // HandleAuthPage — эндпоинт для страницы авторизации (если нужен).
 func (s *OAuth2Server) HandleAuthPage(w http.ResponseWriter, r *http.Request) {
@@ -53,10 +110,4 @@ func (s *OAuth2Server) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-}
-
-func (s *OAuth2Server) SetupRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/oauth/token", s.HandleToken)
-	mux.HandleFunc("/oauth/authorize", s.HandleAuthorize)
-	mux.HandleFunc("/oauth/authpage", s.HandleAuthPage) // Если понадобится страница авторизации
 }
