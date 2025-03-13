@@ -49,7 +49,7 @@ func App() http.Handler {
 	})
 
 	// Инициализируем OAuth2 менеджер с Redis (параметры можно получить из конфигурации)
-	oauth2Manager := oauth2manager.NewOAuth2Manager("localhost:6379", "", 0)
+	oauth2Manager := oauth2manager.NewOAuth2Manager("redis:6379", "", 0)
 	oauth2Server := oauth2server.NewOAuth2Server(oauth2Manager)
 
 	// Регистрируем эндпоинты OAuth2
