@@ -10,7 +10,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/req"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2manager"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2manager"
 )
 
 type AuthHandlerDeps struct { // содержит все необходимые элементы заполнения. это DC
@@ -32,8 +32,8 @@ type refreshInput struct {
 
 func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	handler := &AuthHandler{
-		Config:      deps.Config,
-		AuthService: deps.AuthService,
+		Config:        deps.Config,
+		AuthService:   deps.AuthService,
 		OAuth2Manager: deps.OAuth2Manager,
 	}
 	router.HandleFunc("POST /auth/login", handler.Login())
@@ -134,8 +134,6 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 	}
 }
 
-
-
 // Refresh обновляет JWT токен, используя refresh-токен
 // @Summary        Обновление токенов
 // @Description    Принимает refresh-токен (из cookie), проверяет его и возвращает новый JWT токен
@@ -160,7 +158,7 @@ func (h *AuthHandler) Refresh() http.HandlerFunc {
 
 		// Используем OAuth2 менеджер для обновления токенов
 		accessToken, newRefreshToken, err := h.OAuth2Manager.RefreshTokens(r.Context(), refreshToken)
-    
+
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
@@ -182,4 +180,3 @@ func (h *AuthHandler) Refresh() http.HandlerFunc {
 		res.Json(w, data, http.StatusOK)
 	}
 }
-

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/go-oauth2/oauth2/v4/server"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2manager"
 	"github.com/go-oauth2/oauth2/v4/errors"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2manager"
+	"github.com/go-oauth2/oauth2/v4/server"
 )
 
 // OAuth2Server — структура для запуска сервера OAuth2.
@@ -60,4 +60,3 @@ func (s *OAuth2Server) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/oauth/authorize", s.HandleAuthorize)
 	mux.HandleFunc("/oauth/authpage", s.HandleAuthPage) // Если понадобится страница авторизации
 }
-
