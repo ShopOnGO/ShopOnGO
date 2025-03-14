@@ -5,24 +5,17 @@ import (
 	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2manager"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
 	Db    DbConfig
-	Auth  AuthConfig
 	Redis RedisConfig
 	OAuth OAuthConfig
 }
 
 type DbConfig struct {
 	Dsn string
-}
-
-type AuthConfig struct {
-	Secret string
-	JWTTTL time.Duration
 }
 
 type RedisConfig struct {
@@ -33,8 +26,8 @@ type RedisConfig struct {
 }
 
 type OAuthConfig struct { // Новая структура для OAuth2
-	OAuth2Manager *oauth2manager.OAuth2ManagerImpl
 	Secret        string
+	JWTTTL time.Duration
 }
 
 func LoadConfig() *Config {
@@ -55,37 +48,29 @@ func LoadConfig() *Config {
 
 	jwtTTLStr := os.Getenv("JWT_TTL")
 	if jwtTTLStr == "" {
-		jwtTTLStr = "1h"
+		jwtTTLStr = "15m"
 	}
 	jwtTTL, err := time.ParseDuration(jwtTTLStr)
 	if err != nil {
 		logger.Error("Invalid JWT_TTL, using default 1h", err.Error())
-		jwtTTL = 1 * time.Hour
+		jwtTTL = 15 * time.Minute
 	}
-
-	oauthManager := oauth2manager.NewOAuth2Manager(
-		os.Getenv("REDIS_ADDRESS"),
-		os.Getenv("REDIS_PASSWORD"),
-		os.Getenv("SECRET"),  // Передаем секрет
-		0,
-	)
+	secret := os.Getenv("SECRET")
 
 	return &Config{
 		Db: DbConfig{
 			Dsn: os.Getenv("DSN"),
 		},
-		Auth: AuthConfig{
-			Secret: os.Getenv("SECRET"),
-			JWTTTL: jwtTTL,
-		},
 		Redis: RedisConfig{
 			Addr:            os.Getenv("REDIS_ADDRESS"),
-			Password:        os.Getenv("REDIS_PASSWORD"),
+			// Password:        os.Getenv("REDIS_PASSWORD"),
+			Password:        "",
 			DB:              0,
 			RefreshTokenTTL: refreshTTL,
 		},
 		OAuth: OAuthConfig{
-			OAuth2Manager: oauthManager,
+			Secret: secret,
+			JWTTTL: jwtTTL,
 		},
 	}
 }

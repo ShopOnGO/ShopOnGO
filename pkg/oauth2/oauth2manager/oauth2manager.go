@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/jwt"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 
@@ -29,15 +30,17 @@ type OAuth2Manager interface {
 type OAuth2ManagerImpl struct {
 	Manager     *manage.Manager
 	RedisClient *redis.Client
-	Secret      string
+	Secret        string
+	JWTTTL        time.Duration
+	RefreshTTL    time.Duration
 }
 
 // NewOAuth2Manager создает менеджер OAuth2 с использованием Redis для хранения токенов.
-func NewOAuth2Manager(redisAddr, redisPassword string, secret string, redisDB int) *OAuth2ManagerImpl {
+func NewOAuth2Manager(config *configs.Config) *OAuth2ManagerImpl {
 	client := redis.NewClient(&redis.Options{
-		Addr:     redisAddr,
-		Password: redisPassword,
-		DB:       redisDB,
+		Addr:     config.Redis.Addr,
+		Password: config.Redis.Password,
+		DB:       config.Redis.DB,
 	})
 
 	manager := manage.NewDefaultManager()
@@ -62,7 +65,9 @@ func NewOAuth2Manager(redisAddr, redisPassword string, secret string, redisDB in
 	return &OAuth2ManagerImpl{
 		Manager:     manager,
 		RedisClient: client,
-		Secret:      secret,
+		Secret:      config.OAuth.Secret,
+		JWTTTL:      config.OAuth.JWTTTL,
+		RefreshTTL:  config.Redis.RefreshTokenTTL,
 	}
 }
 

@@ -27,7 +27,7 @@ func IsAuthed(next http.Handler, config *configs.Config) http.Handler {
 			return
 		}
 		token := strings.TrimPrefix(authedHeader, "Bearer ")
-		isValid, data, err := jwt.NewJWT(config.Auth.Secret).Parse(token)
+		isValid, data, err := jwt.NewJWT(config.OAuth.Secret).Parse(token)
 		if err != nil {
 			if strings.Contains(err.Error(), "expired") {
 				http.Error(w, "Token expired", http.StatusUnauthorized)
