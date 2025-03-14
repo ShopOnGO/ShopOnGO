@@ -515,6 +515,25 @@ const docTemplate = `{
                 }
             }
         },
+        "brand.Brand": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "logo": {
+                    "description": "JSON хранящий ссылку на статику(изображение)",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "video_url": {
+                    "description": "Ссылка на видео в облаке",
+                    "type": "string"
+                }
+            }
+        },
         "category.Category": {
             "type": "object",
             "properties": {
@@ -537,6 +556,12 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/category.Category"
+                    }
+                },
+                "featured_brands": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/brand.Brand"
                     }
                 },
                 "featured_products": {
@@ -606,6 +631,13 @@ const docTemplate = `{
         "product.Product": {
             "type": "object",
             "properties": {
+                "brand_id": {
+                    "type": "integer"
+                },
+                "category_id": {
+                    "description": "foreign key",
+                    "type": "integer"
+                },
                 "color": {
                     "type": "string"
                 },
@@ -613,7 +645,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "discount": {
-                    "description": "CategoryID  uint   ` + "`" + `gorm:\"not null\" json:\"category_id\"` + "`" + `//foreign key\nBrandID      uint    ` + "`" + `gorm:\"not null\"  json:\"brand_id\"` + "`" + `\nPrice        float64 ` + "`" + `gorm:\"not null\"  json:\"price\"` + "`" + `",
+                    "description": "Price        float64 ` + "`" + `gorm:\"not null\"  json:\"price\"` + "`" + `",
                     "type": "number"
                 },
                 "gallery": {

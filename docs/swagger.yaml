@@ -28,6 +28,19 @@ definitions:
     - name
     - password
     type: object
+  brand.Brand:
+    properties:
+      description:
+        type: string
+      logo:
+        description: JSON хранящий ссылку на статику(изображение)
+        type: string
+      name:
+        type: string
+      video_url:
+        description: Ссылка на видео в облаке
+        type: string
+    type: object
   category.Category:
     properties:
       description:
@@ -43,6 +56,10 @@ definitions:
       categories:
         items:
           $ref: '#/definitions/category.Category'
+        type: array
+      featured_brands:
+        items:
+          $ref: '#/definitions/brand.Brand'
         type: array
       featured_products:
         items:
@@ -87,15 +104,17 @@ definitions:
     type: object
   product.Product:
     properties:
+      brand_id:
+        type: integer
+      category_id:
+        description: foreign key
+        type: integer
       color:
         type: string
       description:
         type: string
       discount:
-        description: |-
-          CategoryID  uint   `gorm:"not null" json:"category_id"`//foreign key
-          BrandID      uint    `gorm:"not null"  json:"brand_id"`
-          Price        float64 `gorm:"not null"  json:"price"`
+        description: Price        float64 `gorm:"not null"  json:"price"`
         type: number
       gallery:
         description: JSON хранящий ссылки на изображения
