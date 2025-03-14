@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
+
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/jwt"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 
