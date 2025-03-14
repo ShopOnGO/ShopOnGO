@@ -7,10 +7,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y postgresql-client \
     && rm -rf /var/lib/apt/lists/* && apt-get clean
 
-# Устанавливаем переменные окружения
-ENV SECRET="/2+XnmJGz1j3ehIVI/5P9kl+CghrE3DcS7rnT+qar5w="
-ENV CGO_ENABLED=0
 # Отключаем CGO для статической компиляции
+ ENV CGO_ENABLED=0
 
 # Копируем файлы зависимостей
 COPY go.mod go.sum ./

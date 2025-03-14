@@ -1,3 +1,4 @@
+basePath: /
 definitions:
   auth.LoginRequest:
     properties:
@@ -27,6 +28,19 @@ definitions:
     - name
     - password
     type: object
+  brand.Brand:
+    properties:
+      description:
+        type: string
+      logo:
+        description: JSON хранящий ссылку на статику(изображение)
+        type: string
+      name:
+        type: string
+      video_url:
+        description: Ссылка на видео в облаке
+        type: string
+    type: object
   category.Category:
     properties:
       description:
@@ -42,6 +56,10 @@ definitions:
       categories:
         items:
           $ref: '#/definitions/category.Category'
+        type: array
+      featured_brands:
+        items:
+          $ref: '#/definitions/brand.Brand'
         type: array
       featured_products:
         items:
@@ -86,15 +104,17 @@ definitions:
     type: object
   product.Product:
     properties:
+      brand_id:
+        type: integer
+      category_id:
+        description: foreign key
+        type: integer
       color:
         type: string
       description:
         type: string
       discount:
-        description: |-
-          CategoryID  uint   `gorm:"not null" json:"category_id"`//foreign key
-          BrandID      uint    `gorm:"not null"  json:"brand_id"`
-          Price        float64 `gorm:"not null"  json:"price"`
+        description: Price        float64 `gorm:"not null"  json:"price"`
         type: number
       gallery:
         description: JSON хранящий ссылки на изображения
@@ -143,8 +163,20 @@ definitions:
       link_id:
         type: integer
     type: object
+host: localhost:8081
 info:
-  contact: {}
+  contact:
+    email: support@shopongo.com
+    name: Support Team
+    url: http://shopongo.com/support
+  description: API сервиса ShopOnGO, обеспечивающего авторизацию, управление пользователями,
+    товарами и аналитикой.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://shopongo.com/terms/
+  title: ShopOnGO API
+  version: "1.0"
 paths:
   /{hash}:
     get:
@@ -166,7 +198,7 @@ paths:
             type: string
       summary: Редирект по хешу
       tags:
-      - links
+      - link
   /auth/login:
     post:
       consumes:
@@ -196,6 +228,34 @@ paths:
           schema:
             type: string
       summary: Вход в систему
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Принимает refresh-токен (из cookie), проверяет его и возвращает
+        новый JWT токен
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Новый JWT токен
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "401":
+          description: Неверный или просроченный refresh-токен
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера при создании токена
+          schema:
+            type: string
+      summary: Обновление токенов
       tags:
       - auth
   /auth/register:
@@ -246,7 +306,7 @@ paths:
       summary: Главная страница
       tags:
       - home
-  /links:
+  /link:
     get:
       consumes:
       - application/json
@@ -271,9 +331,11 @@ paths:
           description: Некорректные параметры limit/offset
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Получить все ссылки
       tags:
-      - links
+      - link
     post:
       consumes:
       - application/json
@@ -297,10 +359,12 @@ paths:
           description: Некорректный запрос
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Создание короткой ссылки
       tags:
-      - links
-  /links/{id}:
+      - link
+  /link/{id}:
     delete:
       description: Удаляет существующую короткую ссылку из базы данных
       parameters:
@@ -326,9 +390,11 @@ paths:
           description: Ошибка сервера
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Удаление ссылки
       tags:
-      - links
+      - link
     put:
       consumes:
       - application/json
@@ -360,9 +426,11 @@ paths:
           description: Ссылка не найдена
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Обновление ссылки
       tags:
-      - links
+      - link
   /stats:
     get:
       consumes:
@@ -398,7 +466,16 @@ paths:
           description: Некорректные параметры запроса
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Получить статистику переходов
       tags:
       - statistics
+schemes:
+- http
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

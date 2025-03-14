@@ -7,4 +7,5 @@ type User struct {
 	Email      string `gorm:"index"`
 	Password   string
 	Name       string
+	Role       string `gorm:"default:'buyer'"` // "admin", "seller", "buyer"
 }

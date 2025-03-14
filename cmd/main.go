@@ -1,3 +1,22 @@
+// @title ShopOnGO API
+// @version 1.0
+// @description API сервиса ShopOnGO, обеспечивающего авторизацию, управление пользователями, товарами и аналитикой.
+// @termsOfService http://shopongo.com/terms/
+
+// @contact.name Support Team
+// @contact.url http://shopongo.com/support
+// @contact.email support@shopongo.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8081
+// @BasePath /
+// @schemes http
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 package main
 
 import (
@@ -6,6 +25,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/auth"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/brand"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/home"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/link"
@@ -20,6 +40,7 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2manager"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2server"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func App() http.Handler {
@@ -39,10 +60,11 @@ func App() http.Handler {
 	statRepository := stat.NewStatRepository(db)
 	categoryRepository := category.NewCategoryRepository(db)
 	productsRepository := product.NewProductRepository(db)
+	brandsRepository := brand.NewBrandRepository(db)
 
 	// Services
 	authService := auth.NewAuthService(userRepository)
-	homeService := home.NewHomeService(categoryRepository, productsRepository)
+	homeService := home.NewHomeService(categoryRepository, productsRepository, brandsRepository)
 	statService := stat.NewStatService(&stat.StatServiceDeps{
 		StatRepository: statRepository,
 		EventBus:       eventBus,
@@ -78,7 +100,7 @@ func App() http.Handler {
 	})
 
 	// swagger
-	router.Handle("/swagger/", http.StripPrefix("/swagger/", http.FileServer(http.Dir("./docs"))))
+	router.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	//обработчик подписки ( бесконечно сидит отдельно и ждёт пока не придут сообщения)
 	go statService.AddClick()
