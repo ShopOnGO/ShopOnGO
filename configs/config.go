@@ -63,7 +63,8 @@ func LoadConfig() *Config {
 		},
 		Redis: RedisConfig{
 			Addr:            os.Getenv("REDIS_ADDRESS"),
-			Password:        os.Getenv("REDIS_PASSWORD"),
+			// Password:        os.Getenv("REDIS_PASSWORD"),
+			Password:        "",
 			DB:              0,
 			RefreshTokenTTL: refreshTTL,
 		},
