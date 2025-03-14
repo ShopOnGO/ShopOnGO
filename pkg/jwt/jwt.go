@@ -25,19 +25,19 @@ func NewJWT(secret string) *JWT {
 	}
 }
 
-// func (j *JWT) Create(data JWTData, ttl time.Duration) (string, error) {
-// 	//метод шифрования
-// 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-// 		"email": data.Email,
-// 		"exp":   time.Now().Add(ttl).Unix(), // добавляем время жизни токена
-// 		//данные
-// 	})
-// 	s, err := t.SignedString([]byte(j.Secret)) // подпись
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	return s, nil
-// }
+func (j *JWT) Create(data JWTData, ttl time.Duration) (string, error) {
+	//метод шифрования
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email": data.Email,
+		"exp":   time.Now().Add(ttl).Unix(), // добавляем время жизни токена
+		//данные
+	})
+	s, err := t.SignedString([]byte(j.Secret)) // подпись
+	if err != nil {
+		return "", err
+	}
+	return s, nil
+}
 
 func (j *JWT) Parse(token string) (bool, *JWTData, error) {
 	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {

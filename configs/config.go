@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2manager"
 	"github.com/joho/godotenv"
 )
 
@@ -12,7 +13,7 @@ type Config struct {
 	Db    DbConfig
 	Auth  AuthConfig
 	Redis RedisConfig
-	OAuth OAuthConfig // Если понадобится настройка для OAuth2
+	OAuth OAuthConfig
 }
 
 type DbConfig struct {
@@ -31,9 +32,9 @@ type RedisConfig struct {
 	RefreshTokenTTL time.Duration
 }
 
-type OAuthConfig struct {
-	// Здесь можно добавить дополнительные параметры для настройки oauth2,
-	// например, ClientID, ClientSecret, Endpoint и т.д.
+type OAuthConfig struct { // Новая структура для OAuth2
+	OAuth2Manager *oauth2manager.OAuth2ManagerImpl
+	Secret        string
 }
 
 func LoadConfig() *Config {
@@ -62,6 +63,13 @@ func LoadConfig() *Config {
 		jwtTTL = 1 * time.Hour
 	}
 
+	oauthManager := oauth2manager.NewOAuth2Manager(
+		os.Getenv("REDIS_ADDRESS"),
+		os.Getenv("REDIS_PASSWORD"),
+		os.Getenv("SECRET"),  // Передаем секрет
+		0,
+	)
+
 	return &Config{
 		Db: DbConfig{
 			Dsn: os.Getenv("DSN"),
@@ -77,7 +85,7 @@ func LoadConfig() *Config {
 			RefreshTokenTTL: refreshTTL,
 		},
 		OAuth: OAuthConfig{
-			// если потребуется
+			OAuth2Manager: oauthManager,
 		},
 	}
 }

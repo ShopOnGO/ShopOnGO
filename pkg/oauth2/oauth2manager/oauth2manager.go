@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"time"
-
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/jwt"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+
 	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-oauth2/oauth2/v4/manage"
 	"github.com/go-oauth2/oauth2/v4/models"
@@ -26,10 +27,11 @@ type OAuth2Manager interface {
 type OAuth2ManagerImpl struct {
 	Manager     *manage.Manager
 	RedisClient *redis.Client
+	Secret      string
 }
 
 // NewOAuth2Manager создает менеджер OAuth2 с использованием Redis для хранения токенов.
-func NewOAuth2Manager(redisAddr, redisPassword string, redisDB int) *OAuth2ManagerImpl {
+func NewOAuth2Manager(redisAddr, redisPassword string, secret string, redisDB int) *OAuth2ManagerImpl {
 	client := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
 		Password: redisPassword,
@@ -58,21 +60,24 @@ func NewOAuth2Manager(redisAddr, redisPassword string, redisDB int) *OAuth2Manag
 	return &OAuth2ManagerImpl{
 		Manager:     manager,
 		RedisClient: client,
+		Secret:      secret,
 	}
 }
 
 // GenerateTokens генерирует access и refresh токены, используя Password Flow.
 func (o *OAuth2ManagerImpl) GenerateTokens(data interface{}) (string, string, error) {
-	ctx := context.Background()
-
 	// Пример: здесь предполагается, что data содержит userID.
 	userID, ok := data.(string) // Ожидаем, что передаётся userID (например, email)
 	if !ok {
 		return "", "", errors.New("invalid token data type")
 	}
 
-	logger.Info("Генерация токена для пользователя:", userID)
+    accessToken, err := jwt.NewJWT(o.Secret).Create(jwt.JWTData{Email: userID}, 15*time.Minute)
+    if err != nil {
+        return "", "", err
+    }
 
+	logger.Info("Генерация токена для пользователя:", userID)
 	// Создаём запрос на генерацию токена
 	tgr := &oauth2.TokenGenerateRequest{
 		ClientID: "default", // Должен совпадать с clientStore
@@ -86,8 +91,8 @@ func (o *OAuth2ManagerImpl) GenerateTokens(data interface{}) (string, string, er
 		return "", "", err
 	}
 
-	logger.Info("Токен сгенерирован:", ti.GetAccess(), ti.GetRefresh())
-	accessToken := ti.GetAccess()
+	log.Println("Токен сгенерирован:", ti.GetRefresh())
+
 	refreshToken := ti.GetRefresh()
 
 	// Сохраняем refresh_token в Redis
