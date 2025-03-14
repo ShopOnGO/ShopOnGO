@@ -6,8 +6,8 @@ type Product struct {
 	gorm.Model  `swaggerignore:"true"`
 	Name        string `gorm:"type:varchar(255);not null" json:"name"`
 	Description string `gorm:"type:text" json:"description"`
-	//CategoryID  uint   `gorm:"not null" json:"category_id"`//foreign key
-	//BrandID      uint    `gorm:"not null"  json:"brand_id"`
+	CategoryID  uint   `gorm:"not null" json:"category_id"` //foreign key
+	BrandID     uint   `gorm:"not null"  json:"brand_id"`
 	//Price        float64 `gorm:"not null"  json:"price"`
 	Discount    float64 `gorm:"default:0" json:"discount"`
 	Stock       int     `gorm:"not null;default:0" json:"stock"`  // количество в наличии

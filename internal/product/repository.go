@@ -63,3 +63,19 @@ func (repo *ProductRepository) GetFeaturedProducts(amount uint, random bool) ([]
 
 	return products, result.Error
 }
+
+func (repo *ProductRepository) Update(product *Product) (*Product, error) {
+	result := repo.Database.DB.Model(&Product{}).Where("id = ?", product.ID).Updates(product)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return product, nil
+}
+
+func (repo *ProductRepository) Delete(id uint) error {
+	result := repo.Database.DB.Delete(&Product{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}

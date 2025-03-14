@@ -7,13 +7,15 @@ import (
 type HomeService struct {
 	CategoryRepository di.ICategoryRepository
 	ProductsRepository di.IProductRepository
+	BrandRepository    di.IBrandRepository
 	//promoRepo PromotionRepository
 }
 
-func NewHomeService(categoryRepository di.ICategoryRepository, productsRepository di.IProductRepository) *HomeService {
+func NewHomeService(categoryRepository di.ICategoryRepository, productsRepository di.IProductRepository, brandRepository di.IBrandRepository) *HomeService {
 	return &HomeService{
 		CategoryRepository: categoryRepository,
-		ProductsRepository: productsRepository}
+		ProductsRepository: productsRepository,
+		BrandRepository:    brandRepository}
 }
 func (s *HomeService) GetHomeData() (*HomeData, error) {
 
@@ -31,10 +33,15 @@ func (s *HomeService) GetHomeData() (*HomeData, error) {
 	// if err != nil {
 	// 	return nil, err
 	// }
+	brands, err := s.BrandRepository.GetFeaturedBrands(5)
+	if err != nil {
+		return nil, err
+	}
 
 	return &HomeData{
 		Categories:       categories,
 		FeaturedProducts: featuredProducts,
+		Brands:           brands,
 		//Promotions: promotions,
 	}, nil
 }

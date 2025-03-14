@@ -30,3 +30,19 @@ func (repo *UserRepository) FindByEmail(email string) (*User, error) {
 	}
 	return &user, nil
 }
+
+func (repo *UserRepository) Update(user *User) (*User, error) {
+	result := repo.Database.DB.Model(&User{}).Where("id = ?", user.ID).Updates(user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return user, nil
+}
+
+func (repo *UserRepository) Delete(id uint) error {
+	result := repo.Database.DB.Delete(&User{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}

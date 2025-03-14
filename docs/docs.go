@@ -183,8 +183,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/links": {
+        "/link": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Возвращает список всех коротких ссылок с возможностью пагинации",
                 "consumes": [
                     "application/json"
@@ -193,7 +198,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "links"
+                    "link"
                 ],
                 "summary": "Получить все ссылки",
                 "parameters": [
@@ -226,6 +231,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Генерирует короткую ссылку по переданному URL и сохраняет ее в базе",
                 "consumes": [
                     "application/json"
@@ -234,7 +244,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "links"
+                    "link"
                 ],
                 "summary": "Создание короткой ссылки",
                 "parameters": [
@@ -264,8 +274,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/links/{id}": {
+        "/link/{id}": {
             "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Изменяет URL или хеш существующей короткой ссылки",
                 "consumes": [
                     "application/json"
@@ -274,7 +289,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "links"
+                    "link"
                 ],
                 "summary": "Обновление ссылки",
                 "parameters": [
@@ -317,9 +332,14 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Удаляет существующую короткую ссылку из базы данных",
                 "tags": [
-                    "links"
+                    "link"
                 ],
                 "summary": "Удаление ссылки",
                 "parameters": [
@@ -361,6 +381,11 @@ const docTemplate = `{
         },
         "/stats": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Возвращает агрегированную статистику по количеству переходов, сгруппированную по дням или месяцам",
                 "consumes": [
                     "application/json"
@@ -418,7 +443,7 @@ const docTemplate = `{
             "get": {
                 "description": "Ищет короткую ссылку в базе по хешу и выполняет перенаправление",
                 "tags": [
-                    "links"
+                    "link"
                 ],
                 "summary": "Редирект по хешу",
                 "parameters": [

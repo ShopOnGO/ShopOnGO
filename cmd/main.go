@@ -25,6 +25,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/auth"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/brand"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/home"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/link"
@@ -59,10 +60,11 @@ func App() http.Handler {
 	statRepository := stat.NewStatRepository(db)
 	categoryRepository := category.NewCategoryRepository(db)
 	productsRepository := product.NewProductRepository(db)
+	brandsRepository := brand.NewBrandRepository(db)
 
 	// Services
 	authService := auth.NewAuthService(userRepository)
-	homeService := home.NewHomeService(categoryRepository, productsRepository)
+	homeService := home.NewHomeService(categoryRepository, productsRepository, brandsRepository)
 	statService := stat.NewStatService(&stat.StatServiceDeps{
 		StatRepository: statRepository,
 		EventBus:       eventBus,

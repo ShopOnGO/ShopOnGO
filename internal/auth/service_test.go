@@ -19,9 +19,17 @@ func (repo *MockUserRepository) FindByEmail(email string) (*user.User, error) {
 	return nil, nil
 }
 
+func (repo *MockUserRepository) Update(*user.User) (*user.User, error) {
+	return nil, nil
+}
+
+func (repo *MockUserRepository) Delete(id uint) error {
+	return nil
+}
+
 // Тест на регистрацию пользователя
 func TestRegisterSuccess(t *testing.T) {
-	authService := auth.NewAuthService(&MockUserRepository{},)
+	authService := auth.NewAuthService(&MockUserRepository{})
 
 	const initialEmail = "a@a.ru"
 	email, err := authService.Register(initialEmail, "password123", "dan")

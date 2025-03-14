@@ -179,7 +179,7 @@ paths:
             type: string
       summary: Редирект по хешу
       tags:
-      - links
+      - link
   /auth/login:
     post:
       consumes:
@@ -287,7 +287,7 @@ paths:
       summary: Главная страница
       tags:
       - home
-  /links:
+  /link:
     get:
       consumes:
       - application/json
@@ -312,9 +312,11 @@ paths:
           description: Некорректные параметры limit/offset
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Получить все ссылки
       tags:
-      - links
+      - link
     post:
       consumes:
       - application/json
@@ -338,10 +340,12 @@ paths:
           description: Некорректный запрос
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Создание короткой ссылки
       tags:
-      - links
-  /links/{id}:
+      - link
+  /link/{id}:
     delete:
       description: Удаляет существующую короткую ссылку из базы данных
       parameters:
@@ -367,9 +371,11 @@ paths:
           description: Ошибка сервера
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Удаление ссылки
       tags:
-      - links
+      - link
     put:
       consumes:
       - application/json
@@ -401,9 +407,11 @@ paths:
           description: Ссылка не найдена
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Обновление ссылки
       tags:
-      - links
+      - link
   /stats:
     get:
       consumes:
@@ -439,6 +447,8 @@ paths:
           description: Некорректные параметры запроса
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Получить статистику переходов
       tags:
       - statistics
