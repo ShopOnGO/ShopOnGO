@@ -79,7 +79,7 @@ func (o *OAuth2ManagerImpl) GenerateTokens(data interface{}) (string, string, er
 		return "", "", errors.New("invalid token data type")
 	}
 
-    accessToken, err := jwt.NewJWT(o.Secret).Create(jwt.JWTData{Email: userID}, 15*time.Minute)
+    accessToken, err := jwt.NewJWT(o.Secret).Create(jwt.JWTData{Email: userID}, o.JWTTTL)
     if err != nil {
         return "", "", err
     }
@@ -103,7 +103,7 @@ func (o *OAuth2ManagerImpl) GenerateTokens(data interface{}) (string, string, er
 	refreshToken := ti.GetRefresh()
 
 	// Сохраняем refresh_token в Redis
-	err = o.StoreRefreshToken(userID, refreshToken, 30*24*time.Hour)
+	err = o.StoreRefreshToken(userID, refreshToken, o.RefreshTTL)
 	if err != nil {
 		return "", "", err
 	}
