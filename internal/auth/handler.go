@@ -76,7 +76,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			Value:    refreshToken,
 			HttpOnly: true,
 			Path:     "/",
-			Expires:  time.Now().Add(30 * 24 * time.Hour), //типа месяц
+			Expires:  time.Now().Add(h.Config.Redis.RefreshTokenTTL),
 		})
 
 		data := LoginResponse{
@@ -122,7 +122,7 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 			Value:    refreshToken,
 			HttpOnly: true,
 			Path:     "/",
-			Expires:  time.Now().Add(30 * 24 * time.Hour),
+			Expires:  time.Now().Add(h.Config.Redis.RefreshTokenTTL),
 		})
 
 		//fmt.Println(h.Config.Auth.Secret)
@@ -169,7 +169,7 @@ func (h *AuthHandler) Refresh() http.HandlerFunc {
 			Value:    newRefreshToken,
 			HttpOnly: true,
 			Path:     "/",
-			Expires:  time.Now().Add(30 * 24 * time.Hour),
+			Expires:  time.Now().Add(h.Config.Redis.RefreshTokenTTL),
 		})
 
 		// Возвращаем новый access-токен клиенту
