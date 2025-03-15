@@ -49,7 +49,7 @@ func (repo *LinkRepository) Delete(id uint) error {
 	return nil
 }
 func (repo *LinkRepository) GetById(id uint) (*Link, error) {
-	var link Link
+	var link Link                               // автоматическое lowercase и множественное число
 	result := repo.Database.DB.First(&link, id) // SQL QUERY BY CONDS
 	if result.Error != nil {
 		return nil, result.Error

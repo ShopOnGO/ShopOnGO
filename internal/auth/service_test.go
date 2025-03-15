@@ -19,15 +19,26 @@ func (repo *MockUserRepository) FindByEmail(email string) (*user.User, error) {
 	return nil, nil
 }
 
+func (repo *MockUserRepository) Update(*user.User) (*user.User, error) {
+	return nil, nil
+}
+
+func (repo *MockUserRepository) Delete(id uint) error {
+	return nil
+}
+
+// Тест на регистрацию пользователя
 func TestRegisterSuccess(t *testing.T) {
-	const initialEmail = "a@a.ru"
 	authService := auth.NewAuthService(&MockUserRepository{})
-	email, err := authService.Register(initialEmail, "1", "dan")
+
+	const initialEmail = "a@a.ru"
+	email, err := authService.Register(initialEmail, "password123", "dan")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if email != initialEmail {
-		t.Fatalf("email %s do not match %s", email, initialEmail)
+		t.Fatalf("email %s do not match expected %s", email, initialEmail)
 	}
 	// по сути обычный юнит тест для регистрации, только делаем вид записи в базу
 	// для написания просто изучаем функцию и имитируем работу ее зависимостей
