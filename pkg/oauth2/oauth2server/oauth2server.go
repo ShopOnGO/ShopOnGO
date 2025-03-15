@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2manager"
+
 	"github.com/go-oauth2/oauth2/v4/errors"
-	"github.com/go-oauth2/oauth2/v4/models"
 	"github.com/go-oauth2/oauth2/v4/server"
 )
 
@@ -38,20 +38,10 @@ func NewOAuth2Server(manager *oauth2manager.OAuth2ManagerImpl) *OAuth2Server {
 
 
 func (s *OAuth2Server) HandleToken(w http.ResponseWriter, r *http.Request) {
-	err := s.server.HandleTokenRequest(w, r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
-		// Если куки нет или возникла ошибка, можно вернуть ошибку или просто игнорировать
-		if err == http.ErrNoCookie {
-			http.Error(w, "Refresh token cookie not found", http.StatusUnauthorized)
-		} else {
-			http.Error(w, "Error reading refresh token cookie", http.StatusInternalServerError)
-		}
+		http.Error(w, "Refresh token cookie not found", http.StatusUnauthorized)
 		return
 	}
 	refreshToken := cookie.Value
@@ -64,11 +54,8 @@ func (s *OAuth2Server) HandleToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Генерируем новые токены
-	accessToken, newRefreshToken, err := s.oauthManager.GenerateTokens(
-		&models.Token{
-			UserID: userID,
-		},
-	)
+	accessToken, newRefreshToken, err := s.oauthManager.GenerateTokens(userID)
+
 	if err != nil {
 		http.Error(w, "Failed to generate new tokens", http.StatusInternalServerError)
 		return
