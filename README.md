@@ -53,6 +53,7 @@ repo- category : Create(category *Category), GetCategories(),
 
 handlers:
 auth-handler : login(), register()
+oauth-handler : HandleToken()
 link-handler : CRUD,GetAll()
 stat-handler : GetStat()
 
