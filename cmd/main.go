@@ -32,14 +32,16 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/stat"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
+
 	"github.com/ShopOnGO/ShopOnGO/prod/migrations"
+
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/event"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/redis"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2manager"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2server"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -50,6 +52,7 @@ func App() http.Handler {
 
 	conf := configs.LoadConfig()
 	db := db.NewDB(conf)
+	redis := redis.NewRedisDB(conf)
 	//cache := cache.NewRedis(conf)
 	router := http.NewServeMux()
 	eventBus := event.NewEventBus() // передаем как зависимость в handle
@@ -61,6 +64,7 @@ func App() http.Handler {
 	categoryRepository := category.NewCategoryRepository(db)
 	productsRepository := product.NewProductRepository(db)
 	brandsRepository := brand.NewBrandRepository(db)
+	RefreshTokenRepository := oauth2.NewRedisRefreshTokenRepository(redis.Client)
 
 	// Services
 	authService := auth.NewAuthService(userRepository)
@@ -69,21 +73,13 @@ func App() http.Handler {
 		StatRepository: statRepository,
 		EventBus:       eventBus,
 	})
-
-	// Инициализируем OAuth2 менеджер с Redis (параметры можно получить из конфигурации)
-	oauth2Manager := oauth2manager.NewOAuth2Manager(conf)
-	oauth2Server := oauth2server.NewOAuth2Server(oauth2Manager)
-
-	// Регистрируем эндпоинты OAuth2
-	// Например, для выдачи токенов и авторизации
-	router.HandleFunc("/oauth/token", oauth2Server.HandleToken)
-	router.HandleFunc("/oauth/authorize", oauth2Server.HandleAuthorize)
+	oauth2Service := oauth2.NewOAuth2Service(conf, RefreshTokenRepository)
 
 	//Handlers
 	auth.NewAuthHandler(router, auth.AuthHandlerDeps{
 		Config:        conf,
 		AuthService:   authService,
-		OAuth2Manager: oauth2Manager,
+		OAuth2Service: oauth2Service,
 	})
 	link.NewLinkHandler(router, link.LinkHandlerDeps{
 		LinkRepository: linkRepository,
@@ -97,6 +93,9 @@ func App() http.Handler {
 	home.NewHomeHandler(router, home.HomeHandlerDeps{
 		HomeService: homeService,
 		Config:      conf,
+	})
+	oauth2.NewOAuth2Handler(router, oauth2.OAuth2HandlerDeps{
+		Service: oauth2Service,
 	})
 
 	// swagger
