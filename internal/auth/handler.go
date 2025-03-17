@@ -6,21 +6,20 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/req"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
-
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2/oauth2manager"
 )
 
 type AuthHandlerDeps struct { // содержит все необходимые элементы заполнения. это DC
 	*configs.Config
 	*AuthService
-	OAuth2Manager oauth2manager.OAuth2Manager
+	OAuth2Service oauth2.OAuth2Service
 }
 type AuthHandler struct { // это уже рабоая структура
 	*configs.Config
 	*AuthService
-	OAuth2Manager oauth2manager.OAuth2Manager
+	OAuth2Service oauth2.OAuth2Service
 }
 
 // Допустим, refreshInput используется, если вы хотите принимать refresh-токен из JSON.
@@ -33,12 +32,11 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	handler := &AuthHandler{
 		Config:        deps.Config,
 		AuthService:   deps.AuthService,
-		OAuth2Manager: deps.OAuth2Manager,
+		OAuth2Service: deps.OAuth2Service,
 	}
 	router.HandleFunc("POST /auth/login", handler.Login())
 	router.HandleFunc("POST /auth/register", handler.Register())
 
-	router.HandleFunc("POST /auth/refresh", handler.Refresh())
 }
 
 // Login аутентифицирует пользователя и выдает JWT токен
@@ -65,7 +63,7 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			return
 		}
 
-		jwtToken, refreshToken, err := h.OAuth2Manager.GenerateTokens(email)
+		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(email)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -111,7 +109,7 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 			return
 		}
 
-		jwtToken, refreshToken, err := h.OAuth2Manager.GenerateTokens(email)
+		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(email)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -130,52 +128,5 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 			Token: jwtToken,
 		}
 		res.Json(w, data, 201)
-	}
-}
-
-// Refresh обновляет JWT токен, используя refresh-токен
-// @Summary        Обновление токенов
-// @Description    Принимает refresh-токен (из cookie), проверяет его и возвращает новый JWT токен
-// @Tags           auth
-// @Accept         json
-// @Produce        json
-// @Success        200 {object} LoginResponse "Новый JWT токен"
-// @Failure        400 {string} string "Некорректный запрос"
-// @Failure        401 {string} string "Неверный или просроченный refresh-токен"
-// @Failure        500 {string} string "Ошибка сервера при создании токена"
-// @Router         /auth/refresh [post]
-func (h *AuthHandler) Refresh() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		// Извлекаем refresh-токен из cookie
-		cookie, err := r.Cookie("refresh_token")
-		if err != nil || cookie.Value == "" {
-			http.Error(w, "Refresh token not found", http.StatusUnauthorized)
-			return
-		}
-		refreshToken := cookie.Value
-
-		// Используем OAuth2 менеджер для обновления токенов
-		accessToken, newRefreshToken, err := h.OAuth2Manager.RefreshTokens(r.Context(), refreshToken)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return
-		}
-
-		// Обновляем refresh-токен в cookie
-		http.SetCookie(w, &http.Cookie{
-			Name:     "refresh_token",
-			Value:    newRefreshToken,
-			HttpOnly: true,
-			Path:     "/",
-			Expires:  time.Now().Add(h.Config.Redis.RefreshTokenTTL),
-		})
-
-		// Возвращаем новый access-токен клиенту
-		data := LoginResponse{
-			Token: accessToken,
-		}
-		res.Json(w, data, http.StatusOK)
 	}
 }
