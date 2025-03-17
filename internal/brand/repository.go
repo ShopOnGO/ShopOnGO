@@ -35,7 +35,14 @@ func (repo *BrandRepository) GetFeaturedBrands(amount int) ([]Brand, error) {
 
 	return brand, nil
 }
-
+func (repo *BrandRepository) FindBrandByID(id uint) (*Brand, error) {
+	var brand Brand
+	result := repo.Database.DB.First(&brand, "id = ?", id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &brand, nil
+}
 func (repo *BrandRepository) FindByName(name string) (*Brand, error) {
 	var brand Brand
 	result := repo.Database.DB.First(&brand, "name = ?", name)

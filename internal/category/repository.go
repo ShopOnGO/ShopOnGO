@@ -59,3 +59,11 @@ func (repo *CategoryRepository) Delete(id uint) error {
 	}
 	return nil
 }
+func (repo *CategoryRepository) FindCategoryByID(id uint) (*Category, error) {
+	var category Category
+	result := repo.Database.DB.First(&category, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &category, nil
+}
