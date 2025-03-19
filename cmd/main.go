@@ -62,18 +62,23 @@ func App() http.Handler {
 	userRepository := user.NewUserRepository(db)
 	statRepository := stat.NewStatRepository(db)
 	categoryRepository := category.NewCategoryRepository(db)
-	productsRepository := product.NewProductRepository(db)
+	productRepository := product.NewProductRepository(db)
 	brandsRepository := brand.NewBrandRepository(db)
 	RefreshTokenRepository := oauth2.NewRedisRefreshTokenRepository(redis.Client)
 
 	// Services
 	authService := auth.NewAuthService(userRepository)
-	homeService := home.NewHomeService(categoryRepository, productsRepository, brandsRepository)
+	homeService := home.NewHomeService(categoryRepository, productRepository, brandsRepository)
 	statService := stat.NewStatService(&stat.StatServiceDeps{
 		StatRepository: statRepository,
 		EventBus:       eventBus,
 	})
 	oauth2Service := oauth2.NewOAuth2Service(conf, RefreshTokenRepository)
+	//categoryService := category.NewCategoryService(categoryRepository)
+	//brandService := brand.NewBrandService(brandsRepository)
+	//statService := stat.NewStatService(statRepository)
+	//prodService := product.NewProductService(productRepository)
+	//userService := user.NewUserService(userRepository)
 
 	//Handlers
 	auth.NewAuthHandler(router, auth.AuthHandlerDeps{
