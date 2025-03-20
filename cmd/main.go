@@ -101,6 +101,7 @@ func App() http.Handler {
 	})
 	oauth2.NewOAuth2Handler(router, oauth2.OAuth2HandlerDeps{
 		Service: oauth2Service,
+		Config: conf,
 	})
 
 	// swagger
