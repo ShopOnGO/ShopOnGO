@@ -12,6 +12,7 @@ type Config struct {
 	Db    DbConfig
 	Redis RedisConfig
 	OAuth OAuthConfig
+	Google GoogleConfig
 }
 
 type DbConfig struct {
@@ -28,6 +29,12 @@ type RedisConfig struct {
 type OAuthConfig struct { // Новая структура для OAuth2
 	Secret        string
 	JWTTTL time.Duration
+}
+
+type GoogleConfig struct {
+    ClientID     string
+    ClientSecret string
+    RedirectURL  string
 }
 
 func LoadConfig() *Config {
@@ -55,7 +62,6 @@ func LoadConfig() *Config {
 		logger.Error("Invalid JWT_TTL, using default 1h", err.Error())
 		jwtTTL = 15 * time.Minute
 	}
-	secret := os.Getenv("SECRET")
 
 	return &Config{
 		Db: DbConfig{
@@ -69,8 +75,13 @@ func LoadConfig() *Config {
 			RefreshTokenTTL: refreshTTL,
 		},
 		OAuth: OAuthConfig{
-			Secret: secret,
+			Secret: os.Getenv("SECRET"),
 			JWTTTL: jwtTTL,
+		},
+		Google: GoogleConfig{
+			ClientID: os.Getenv("CLIENT_ID"),
+			ClientSecret: os.Getenv("CLIENT_SECRET"),
+			RedirectURL: os.Getenv("REDIRECT_URL"),
 		},
 	}
 }

@@ -11,12 +11,12 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
 )
 
-type AuthHandlerDeps struct { // содержит все необходимые элементы заполнения. это DC
+type AuthHandlerDeps struct {
 	*configs.Config
 	*AuthService
 	OAuth2Service oauth2.OAuth2Service
 }
-type AuthHandler struct { // это уже рабоая структура
+type AuthHandler struct {
 	*configs.Config
 	*AuthService
 	OAuth2Service oauth2.OAuth2Service
@@ -28,14 +28,10 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 		AuthService:   deps.AuthService,
 		OAuth2Service: deps.OAuth2Service,
 	}
-	router.HandleFunc("POST /auth", handler.AuthPage())
 	router.HandleFunc("POST /auth/login", handler.Login())
 	router.HandleFunc("POST /auth/register", handler.Register())
 	router.HandleFunc("POST /auth/logout", handler.Logout())
 }
-
-
-// добавить страничку пользователя...
 
 
 // Login аутентифицирует пользователя и выдает JWT токен
@@ -130,7 +126,16 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 	}
 }
 
-// Logout прекращает сессию пользователя
+// Logout завершает сеанс пользователя и удаляет refresh-токен из cookie
+// @Summary        Завершение сеанса пользователя
+// @Description    Удаляет refresh-токен из хранилища и очищает cookie
+// @Tags          auth
+// @Accept        json
+// @Produce       json
+// @Success       200 {object} map[string]string "Успешный выход, refresh-токен удален"
+// @Failure       401 {string} string "Refresh-токен не найден"
+// @Failure       500 {string} string "Ошибка сервера при выходе"
+// @Router        /auth/logout [post]
 func (h *AuthHandler) Logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Извлекаем refresh-токен из cookie
@@ -161,12 +166,5 @@ func (h *AuthHandler) Logout() http.HandlerFunc {
 			"message":      "Logout successful",
 			"removeToken":  "Please remove access token from your storage",
 		}, http.StatusOK)
-	}
-}
-
-
-func (h *AuthHandler) AuthPage() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		
 	}
 }
