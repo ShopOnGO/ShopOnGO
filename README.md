@@ -52,7 +52,7 @@ repo- products :  Create(product *Product)
 repo- category : Create(category *Category), GetCategories(),
 
 handlers:
-auth-handler : login(), register()
+auth-handler : login(), register(), logout()
 oauth-handler : HandleToken()
 link-handler : CRUD,GetAll()
 stat-handler : GetStat()
