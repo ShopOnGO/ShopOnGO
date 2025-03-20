@@ -5,24 +5,25 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 )
-
-// OAuth2Handler отвечает за HTTP‑эндпоинты OAuth2.
 type OAuth2HandlerDeps struct {
 	Service OAuth2Service
+	*configs.Config
 }
 
 type OAuth2Handler struct {
 	service OAuth2Service
+	*configs.Config
 }
 
 func NewOAuth2Handler(router *http.ServeMux, deps OAuth2HandlerDeps) {
 	handler := &OAuth2Handler{
 		service: deps.Service,
+		Config:  deps.Config,
 	}
 
 	router.HandleFunc("/oauth/token", handler.HandleToken)
-	router.HandleFunc("/oauth/authorize", handler.HandleAuthorize)
 }
 
 
@@ -48,17 +49,11 @@ func (h *OAuth2Handler) HandleToken(w http.ResponseWriter, r *http.Request) {
 		Value:    newRefreshToken,
 		HttpOnly: true,
 		Path:     "/",
-		Expires:  time.Now().Add(30 * 24 * time.Hour),
+		Expires:  time.Now().Add(h.Redis.RefreshTokenTTL),
 	})
 
 	response := map[string]string{"access_token": accessToken}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
-}
-
-// HandleAuthorize обрабатывает запросы авторизации.
-func (h *OAuth2Handler) HandleAuthorize(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OAuth2 Authorization Page"))
 }

@@ -22,22 +22,21 @@ type AuthHandler struct { // это уже рабоая структура
 	OAuth2Service oauth2.OAuth2Service
 }
 
-// Допустим, refreshInput используется, если вы хотите принимать refresh-токен из JSON.
-// Если же вы берёте его из cookie, то структура не обязательна.
-// type refreshInput struct {
-// 	Token string `json:"token"`
-// }
-
 func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	handler := &AuthHandler{
 		Config:        deps.Config,
 		AuthService:   deps.AuthService,
 		OAuth2Service: deps.OAuth2Service,
 	}
+	router.HandleFunc("POST /auth", handler.AuthPage())
 	router.HandleFunc("POST /auth/login", handler.Login())
 	router.HandleFunc("POST /auth/register", handler.Register())
-
+	router.HandleFunc("POST /auth/logout", handler.Logout())
 }
+
+
+// добавить страничку пользователя...
+
 
 // Login аутентифицирует пользователя и выдает JWT токен
 // @Summary        Вход в систему
@@ -128,5 +127,46 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 			Token: jwtToken,
 		}
 		res.Json(w, data, 201)
+	}
+}
+
+// Logout прекращает сессию пользователя
+func (h *AuthHandler) Logout() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Извлекаем refresh-токен из cookie
+		refreshCookie, err := r.Cookie("refresh_token")
+		if err != nil {
+			http.Error(w, "Refresh token not found", http.StatusUnauthorized)
+			return
+		}
+		refreshToken := refreshCookie.Value
+
+		// Вызываем метод logout сервиса, который удаляет refresh-токен
+		if err := h.OAuth2Service.Logout(refreshToken); err != nil {
+			http.Error(w, "Failed to logout: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Очищаем cookie refresh-токена
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    "",
+			Path:     "/",
+			Expires:  time.Unix(0, 0),
+			MaxAge:   -1,
+			HttpOnly: true,
+		})
+
+		res.Json(w, map[string]string{
+			"message":      "Logout successful",
+			"removeToken":  "Please remove access token from your storage",
+		}, http.StatusOK)
+	}
+}
+
+
+func (h *AuthHandler) AuthPage() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		
 	}
 }

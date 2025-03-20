@@ -21,6 +21,7 @@ import (
 type OAuth2Service interface {
 	GenerateTokens(userID string) (accessToken, refreshToken string, err error)
 	RefreshTokens(refreshToken string) (accessToken, newRefreshToken string, err error)
+	Logout(refreshToken string) error
 }
 
 // oauth2ServiceImpl – реализация OAuth2Service.
@@ -118,4 +119,9 @@ func (s *oauth2ServiceImpl) RefreshTokens(refreshToken string) (string, string, 
 	}
 
 	return newAccessToken, newRefreshToken, nil
+}
+
+// Logout удаляет refresh-токен, вызывая метод репозитория.
+func (s *oauth2ServiceImpl) Logout(refreshToken string) error {
+	return s.repo.DeleteRefreshToken(refreshToken)
 }
