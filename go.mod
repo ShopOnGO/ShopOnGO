@@ -8,11 +8,13 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.4
+	golang.org/x/oauth2 v0.28.0
 	gorm.io/datatypes v1.2.5
 	gorm.io/driver/postgres v1.5.11
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
 	golang.org/x/net v0.37.0 // indirect
 )
