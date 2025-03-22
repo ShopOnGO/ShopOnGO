@@ -25,7 +25,7 @@ func (s *ProductService) GetProductsByCategory(category *category.Category) ([]P
 	if category == nil {
 		return nil, errors.New("category cannot be nil")
 	}
-	return s.ProductRepository.GetByCategory(category)
+	return s.ProductRepository.GetByCategory(category.ID)
 }
 
 func (s *ProductService) GetProductsByName(name string) ([]Product, error) {
