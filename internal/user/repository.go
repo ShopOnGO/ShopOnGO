@@ -46,3 +46,8 @@ func (repo *UserRepository) Delete(id uint) error {
 	}
 	return nil
 }
+
+func (repo *UserRepository) UpdateUserPassword(id uint, newPassword string) error {
+	result := repo.Database.DB.Model(&User{}).Where("id = ?", id).Update("password", newPassword)
+	return result.Error
+}

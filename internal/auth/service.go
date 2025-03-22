@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/di"
@@ -56,7 +57,27 @@ func (service *AuthService) Login(email, password string) (string, error) {
 	return email, nil
 }
 
-// //пока что просто заглушка, надо решить как реализовать
-// func (service *AuthService) Refresh(refreshToken string) (string, error) {
-// 	return "12345", nil
-// }
+func (service *AuthService) ChangePassword(email, oldPassword, newPassword string) error {
+	userData, _ := service.UserRepository.FindByEmail(email)
+	if userData == nil {
+		return errors.New(ErrWrongCredentials)
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(oldPassword))
+	if err != nil {
+		return errors.New(ErrWrongCredentials)
+	}
+
+	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+
+	if err != nil {
+		return fmt.Errorf("failed to hash new password: %w", err)
+	}
+
+	if err := service.UserRepository.UpdateUserPassword(userData.ID, string(newPasswordHash)); err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	return nil
+}
+

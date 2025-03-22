@@ -16,6 +16,7 @@ type IUserRepository interface {
 	FindByEmail(email string) (*user.User, error)
 	Update(user *user.User) (*user.User, error)
 	Delete(id uint) error
+	UpdateUserPassword(id uint, newPassword string) error
 }
 
 type IProductRepository interface {

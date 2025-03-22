@@ -6,27 +6,22 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/req"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
 )
 
-type AuthHandlerDeps struct { // содержит все необходимые элементы заполнения. это DC
+type AuthHandlerDeps struct {
 	*configs.Config
 	*AuthService
 	OAuth2Service oauth2.OAuth2Service
 }
-type AuthHandler struct { // это уже рабоая структура
+type AuthHandler struct {
 	*configs.Config
 	*AuthService
 	OAuth2Service oauth2.OAuth2Service
 }
-
-// Допустим, refreshInput используется, если вы хотите принимать refresh-токен из JSON.
-// Если же вы берёте его из cookie, то структура не обязательна.
-// type refreshInput struct {
-// 	Token string `json:"token"`
-// }
 
 func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	handler := &AuthHandler{
@@ -36,8 +31,10 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	}
 	router.HandleFunc("POST /auth/login", handler.Login())
 	router.HandleFunc("POST /auth/register", handler.Register())
-
+	router.HandleFunc("POST /auth/logout", handler.Logout())
+	router.Handle("POST /auth/change/password", middleware.IsAuthed(handler.ChangePassword(), deps.Config))
 }
+
 
 // Login аутентифицирует пользователя и выдает JWT токен
 // @Summary        Вход в систему
@@ -128,5 +125,85 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 			Token: jwtToken,
 		}
 		res.Json(w, data, 201)
+	}
+}
+
+// Logout завершает сеанс пользователя и удаляет refresh-токен из cookie
+// @Summary        Завершение сеанса пользователя
+// @Description    Удаляет refresh-токен из хранилища и очищает cookie
+// @Tags          auth
+// @Accept        json
+// @Produce       json
+// @Success       200 {object} map[string]string "Успешный выход, refresh-токен удален"
+// @Failure       401 {string} string "Refresh-токен не найден"
+// @Failure       500 {string} string "Ошибка сервера при выходе"
+// @Router        /auth/logout [post]
+func (h *AuthHandler) Logout() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Извлекаем refresh-токен из cookie
+		refreshCookie, err := r.Cookie("refresh_token")
+		if err != nil {
+			http.Error(w, "Refresh token not found", http.StatusUnauthorized)
+			return
+		}
+		refreshToken := refreshCookie.Value
+
+		// Вызываем метод logout сервиса, который удаляет refresh-токен
+		if err := h.OAuth2Service.Logout(refreshToken); err != nil {
+			http.Error(w, "Failed to logout: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Очищаем cookie refresh-токена
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    "",
+			Path:     "/",
+			Expires:  time.Unix(0, 0),
+			MaxAge:   -1,
+			HttpOnly: true,
+		})
+
+		res.Json(w, map[string]string{
+			"message":      "Logout successful",
+			"removeToken":  "Please remove access token from your storage",
+		}, http.StatusOK)
+	}
+}
+
+
+// ChangePassword меняет пароль пользователя
+// @Summary        Смена пароля
+// @Description    Изменяет пароль пользователя, требует авторизации (Bearer токен)
+// @Tags           auth
+// @Accept         json
+// @Produce        json
+// @Param          body body ChangePasswordRequest true "Старый и новый пароль"
+// @Success        200 {object} map[string]string "Сообщение об успешной смене пароля"
+// @Failure        400 {string} string "Некорректные данные или старый пароль неверен"
+// @Failure        401 {string} string "Неавторизован"
+// @Failure        500 {string} string "Ошибка сервера"
+// @Router         /auth/change/password [post]
+func (h *AuthHandler) ChangePassword() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := req.HandleBody[ChangePasswordRequest](&w, r)
+		if err != nil {
+			return
+		}
+
+		// Извлекаем email пользователя из контекста (middleware.IsAuthed добавляет его)
+		emailAny := r.Context().Value(middleware.ContextEmailKey)
+		email, ok := emailAny.(string)
+		if !ok || email == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		if err := h.AuthService.ChangePassword(email, body.OldPassword, body.NewPassword); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		res.Json(w, map[string]string{"message": "Password changed successfully"}, http.StatusOK)
 	}
 }
