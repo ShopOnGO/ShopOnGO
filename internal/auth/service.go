@@ -81,3 +81,28 @@ func (service *AuthService) ChangePassword(email, oldPassword, newPassword strin
 	return nil
 }
 
+func (service *AuthService) UpdateUserRole(email, newRole string) error {
+    userData, err := service.UserRepository.FindByEmail(email)
+    if err != nil {
+        return fmt.Errorf("failed to find user: %w", err)
+    }
+
+    if userData == nil {
+        return errors.New("user not found")
+    }
+
+    err = service.UserRepository.UpdateRole(userData, newRole)
+    if err != nil {
+        return fmt.Errorf("failed to update user role: %w", err)
+    }
+
+    return nil
+}
+
+func (service *AuthService) GetUserRole(email string) (string, error) {
+	role, err := service.UserRepository.GetUserRoleByEmail(email)
+    if err != nil {
+        return "", err
+    }
+    return role, nil
+}

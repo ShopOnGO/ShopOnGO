@@ -14,6 +14,7 @@ type key string // делается чтобы не затирать други�
 
 const (
 	ContextEmailKey key = "ContentEmailKey"
+	ContextRolesKey key = "ContextRolesKey"
 )
 
 func writeUnauthed(w http.ResponseWriter) {
@@ -49,6 +50,7 @@ func IsAuthed(next http.Handler, config *configs.Config) http.Handler {
 		}
 		logger.Info("✅ Token is valid for:", data.Email)
 		ctx := context.WithValue(r.Context(), ContextEmailKey, data.Email)
+		ctx = context.WithValue(ctx, ContextRolesKey, data.Role)
 		req := r.WithContext(ctx) // для передачи контекста необходимо пересоздать запроc
 		next.ServeHTTP(w, req)    //все handlers теперь обогащены необходимым контекстом
 	})

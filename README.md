@@ -52,8 +52,8 @@ repo- products :  Create(product *Product)
 repo- category : Create(category *Category), GetCategories(),
 
 handlers:
-auth-handler : Login(), Register(), Logout() ChangePassword()
-oauth-handler : HandleToken() GoogleLogin()
+auth-handler : Login(), GoogleLogin(), Register(), Logout(), ChangePassword(), ChangeRole()
+oauth-handler : HandleToken()
 link-handler : CRUD,GetAll()
 stat-handler : GetStat()
 

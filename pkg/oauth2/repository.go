@@ -2,16 +2,22 @@ package oauth2
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 )
 
+type RefreshTokenData struct {
+	UserID string `json:"user_id"`
+	Role   string `json:"role"`
+}
+
 // RefreshTokenRepository описывает методы для работы с refresh‑токенами.
 type RefreshTokenRepository interface {
-	GetUserIDByRefreshToken(refreshToken string) (string, error)
-	StoreRefreshToken(userID, refreshToken string, expiresIn time.Duration) error
+	GetRefreshTokenData(refreshToken string) (*RefreshTokenData, error)
+	StoreRefreshToken(data *RefreshTokenData, refreshToken string, expiresIn time.Duration) error
 	DeleteRefreshToken(refreshToken string) error
 }
 
@@ -29,18 +35,29 @@ func NewRedisRefreshTokenRepository(client *redis.Client) *RedisRefreshTokenRepo
 	}
 }
 
-func (r *RedisRefreshTokenRepository) GetUserIDByRefreshToken(refreshToken string) (string, error) {
+func (r *RedisRefreshTokenRepository) StoreRefreshToken(data *RefreshTokenData, refreshToken string, expiresIn time.Duration) error {
 	key := fmt.Sprintf("refresh:%s", refreshToken)
-	userID, err := r.client.Get(r.ctx, key).Result()
-	if err == redis.Nil {
-		return "", fmt.Errorf("refresh token not found")
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
 	}
-	return userID, err
+	return r.client.Set(r.ctx, key, jsonData, expiresIn).Err()
 }
 
-func (r *RedisRefreshTokenRepository) StoreRefreshToken(userID, refreshToken string, expiresIn time.Duration) error {
+func (r *RedisRefreshTokenRepository) GetRefreshTokenData(refreshToken string) (*RefreshTokenData, error) {
 	key := fmt.Sprintf("refresh:%s", refreshToken)
-	return r.client.Set(r.ctx, key, userID, expiresIn).Err()
+	jsonData, err := r.client.Get(r.ctx, key).Result()
+	if err == redis.Nil {
+		return nil, fmt.Errorf("refresh token not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	var data RefreshTokenData
+	if err := json.Unmarshal([]byte(jsonData), &data); err != nil {
+		return nil, err
+	}
+	return &data, nil
 }
 
 func (r *RedisRefreshTokenRepository) DeleteRefreshToken(refreshToken string) error {

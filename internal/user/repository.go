@@ -51,3 +51,17 @@ func (repo *UserRepository) UpdateUserPassword(id uint, newPassword string) erro
 	result := repo.Database.DB.Model(&User{}).Where("id = ?", id).Update("password", newPassword)
 	return result.Error
 }
+
+func (repo *UserRepository) GetUserRoleByEmail(email string) (string, error) {
+    var role string
+    result := repo.Database.DB.Model(&User{}).Select("role").Where("email = ?", email).First(&role)
+    if result.Error != nil {
+        return "", result.Error
+    }
+    return role, nil
+}
+
+func (repo *UserRepository) UpdateRole(user *User, newRole string) error {
+    result := repo.Database.DB.Model(&User{}).Where("id = ?", user.ID).Update("role", newRole)
+    return result.Error
+}

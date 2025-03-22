@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -10,6 +12,9 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/req"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
+
+	googleOAuth2 "golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 type AuthHandlerDeps struct {
@@ -23,6 +28,13 @@ type AuthHandler struct {
 	OAuth2Service oauth2.OAuth2Service
 }
 
+type GoogleUserInfo struct {
+	ID            string `json:"id"`
+	Email         string `json:"email"`
+	VerifiedEmail bool   `json:"verified_email"`
+	Picture       string `json:"picture"`
+}
+
 func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	handler := &AuthHandler{
 		Config:        deps.Config,
@@ -30,9 +42,11 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 		OAuth2Service: deps.OAuth2Service,
 	}
 	router.HandleFunc("POST /auth/login", handler.Login())
+	router.HandleFunc("GET /oauth/google/login", handler.GoogleLogin)
 	router.HandleFunc("POST /auth/register", handler.Register())
 	router.HandleFunc("POST /auth/logout", handler.Logout())
 	router.Handle("POST /auth/change/password", middleware.IsAuthed(handler.ChangePassword(), deps.Config))
+	router.Handle("POST /auth/change/role", middleware.IsAuthed(handler.ChangeUserRole(), deps.Config))
 }
 
 
@@ -60,7 +74,13 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			return
 		}
 
-		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(email)
+		role, err := h.AuthService.GetUserRole(email)
+		if err != nil {
+			http.Error(w, "Failed to get user role: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(email, role)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -79,6 +99,87 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 		}
 		res.Json(w, data, 200)
 	}
+}
+
+// GoogleLogin выполняет аутентификацию пользователя через Google OAuth2
+// @Summary        Авторизация через Google
+// @Description    Перенаправляет пользователя на страницу авторизации Google, затем получает токены и информацию о пользователе
+// @Tags           auth
+// @Accept         json
+// @Produce        json
+// @Param          code query string false "Код авторизации от Google (автоматически передается после редиректа)"
+// @Success        200 {object} map[string]string "JWT access-токен"
+// @Failure        500 {string} string "Ошибка при обмене кода на токен или получении данных пользователя"
+// @Router         /oauth/google/login [get]
+func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
+
+	googleOauthConfig := &googleOAuth2.Config{
+		ClientID:     h.Config.Google.ClientID,
+		ClientSecret: h.Config.Google.ClientSecret,
+		RedirectURL:  h.Config.Google.RedirectURL,
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.email",
+			"https://www.googleapis.com/auth/userinfo.profile",
+		},
+		Endpoint: google.Endpoint,
+	}
+
+	// Если параметр code отсутствует, перенаправляем пользователя на страницу согласия Google
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		// можно добавить state для безопасности, пока используется простая строка "state-token"
+		url := googleOauthConfig.AuthCodeURL("state-token", googleOAuth2.AccessTypeOffline)
+		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+		return
+	}
+
+	// обменчик кода на токен
+	token, err := googleOauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		http.Error(w, "Failed to exchange token: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	client := googleOauthConfig.Client(context.Background(), token)
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+	if err != nil {
+		http.Error(w, "Failed to get user info: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close() //пока так
+
+	var userInfo GoogleUserInfo
+	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
+		http.Error(w, "Failed to decode user info: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	role, err := h.AuthService.GetUserRole(userInfo.Email)
+    if err != nil {
+        http.Error(w, "Failed to get user role: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+	
+	jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(userInfo.Email, role)
+	if err != nil {
+		http.Error(w, "Failed to generate tokens: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HttpOnly: true,
+		Path:     "/",
+		Expires:  time.Now().Add(h.Config.Redis.RefreshTokenTTL),
+	})
+
+	response := map[string]string{
+		"access_token": jwtToken,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 // Register регистрирует нового пользователя и возвращает JWT токен
@@ -106,7 +207,13 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 			return
 		}
 
-		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(email)
+		role, err := h.AuthService.GetUserRole(email)
+		if err != nil {
+			http.Error(w, "Failed to get user role: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(email, role)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -206,4 +313,50 @@ func (h *AuthHandler) ChangePassword() http.HandlerFunc {
 
 		res.Json(w, map[string]string{"message": "Password changed successfully"}, http.StatusOK)
 	}
+}
+
+// ChangeUserRole изменяет роль пользователя
+// @Summary        Изменение роли пользователя
+// @Description    Изменяет роль пользователя, требует авторизации (Bearer токен)
+// @Tags           auth
+// @Accept         json
+// @Produce        json
+// @Param          body body ChangeRoleRequest true "Email пользователя и новая роль"
+// @Success        200 {object} map[string]string "Сообщение об успешном изменении роли"
+// @Failure        400 {string} string "Некорректные данные"
+// @Failure        401 {string} string "Неавторизован"
+// @Failure        403 {string} string "Недостаточно прав"
+// @Failure        500 {string} string "Ошибка сервера"
+// @Router         /auth/change/role [post]
+func (h *AuthHandler) ChangeUserRole() http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        body, err := req.HandleBody[ChangeRoleRequest](&w, r)
+        if err != nil {
+            http.Error(w, "Invalid request data", http.StatusBadRequest)
+            return
+        }
+
+        // Обновляем роль пользователя в базе данных
+        if err := h.AuthService.UpdateUserRole(body.Email, body.NewRole); err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+
+        // Генерируем новый JWT и refresh-токен с обновленной ролью
+        jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(body.Email, body.NewRole)
+        if err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+
+        http.SetCookie(w, &http.Cookie{
+            Name:     "refresh_token",
+            Value:    refreshToken,
+            HttpOnly: true,
+            Path:     "/",
+            Expires:  time.Now().Add(h.Config.Redis.RefreshTokenTTL),
+        })
+
+        res.Json(w, map[string]string{"message": "Role changed successfully", "token": jwtToken}, http.StatusOK)
+    }
 }
