@@ -71,11 +71,11 @@ func (service *AuthService) ChangePassword(email, oldPassword, newPassword strin
 	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 
 	if err != nil {
-		return fmt.Errorf("failed to hash new password: %w", err)
+		return fmt.Errorf(FailedToHashNewPassword+": %w", err)
 	}
 
 	if err := service.UserRepository.UpdateUserPassword(userData.ID, string(newPasswordHash)); err != nil {
-		return fmt.Errorf("failed to update password: %w", err)
+		return fmt.Errorf(FailedToUpdatePassword+": %w", err)
 	}
 
 	return nil
@@ -84,16 +84,16 @@ func (service *AuthService) ChangePassword(email, oldPassword, newPassword strin
 func (service *AuthService) UpdateUserRole(email, newRole string) error {
     userData, err := service.UserRepository.FindByEmail(email)
     if err != nil {
-        return fmt.Errorf("failed to find user: %w", err)
+        return fmt.Errorf(ErrFailedToFindUser+": %w", err)
     }
 
     if userData == nil {
-        return errors.New("user not found")
+        return errors.New(ErrUserNotFound)
     }
 
     err = service.UserRepository.UpdateRole(userData, newRole)
     if err != nil {
-        return fmt.Errorf("failed to update user role: %w", err)
+        return fmt.Errorf(ErrFailedToUpdateUserRole+": %w", err)
     }
 
     return nil

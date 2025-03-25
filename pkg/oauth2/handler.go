@@ -42,7 +42,7 @@ func (h *OAuth2Handler) HandleToken(w http.ResponseWriter, r *http.Request) {
 	// Читаем refresh‑токен из cookie
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
-		http.Error(w, "Refresh token cookie not found", http.StatusUnauthorized)
+		http.Error(w, ErrRefreshTokenCookieNotFound.Error(), http.StatusUnauthorized)
 		return
 	}
 	refreshToken := cookie.Value

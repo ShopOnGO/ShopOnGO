@@ -43,10 +43,6 @@ type ChangeRoleRequest struct {
     StoreAddress    string `json:"store_address" validate:"required_if=NewRole seller"`
     PhoneNumber     string `json:"phone_number,omitempty" validate:"omitempty,e164"`
     
-    // Поля для модератора
-    Experience      int    `json:"experience" validate:"required_if=NewRole moderator,number,gte=0"`
-    Qualifications  string `json:"qualifications" validate:"required_if=NewRole moderator"`
-    
     // Согласие с условиями
     AcceptTerms     bool   `json:"accept_terms,omitempty" validate:"omitempty,eq=true"`
 }

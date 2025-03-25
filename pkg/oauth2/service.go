@@ -2,9 +2,7 @@ package oauth2
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
@@ -75,7 +73,7 @@ func (s *oauth2ServiceImpl) GenerateTokens(userID, role string) (string, string,
 		return "", "", err
 	}
 
-	log.Println("Генерация токенов для пользователя:", userID)
+	logger.Info("Генерация токенов для пользователя:", userID)
 
 	// Формируем запрос для генерации токена через OAuth2 менеджер
 	tgr := &oauth2.TokenGenerateRequest{
@@ -109,18 +107,18 @@ func (s *oauth2ServiceImpl) RefreshTokens(refreshToken string) (string, string, 
 	// Получаем userID из хранилища refresh‑токена
 	data, err := s.repo.GetRefreshTokenData(refreshToken)
 	if err != nil {
-		return "", "", errors.New("invalid or expired refresh token")
+		return "", "", ErrInvalidOrExpiredRefreshToken
 	}
 
 	newAccessToken, newRefreshToken, err := s.GenerateTokens(data.UserID, data.Role)
 	if err != nil {
-		return "", "", errors.New("failed to create new tokens")
+		return "", "", ErrFailedToCreateNewTokens
 	}
 	
 	// Обновляем refresh‑токен в хранилище
 	err = s.repo.StoreRefreshToken(data, newRefreshToken, s.refreshTTL)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to store refresh token: %w", err)
+		return "", "", fmt.Errorf("%w: %v", ErrFailedToStoreRefreshToken, err)
 	}
 
 	return newAccessToken, newRefreshToken, nil

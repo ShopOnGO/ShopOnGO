@@ -36,12 +36,31 @@ func NewRedisRefreshTokenRepository(client *redis.Client) *RedisRefreshTokenRepo
 }
 
 func (r *RedisRefreshTokenRepository) StoreRefreshToken(data *RefreshTokenData, refreshToken string, expiresIn time.Duration) error {
-	key := fmt.Sprintf("refresh:%s", refreshToken)
+	oldKey := fmt.Sprintf("refresh:user:%s", data.UserID)
+	newKey := fmt.Sprintf("refresh:%s", refreshToken)
+
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
-	return r.client.Set(r.ctx, key, jsonData, expiresIn).Err()
+
+	oldToken, err := r.client.Get(r.ctx, oldKey).Result()
+	if err == redis.Nil {
+		oldToken = ""
+	} else if err != nil {
+		return err
+	}
+
+	_, err = r.client.TxPipelined(r.ctx, func(pipe redis.Pipeliner) error {
+		if oldToken != "" {
+			pipe.Del(r.ctx, fmt.Sprintf("refresh:%s", oldToken))
+		}
+		pipe.Set(r.ctx, newKey, jsonData, expiresIn)
+		pipe.Set(r.ctx, oldKey, refreshToken, expiresIn)
+
+		return nil
+	})
+	return err
 }
 
 func (r *RedisRefreshTokenRepository) GetRefreshTokenData(refreshToken string) (*RefreshTokenData, error) {
