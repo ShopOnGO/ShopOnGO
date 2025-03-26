@@ -1,10 +1,14 @@
 package di
 
 import (
+	"time"
+
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/brand"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
+
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2"
 )
 
 type IStatRepository interface {
@@ -17,6 +21,15 @@ type IUserRepository interface {
 	Update(user *user.User) (*user.User, error)
 	Delete(id uint) error
 	UpdateUserPassword(id uint, newPassword string) error
+	GetUserRoleByEmail(email string) (string, error)
+	UpdateRole(user *user.User, newRole string) (error)
+}
+
+type IURefreshTokenRepository interface {
+	GetRefreshTokenData(refreshToken string) (*oauth2.RefreshTokenData, error)
+	StoreRefreshToken(data *oauth2.RefreshTokenData, refreshToken string, expiresIn time.Duration) error
+	DeleteRefreshToken(refreshToken string) error
+	// GetUserRoleByEmail(email string) (string, error)
 }
 
 type IProductRepository interface {

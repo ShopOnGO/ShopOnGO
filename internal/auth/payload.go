@@ -31,3 +31,19 @@ type ChangePasswordRequest struct {
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
 }
+
+type ChangeRoleRequest struct {
+    Email           string `json:"email" validate:"required,email"`
+    CurrentPassword string `json:"current_password" validate:"required"`
+	Name 			string `json:"name" validate:"required"`
+	NewRole         string `json:"new_role" validate:"required,oneof=buyer seller moderator"`
+    
+    // Поля для продавца
+    StoreName       string `json:"store_name" validate:"required_if=NewRole seller"`
+    StoreAddress    string `json:"store_address" validate:"required_if=NewRole seller"`
+    PhoneNumber     string `json:"phone_number,omitempty" validate:"omitempty,e164"`
+    
+    // Согласие с условиями
+    AcceptTerms     bool   `json:"accept_terms,omitempty" validate:"omitempty,eq=true"`
+}
+

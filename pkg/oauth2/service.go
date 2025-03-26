@@ -2,9 +2,7 @@ package oauth2
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
@@ -19,9 +17,10 @@ import (
 
 // OAuth2Service определяет бизнес-методы для работы с токенами.
 type OAuth2Service interface {
-	GenerateTokens(userID string) (accessToken, refreshToken string, err error)
+	GenerateTokens(userID, role string) (accessToken, refreshToken string, err error)
 	RefreshTokens(refreshToken string) (accessToken, newRefreshToken string, err error)
 	Logout(refreshToken string) error
+	// UserRole(email string) (string, error)
 }
 
 // oauth2ServiceImpl – реализация OAuth2Service.
@@ -67,14 +66,14 @@ func NewOAuth2Service(config *configs.Config, repo RefreshTokenRepository) OAuth
 }
 
 // GenerateTokens генерирует новый access‑и refresh‑токены.
-func (s *oauth2ServiceImpl) GenerateTokens(userID string) (string, string, error) {
+func (s *oauth2ServiceImpl) GenerateTokens(userID, role string) (string, string, error) {
 	// Генерация access‑токена с использованием JWT
-	accessToken, err := jwt.NewJWT(s.secret).Create(jwt.JWTData{Email: userID}, s.jwtTTL)
+	accessToken, err := jwt.NewJWT(s.secret).Create(jwt.JWTData{Email: userID, Role: role}, s.jwtTTL)
 	if err != nil {
 		return "", "", err
 	}
 
-	log.Println("Генерация токенов для пользователя:", userID)
+	logger.Info("Генерация токенов для пользователя:", userID)
 
 	// Формируем запрос для генерации токена через OAuth2 менеджер
 	tgr := &oauth2.TokenGenerateRequest{
@@ -90,8 +89,12 @@ func (s *oauth2ServiceImpl) GenerateTokens(userID string) (string, string, error
 
 	refreshToken := ti.GetRefresh()
 
+	data := &RefreshTokenData{
+		UserID: userID,
+		Role:   role,
+	}
 	// Сохраняем refresh‑токен через репозиторий
-	err = s.repo.StoreRefreshToken(userID, refreshToken, s.refreshTTL)
+	err = s.repo.StoreRefreshToken(data, refreshToken, s.refreshTTL)
 	if err != nil {
 		return "", "", err
 	}
@@ -102,20 +105,20 @@ func (s *oauth2ServiceImpl) GenerateTokens(userID string) (string, string, error
 // RefreshTokens обновляет access‑токен с использованием переданного refresh‑токена.
 func (s *oauth2ServiceImpl) RefreshTokens(refreshToken string) (string, string, error) {
 	// Получаем userID из хранилища refresh‑токена
-	userID, err := s.repo.GetUserIDByRefreshToken(refreshToken)
+	data, err := s.repo.GetRefreshTokenData(refreshToken)
 	if err != nil {
-		return "", "", errors.New("invalid or expired refresh token")
+		return "", "", ErrInvalidOrExpiredRefreshToken
 	}
 
-	newAccessToken, newRefreshToken, err := s.GenerateTokens(userID)
+	newAccessToken, newRefreshToken, err := s.GenerateTokens(data.UserID, data.Role)
 	if err != nil {
-		return "", "", errors.New("failed to create new tokens")
+		return "", "", ErrFailedToCreateNewTokens
 	}
 	
 	// Обновляем refresh‑токен в хранилище
-	err = s.repo.StoreRefreshToken(userID, newRefreshToken, s.refreshTTL)
+	err = s.repo.StoreRefreshToken(data, newRefreshToken, s.refreshTTL)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to store refresh token: %w", err)
+		return "", "", fmt.Errorf("%w: %v", ErrFailedToStoreRefreshToken, err)
 	}
 
 	return newAccessToken, newRefreshToken, nil
