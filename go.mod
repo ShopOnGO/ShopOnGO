@@ -5,6 +5,7 @@ go 1.23.3
 require (
 	github.com/ShopOnGO/admin-proto v0.0.0-20250325182951-03ae22714a0f
 	github.com/go-oauth2/oauth2/v4 v4.5.2
+	github.com/go-playground/validator/v10 v10.25.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/joho/godotenv v1.5.1
 	github.com/swaggo/http-swagger v1.3.4
@@ -16,6 +17,7 @@ require (
 
 require (
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
 	golang.org/x/net v0.37.0 // indirect
@@ -51,13 +53,11 @@ require (
 	github.com/tidwall/tinyqueue v0.0.0-20180302190814-1e39f5511563 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/tools v0.31.0 // indirect
-	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.5.6 // indirect
 )
 
 require (
-	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
