@@ -30,6 +30,7 @@ type AuthHandler struct {
 
 type GoogleUserInfo struct {
 	ID            string `json:"id"`
+	Name          string `json:"name"`
 	Email         string `json:"email"`
 	VerifiedEmail bool   `json:"verified_email"`
 	Picture       string `json:"picture"`
@@ -101,6 +102,58 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 	}
 }
 
+// Register регистрирует нового пользователя и возвращает JWT токен
+// @Summary        Регистрация нового пользователя
+// @Description    Создает учетную запись пользователя и возвращает JWT токен для аутентификации
+// @Tags          auth
+// @Accept        json
+// @Produce       json
+// @Param         body body RegisterRequest true "Данные для регистрации"
+// @Success       201 {object} LoginResponse "Успешная регистрация, возвращает JWT токен"
+// @Failure       400 {string} string "Некорректные данные для регистрации"
+// @Failure       409 {string} string "Пользователь с таким email уже существует"
+// @Failure       500 {string} string "Ошибка сервера при создании токена"
+// @Router        /auth/register [post]
+func (h *AuthHandler) Register() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := req.HandleBody[RegisterRequest](&w, r)
+		if err != nil {
+			return
+		}
+
+		email, err := h.AuthService.Register(body.Email, body.Password, body.Name)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		role, err := h.AuthService.GetUserRole(email)
+		if err != nil {
+			http.Error(w, ErrFailedToGetUserRole+": "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(email, role)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    refreshToken,
+			HttpOnly: true,
+			Path:     "/",
+			Expires:  time.Now().Add(h.Config.Redis.RefreshTokenTTL),
+		})
+
+		data := LoginResponse{
+			Token: jwtToken,
+		}
+		res.Json(w, data, 201)
+	}
+}
+
 // GoogleLogin выполняет аутентификацию пользователя через Google OAuth2
 // @Summary        Авторизация через Google
 // @Description    Перенаправляет пользователя на страницу авторизации Google, затем получает токены и информацию о пользователе
@@ -154,13 +207,13 @@ func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := h.AuthService.GetUserRole(userInfo.Email)
-    if err != nil {
-        http.Error(w, ErrFailedToGetUserInfo+": "+err.Error(), http.StatusInternalServerError)
-        return
-    }
-	
-	jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(userInfo.Email, role)
+	user, err := h.AuthService.GetOrCreateUserByGoogle(userInfo)
+	if err != nil {
+		http.Error(w, ErrorCreatingorFindingUser+": "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(user.Email, user.Role)
 	if err != nil {
 		http.Error(w, ErrFailedToGenerateTokens+": "+err.Error(), http.StatusInternalServerError)
 		return
@@ -180,59 +233,6 @@ func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
-}
-
-// Register регистрирует нового пользователя и возвращает JWT токен
-// @Summary        Регистрация нового пользователя
-// @Description    Создает учетную запись пользователя и возвращает JWT токен для аутентификации
-// @Tags          auth
-// @Accept        json
-// @Produce       json
-// @Param         body body RegisterRequest true "Данные для регистрации"
-// @Success       201 {object} LoginResponse "Успешная регистрация, возвращает JWT токен"
-// @Failure       400 {string} string "Некорректные данные для регистрации"
-// @Failure       409 {string} string "Пользователь с таким email уже существует"
-// @Failure       500 {string} string "Ошибка сервера при создании токена"
-// @Router        /auth/register [post]
-func (h *AuthHandler) Register() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := req.HandleBody[RegisterRequest](&w, r)
-		if err != nil {
-			return
-		}
-
-		email, err := h.AuthService.Register(body.Email, body.Password, body.Name)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return
-		}
-
-		role, err := h.AuthService.GetUserRole(email)
-		if err != nil {
-			http.Error(w, ErrFailedToGetUserRole+": "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(email, role)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		http.SetCookie(w, &http.Cookie{
-			Name:     "refresh_token",
-			Value:    refreshToken,
-			HttpOnly: true,
-			Path:     "/",
-			Expires:  time.Now().Add(h.Config.Redis.RefreshTokenTTL),
-		})
-
-		//fmt.Println(h.Config.Auth.Secret)
-		data := LoginResponse{
-			Token: jwtToken,
-		}
-		res.Json(w, data, 201)
-	}
 }
 
 // Logout завершает сеанс пользователя и удаляет refresh-токен из cookie

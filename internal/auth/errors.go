@@ -17,4 +17,6 @@ const (
 	ErrInvalidRequestData = "invalid request data"
 	FailedToHashNewPassword = "failed to hash new password"
 	FailedToUpdatePassword = "failed to update password"
+	ErrRecordNotFound = "record not found"
+	ErrorCreatingorFindingUser = "error creating or finding user"
 )
