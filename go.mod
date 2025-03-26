@@ -3,6 +3,7 @@ module github.com/ShopOnGO/ShopOnGO/prod
 go 1.23.3
 
 require (
+	github.com/ShopOnGO/admin-proto v0.0.0-20250325182951-03ae22714a0f
 	github.com/go-oauth2/oauth2/v4 v4.5.2
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/joho/godotenv v1.5.1
@@ -15,8 +16,11 @@ require (
 
 require (
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
 	golang.org/x/net v0.37.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
+	google.golang.org/protobuf v1.36.4 // indirect
 )
 
 require (
@@ -65,5 +69,6 @@ require (
 	golang.org/x/crypto v0.36.0
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
+	google.golang.org/grpc v1.71.0
 	gorm.io/gorm v1.25.12
 )
