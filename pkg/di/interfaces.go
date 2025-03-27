@@ -32,6 +32,13 @@ type IURefreshTokenRepository interface {
 	// GetUserRoleByEmail(email string) (string, error)
 }
 
+type IURedisResetRepository interface {
+    SaveToken(email, code string, expiresAt time.Time) error
+    GetToken(email string) (string, time.Time, error)
+    DeleteToken(email string) error
+}
+
+
 type IProductRepository interface {
 	Create(product *product.Product) (*product.Product, error)
 	GetByCategory(category *category.Category) ([]product.Product, error)
