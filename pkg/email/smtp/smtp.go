@@ -31,20 +31,15 @@ func (s *SMTPSender) Send(input email.SendEmailInput) error {
 	msg.SetHeader("Subject", input.Subject)
 	msg.SetBody("text/html", input.Body)
 
-	// Убедитесь, что настройки подключения правильные
 	dialer := gomail.NewDialer(s.host, s.port, s.name, s.pass)
-	// Добавляем логирование перед подключением
+
 	logger.Info(fmt.Sprintf("Попытка отправки email на %s через SMTP сервер %s:%d", input.To, s.host, s.port))
 
-	// Попробуем подключиться и отправить сообщение
 	if err := dialer.DialAndSend(msg); err != nil {
-		// Логируем ошибку с точной информацией
 		logger.Error(fmt.Sprintf("❌ Ошибка при отправке email на %s: %s", input.To, err.Error()))
-		// Возвращаем точную ошибку
 		return fmt.Errorf("failed to send email via smtp: %v", err)
 	}
 
-	// Если все прошло успешно, логируем успех
 	logger.Info(fmt.Sprintf("✅ Email успешно отправлен на %s", input.To))
 
 return nil

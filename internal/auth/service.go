@@ -6,6 +6,7 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/di"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"gorm.io/gorm"
 
 	"golang.org/x/crypto/bcrypt"
@@ -65,9 +66,14 @@ func (service *AuthService) Login(email, password string) (string, error) {
 	if existedUser.Provider == "google" || existedUser.Password == "" {
 		return "", errors.New(ErrWrongCredentials) // У Google-юзеров нет пароля
 	}
+	logger.Info("Сохраненный пароль в БД:", existedUser.Password)
+
+	logger.Info("Введенный пароль: " + password)
+	logger.Info("Хеш пароля из БД: " + existedUser.Password)
 
 	err := bcrypt.CompareHashAndPassword([]byte(existedUser.Password), []byte(password)) //дефолтная cost даёт 2^10 раундов шифрования
 	if err != nil {
+		logger.Error("❌ Ошибка сравнения паролей: " + err.Error())
 		return "", errors.New(ErrWrongCredentials)
 	}
 
