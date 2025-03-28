@@ -2,6 +2,7 @@ package configs
 
 import (
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
@@ -35,6 +36,8 @@ type OAuthConfig struct {
 
 type CodeConfig struct {
 	CodeTTL time.Duration
+	MaxRequests int
+	RateLimitTTL time.Duration
 }
 
 type SMTPConfig struct {
@@ -86,6 +89,24 @@ func LoadConfig() *Config {
 		logger.Error("Invalid CODE_TTL, using default 10m", err.Error())
 		codeTTL = 10 * time.Minute
 	}
+	maxRequestsStr := os.Getenv("CODE_MAX_REQUESTS")
+	maxRequests := 5
+	if maxRequestsStr != "" {
+		if val, err := strconv.Atoi(maxRequestsStr); err == nil {
+			maxRequests = val
+		} else {
+			logger.Error("Invalid CODE_MAX_REQUESTS, using default 5", err.Error())
+		}
+	}
+	rateLimitTTLStr := os.Getenv("CODE_RATE_LIMIT_TTL")
+	rateLimitTTL := 24 * time.Hour
+	if rateLimitTTLStr != "" {
+		if val, err := time.ParseDuration(rateLimitTTLStr); err == nil {
+			rateLimitTTL = val
+		} else {
+			logger.Error("Invalid CODE_RATE_LIMIT_TTL, using default 24h", err.Error())
+		}
+	}
 	
 
 	return &Config{
@@ -110,6 +131,8 @@ func LoadConfig() *Config {
 		},
 		Code: CodeConfig{
             CodeTTL: codeTTL,
+			MaxRequests: maxRequests,
+			RateLimitTTL: rateLimitTTL,
         },
 		SMTP: SMTPConfig{
 			Name: os.Getenv("SMTP_NAME"),

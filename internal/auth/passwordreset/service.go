@@ -55,6 +55,21 @@ func (service *ResetService) RequestReset(toEmail string) error {
 		logger.Error("❌ ошибка сброс пароля для зарегистрированного через Google пользователя")        
         return errors.New("сброс пароля недоступен для пользователей, зарегистрированных через Google")
     }
+
+	requests, err := service.Storage.GetResetCodeCount(toEmail)
+    if err != nil {
+        logger.Error("❌ ошибка при получении количества запросов для email: " + err.Error())
+        return err
+    }
+    if requests >= service.Conf.Code.MaxRequests {
+        return errors.New("превышено количество запросов на сброс пароля, попробуйте позже")
+    }
+    
+    // Увеличиваем счетчик запросов
+    if err := service.Storage.IncrementResetCodeCount(toEmail, service.Conf.Code.RateLimitTTL); err != nil {
+        logger.Error("❌ ошибка при обновлении количества запросов для email: " + err.Error())
+        return err
+    }
     
     code, err := GenerateCode()
     if err != nil {
@@ -150,6 +165,19 @@ func (service *ResetService) ResendCode(toEmail string) error {
 	if user.Provider == "google" {
         return errors.New("сброс пароля недоступен для пользователей, зарегистрированных через Google")
     }
+
+	requests, err := service.Storage.GetResetCodeCount(toEmail)
+	if err != nil {
+		logger.Error("❌ ошибка при получении количества запросов для email: " + err.Error())
+		return err
+	}
+	if requests >= service.Conf.Code.MaxRequests {
+		return errors.New("превышено количество запросов на сброс пароля, попробуйте позже")
+	}
+	if err := service.Storage.IncrementResetCodeCount(toEmail, service.Conf.Code.RateLimitTTL); err != nil {
+		logger.Error("❌ ошибка при обновлении счетчика запросов для email: " + err.Error())
+		return err
+	}
 
 	// Генерируем новый код
 	code, err := GenerateCode()

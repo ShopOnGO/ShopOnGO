@@ -36,6 +36,8 @@ type IURedisResetRepository interface {
     SaveToken(email, code string, expiresAt time.Time) error
     GetToken(email string) (string, time.Time, error)
     DeleteToken(email string) error
+	GetResetCodeCount(email string) (int, error)
+	IncrementResetCodeCount(email string, ttl time.Duration) error
 }
 
 
