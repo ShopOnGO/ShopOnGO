@@ -53,6 +53,7 @@ repo- category : Create(category *Category), GetCategories(),
 
 handlers:
 auth-handler : Login(), GoogleLogin(), Register(), Logout(), ChangePassword(), ChangeRole()
+reset-password-handler : Reset(), VerifyCode(), ResetPassword(), ResendCode()
 oauth-handler : HandleToken()
 link-handler : CRUD,GetAll()
 stat-handler : GetStat()
