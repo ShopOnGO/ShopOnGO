@@ -38,12 +38,12 @@ func (e *SendEmailInput) Validate() error {
 		return errors.New("empty to")
 	}
 
-	if e.Subject == "" || e.Body == "" {
-		return errors.New("empty subject/body")
+	if e.Subject == "" {
+		return errors.New("empty subject")
 	}
 
-	if !IsEmailValid(e.To) {
-		return errors.New("invalid to email")
+	if e.Body == "" {
+		return errors.New("empty body")
 	}
 
 	return nil
