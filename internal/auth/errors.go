@@ -3,6 +3,8 @@ package auth
 const (
 	ErrUserExists       = "user exists"
 	ErrWrongCredentials = "wrong email or password"
+	ErrWrongPassword = "wrong password"
+	ErrGoogleAuthToLocalFailed = "your account is registered through google, sign in through google"
 	ErrRefreshTokenNotFound = "refresh token not found"
 	ErrFailedToExchangeToken = "failed to exchange token"
 	ErrFailedToGetUserInfo = "failed to get user info"

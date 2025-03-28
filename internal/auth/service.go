@@ -33,7 +33,7 @@ func (service *AuthService) Register(email, password, name string) (string, erro
     if existedUser != nil {
         // Если пользователь найден, проверяем его провайдера
         if existedUser.Provider == "google" || existedUser.Password == "" {
-            return "", errors.New(ErrWrongCredentials) // У Google-юзеров нет пароля
+            return "", errors.New(ErrGoogleAuthToLocalFailed) // У Google-юзеров нет пароля
         }
         return "", errors.New(ErrUserExists) // Пользователь с таким email уже существует
     }
@@ -64,7 +64,7 @@ func (service *AuthService) Login(email, password string) (string, error) {
 	}
 
 	if existedUser.Provider == "google" || existedUser.Password == "" {
-		return "", errors.New(ErrWrongCredentials) // У Google-юзеров нет пароля
+		return "", errors.New(ErrGoogleAuthToLocalFailed) // У Google-юзеров нет пароля
 	}
 	logger.Info("Сохраненный пароль в БД:", existedUser.Password)
 
@@ -116,7 +116,7 @@ func (service *AuthService) ChangePassword(email, oldPassword, newPassword strin
 
 	err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(oldPassword))
 	if err != nil {
-		return errors.New(ErrWrongCredentials)
+		return errors.New(ErrWrongPassword)
 	}
 
 	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
