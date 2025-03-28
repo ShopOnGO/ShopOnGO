@@ -42,20 +42,24 @@ func NewResetHandler(router *http.ServeMux, deps ResetHandlerDeps) {
 // @Router       /auth/reset [post]
 func (h *ResetHandler) Reset() http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-    var req ResetRequest
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        logger.Error("❌ error decoding request body: " + err.Error())
-        http.Error(w, "Неверные данные", http.StatusBadRequest)
-        return
-    }
-    logger.Info("📧 Сброс пароля для email: " + req.Email)
-    if err := h.RequestReset(req.Email); err != nil {
-        logger.Error("❌ error during password reset request: " + err.Error())
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-    logger.Info("✅ Сброс пароля успешно инициирован для email: " + req.Email)
-    w.WriteHeader(http.StatusOK)
+		var req ResetRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			logger.Error("❌ error decoding request body: " + err.Error())
+			http.Error(w, "Неверные данные", http.StatusBadRequest)
+			return
+		}
+		logger.Info("📧 Сброс пароля для email: " + req.Email)
+		if err := h.RequestReset(req.Email); err != nil {
+			logger.Error("❌ error during password reset request: " + err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		logger.Info("✅ Сброс пароля успешно инициирован для email: " + req.Email)
+
+		response := map[string]string{"message": "Password reset request initiated successfully"}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
     }
 }
 
@@ -72,16 +76,19 @@ func (h *ResetHandler) Reset() http.HandlerFunc {
 // @Router       /auth/reset/verify [post]
 func (h *ResetHandler) VerifyCode() http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
-    var req VerifyCodeRequest
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        http.Error(w, "Неверные данные", http.StatusBadRequest)
-        return
-    }
-    if err := h.VerifyCodeByEmail(req.Email, req.Code); err != nil {
-        http.Error(w, err.Error(), http.StatusUnauthorized)
-        return
-    }
-    w.WriteHeader(http.StatusOK)
+		var req VerifyCodeRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Неверные данные", http.StatusBadRequest)
+			return
+		}
+		if err := h.VerifyCodeByEmail(req.Email, req.Code); err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+		response := map[string]string{"message": "Verification code is valid"}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
     }
 }
 
@@ -112,7 +119,10 @@ func (h *ResetHandler) ResetPassword() http.HandlerFunc {
 			return
 		}
 		logger.Info("✅ Пароль успешно обновлен для email: " + req.Email)
-		w.WriteHeader(http.StatusOK)
+		response := map[string]string{"message": "Password successfully updated"}
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(response)
 	}
 }
 
@@ -142,6 +152,9 @@ func (h *ResetHandler) ResendCode() http.HandlerFunc {
 			return
 		}
 		logger.Info("✅ Код успешно отправлен повторно для email: " + req.Email)
-		w.WriteHeader(http.StatusOK)
+		response := map[string]string{"message": "Reset code resent successfully"}
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(response)
 	}
 }
