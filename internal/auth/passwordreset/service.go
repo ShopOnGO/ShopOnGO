@@ -45,10 +45,15 @@ func GenerateCode() (string, error) {
 func (service *ResetService) RequestReset(toEmail string) error {
     logger.Info("🔐 Запрос на сброс пароля для email: " + toEmail)
     
-    _, err := service.UserRepository.FindByEmail(toEmail)
+    user, err := service.UserRepository.FindByEmail(toEmail)
     if err != nil {
         logger.Error("❌ ошибка при поиске пользователя по email: " + err.Error())        
-        return nil // или return стандартную заглушку
+        return err
+    }
+
+	if user.Provider == "google" {
+		logger.Error("❌ ошибка сброс пароля для зарегистрированного через Google пользователя")        
+        return errors.New("сброс пароля недоступен для пользователей, зарегистрированных через Google")
     }
     
     code, err := GenerateCode()
@@ -94,6 +99,16 @@ func (service *ResetService) VerifyCodeByEmail(toEmail, code string) error {
 }
 
 func (service *ResetService) ResetPassword(code, toEmail, newPassword string) error {
+	user, err := service.UserRepository.FindByEmail(toEmail)
+	if err != nil {
+		logger.Error("❌ ошибка при поиске пользователя по email: " + err.Error())
+		return fmt.Errorf("пользователь не найден")
+	}
+
+	if user.Provider == "google" {
+        return errors.New("сброс пароля недоступен для пользователей, зарегистрированных через Google")
+    }
+
     storedCode, expiresAt, err := service.Storage.GetToken(toEmail)
 	if err != nil {
 		logger.Error("❌ не удалось получить токен для email " + toEmail + ": " + err.Error())
@@ -108,12 +123,6 @@ func (service *ResetService) ResetPassword(code, toEmail, newPassword string) er
 	if err := service.Storage.DeleteToken(toEmail); err != nil {
 		logger.Error("❌ ошибка при удалении токена для email " + toEmail + ": " + err.Error())
 		return err
-	}
-
-	user, err := service.UserRepository.FindByEmail(toEmail)
-	if err != nil {
-		logger.Error("❌ ошибка при поиске пользователя по email: " + err.Error())
-		return fmt.Errorf("пользователь не найден")
 	}
 
 	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
@@ -132,11 +141,15 @@ func (service *ResetService) ResetPassword(code, toEmail, newPassword string) er
 }
 
 func (service *ResetService) ResendCode(toEmail string) error {
-	_, err := service.UserRepository.FindByEmail(toEmail)
+	user, err := service.UserRepository.FindByEmail(toEmail)
 	if err != nil {
 		logger.Error("❌ ошибка при поиске пользователя по email: " + err.Error())
 		return fmt.Errorf("пользователь не найден")
 	}
+
+	if user.Provider == "google" {
+        return errors.New("сброс пароля недоступен для пользователей, зарегистрированных через Google")
+    }
 
 	// Генерируем новый код
 	code, err := GenerateCode()
