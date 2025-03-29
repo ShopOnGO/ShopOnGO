@@ -337,7 +337,7 @@ func (h *AuthHandler) ChangeUserRole() http.HandlerFunc {
         }
 
         // Обновляем роль пользователя в базе данных
-        if err := h.AuthService.UpdateUserRole(body.Email, body.NewRole); err != nil {
+		if err := h.AuthService.UpdateUser(body); err != nil {
             http.Error(w, err.Error(), http.StatusInternalServerError)
             return
         }
