@@ -48,6 +48,7 @@ func NewAdminHandler(router *http.ServeMux) {
 	router.HandleFunc("GET /admin/users", handler.GetUserByEmail)
 	router.HandleFunc("PUT /admin/users", handler.UpdateUser)
 	router.HandleFunc("DELETE /admin/users", handler.DeleteUser)
+	router.HandleFunc("POST /admin/by-email", handler.GetUserByEmail)
 	// router.HandleFunc("DELETE /admin/users/all", handler.DeleteAllUsers)
 
 	// Products
@@ -80,8 +81,8 @@ func NewAdminHandler(router *http.ServeMux) {
 // @Accept         json
 // @Produce        json
 // @Security       ApiKeyAuth
-// @Param          category body pb.CreateCategoryRequest true "Данные для создания категории"
-// @Success        201 {object} pb.Category "Созданная категория"
+// Param category body pb.CreateCategoryRequest true "Данные для создания категории"
+// @Success 201 {object} pb.Category "Созданная категория"
 // @Failure        400 {string} string "Некорректный запрос"
 // @Failure        500 {string} string "Ошибка сервера"
 // @Router         /admin/categories [post]
@@ -104,17 +105,17 @@ func (a *AdminHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetCategoryByID получает категорию по её ID
-// @Summary        Получение категории
-// @Description    Возвращает категорию по переданному ID
-// @Tags           category
-// @Accept         json
-// @Produce        json
-// @Security       ApiKeyAuth
-// @Param          id query int true "ID категории"
-// @Success        200 {object} pb.Category "Найденная категория"
-// @Failure        400 {string} string "Некорректный ID"
-// @Failure        500 {string} string "Ошибка сервера"
-// @Router         /admin/categories [get]
+// @Summary      Получение категории
+// @Description  Возвращает категорию по переданному ID
+// @Tags         category
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        id  path  int  true  "ID категории"
+// @Success      200 {object} pb.Category "Найденная категория"
+// @Failure      400 {string} string "Некорректный ID"
+// @Failure      500 {string} string "Ошибка сервера"
+// @Router       /admin/categories/{id} [get]
 func (a *AdminHandler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	categoryID, err := strconv.ParseInt(id, 10, 64)
@@ -181,7 +182,7 @@ func (a *AdminHandler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 // @Accept         json
 // @Produce        json
 // @Security       ApiKeyAuth
-// @Success        200 {array} pb.Category "Список категорий"
+// @Success        200 {array}  pb.Category "Список категорий"
 // @Failure        500 {string} string "Ошибка сервера"
 // @Router         /admin/categories/featured [get]
 func (a *AdminHandler) GetFeaturedCategories(w http.ResponseWriter, r *http.Request) {
@@ -263,10 +264,10 @@ func (a *AdminHandler) DeleteAllCategories(w http.ResponseWriter, r *http.Reques
 // @Accept        json
 // @Produce       json
 // @Security      ApiKeyAuth
-// @Param         brand body CreateBrandRequest true "Данные для создания бренда"
-// @Success       201 {object} Brand
+// @Param         brand body pb.CreateBrandRequest true "Данные для создания бренда"
+// @Success       201 {object} pb.Brand
 // @Failure       400 {string} string "Некорректный запрос"
-// @Router        /admin/brands[post]
+// @Router        /admin/brands [post]
 func (a *AdminHandler) CreateBrand(w http.ResponseWriter, r *http.Request) {
 	var req pb.CreateBrandRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -286,15 +287,17 @@ func (a *AdminHandler) CreateBrand(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetFeaturedBrands получает список рекомендованных брендов
-// @Summary        Рекомендованные бренды
-// @Description    Возвращает список популярных или продвигаемых брендов
-// @Tags           brand
-// @Accept         json
-// @Produce        json
-// @Security       ApiKeyAuth
-// @Success        200 {array} pb.Brand "Список брендов"
-// @Failure        500 {string} string "Ошибка сервера"
-// @Router         /admin/brands/featured [get]
+// @Summary      Рекомендованные бренды
+// @Description  Возвращает список популярных или продвигаемых брендов
+// @Tags         brand
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        amount    query  int  false  "Количество брендов"
+// @Param        unscoped  query  bool false  "Показывать архивные бренды"
+// @Success      200 {array} pb.Brand "Список брендов"
+// @Failure      500 {string} string "Ошибка сервера"
+// @Router       /admin/brands/featured [get]
 func (a *AdminHandler) GetFeaturedBrands(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -426,15 +429,18 @@ func (a *AdminHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetFeaturedProducts получает список рекомендованных продуктов
-// @Summary        Рекомендованные продукты
-// @Description    Возвращает список популярных или продвигаемых продуктов
-// @Tags           product
-// @Accept         json
-// @Produce        json
-// @Security       ApiKeyAuth
-// @Success        200 {array} pb.Product "Список продуктов"
-// @Failure        500 {string} string "Ошибка сервера"
-// @Router         /admin/products/featured [get]
+// @Summary      Рекомендованные продукты
+// @Description  Возвращает список популярных или продвигаемых продуктов
+// @Tags         product
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        amount          query  int  false  "Количество продуктов"
+// @Param        random          query  bool false  "Случайный порядок"
+// @Param        includeDeleted  query  bool false  "Включать удалённые продукты"
+// @Success      200 {array} pb.ProductList "Список продуктов"
+// @Failure      500 {string} string "Ошибка сервера"
+// @Router       /admin/products/featured [get]
 func (a *AdminHandler) GetFeaturedProducts(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -565,6 +571,19 @@ func (a *AdminHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp.User)
 }
 
+// GetUserByEmail возвращает пользователя по email
+// @Summary        Получение пользователя по email
+// @Description    Поиск пользователя в базе данных по его email
+// @Tags           user
+// @Accept         json
+// @Produce        json
+// @Security       ApiKeyAuth
+// @Param          request body pb.EmailRequest true "Email пользователя для поиска"
+// @Success        200 {object} pb.User "Найденный пользователь"
+// @Failure        400 {string} string "Некорректный запрос"
+// @Failure        404 {string} string "Пользователь не найден"
+// @Failure        500 {string} string "Ошибка сервера"
+// @Router         /admin/users/by-email [post]
 func (a *AdminHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 	var req pb.EmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

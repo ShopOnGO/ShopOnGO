@@ -17,6 +17,7 @@ docker exec -i go_shop_postgres psql -U postgres -d link < backup.sql
 
 работа со swagger:
 для обновления документации : swag init -g cmd/main.go
+NEW : swag init -g cmd/main.go --parseDependency --parseInternal --output ./docs
 для обращения  : http://localhost:8081/swagger/index.html
 
 
