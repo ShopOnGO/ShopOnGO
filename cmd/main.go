@@ -74,7 +74,7 @@ func App() http.Handler {
 
 	// Services
 	authService := auth.NewAuthService(userRepository)
-	homeService := home.NewHomeService(categoryRepository, productsRepository, brandsRepository)
+	homeService := home.NewHomeService(categoryRepository, productRepository, brandsRepository)
 	cartService := cart.NewCartService(cartRepository)
 	statService := stat.NewStatService(&stat.StatServiceDeps{
 		StatRepository: statRepository,
@@ -83,7 +83,6 @@ func App() http.Handler {
 
 	oauth2Service := oauth2.NewOAuth2Service(conf, refreshTokenRepository)
 	resetService := passwordreset.NewResetService(conf, smtp, resetPasswordRepository, userRepository)
-	oauth2Service := oauth2.NewOAuth2Service(conf, RefreshTokenRepository)
 	//categoryService := category.NewCategoryService(categoryRepository)
 	//brandService := brand.NewBrandService(brandsRepository)
 	//statService := stat.NewStatService(statRepository)
