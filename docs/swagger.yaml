@@ -1,5 +1,196 @@
+basePath: /
 definitions:
-  auth.LoginRequest:
+  github_com_ShopOnGO_ShopOnGO_prod_internal_brand.Brand:
+    properties:
+      description:
+        type: string
+      logo:
+        description: JSON хранящий ссылку на статику(изображение)
+        type: string
+      name:
+        type: string
+      video_url:
+        description: Ссылка на видео в облаке
+        type: string
+    type: object
+  github_com_ShopOnGO_ShopOnGO_prod_internal_category.Category:
+    properties:
+      description:
+        type: string
+      image_url:
+        description: Ссылка на изображение категории
+        type: string
+      name:
+        type: string
+      parentCategory:
+        $ref: '#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_category.Category'
+      parentCategoryID:
+        description: Внешний ключ может быть NULL
+        type: integer
+      subCategories:
+        description: Связь для подкатегорий
+        items:
+          $ref: '#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_category.Category'
+        type: array
+    type: object
+  github_com_ShopOnGO_ShopOnGO_prod_internal_product.Product:
+    properties:
+      brand:
+        $ref: '#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_brand.Brand'
+      brand_id:
+        type: integer
+      category:
+        $ref: '#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_category.Category'
+      category_id:
+        description: "\U0001F539 Внешние ключи"
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      description:
+        type: string
+      discount:
+        type: integer
+      id:
+        type: integer
+      images:
+        description: "\U0001F539 Дополнительные данные"
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      price:
+        type: integer
+      updatedAt:
+        type: string
+      variants:
+        description: Ссылка на варианты продукта
+        items:
+          $ref: '#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_productVariant.ProductVariant'
+        type: array
+      video_url:
+        description: Видеообзор
+        type: string
+    type: object
+  github_com_ShopOnGO_ShopOnGO_prod_internal_productVariant.ProductVariant:
+    properties:
+      barcode:
+        description: Weight          uint      `gorm:"default:0"`                           //
+          Вес в граммах
+        type: string
+      colors:
+        description: Храним цвета как JSON-массив
+        items:
+          type: string
+        type: array
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      dimensions:
+        description: Габариты (например "20x30x5 см")
+        type: string
+      discount:
+        type: integer
+      id:
+        type: integer
+      images:
+        description: Массив URL изображений
+        items:
+          type: string
+        type: array
+      isActive:
+        description: Активен ли вариант
+        type: boolean
+      material:
+        description: Материал изготовления
+        type: string
+      minOrder:
+        description: Минимальный заказ
+        type: integer
+      price:
+        type: integer
+      productID:
+        description: на всякий
+        type: integer
+      rating:
+        type: integer
+      reservedStock:
+        description: бронь (пока оплатишь типа)
+        type: integer
+      sizes:
+        description: Храним размеры как JSON-массив
+        items:
+          type: integer
+        type: array
+      sku:
+        description: Уникальный артикул
+        type: string
+      stock:
+        description: Общий остаток на складе
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  github_com_ShopOnGO_ShopOnGO_prod_internal_stat.Stat:
+    properties:
+      clicks:
+        type: integer
+      date:
+        description: поддерживается в postgres
+        format: date
+        type: string
+      link_id:
+        type: integer
+    type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  internal_auth.ChangePasswordRequest:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+    type: object
+  internal_auth.ChangeRoleRequest:
+    properties:
+      accept_terms:
+        description: Согласие с условиями
+        type: boolean
+      current_password:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      new_role:
+        enum:
+        - buyer
+        - seller
+        - moderator
+        type: string
+      phone_number:
+        type: string
+      store_address:
+        type: string
+      store_name:
+        description: Поля для продавца
+        type: string
+    required:
+    - current_password
+    - email
+    - name
+    - new_role
+    type: object
+  internal_auth.LoginRequest:
     properties:
       email:
         type: string
@@ -9,12 +200,12 @@ definitions:
     - email
     - password
     type: object
-  auth.LoginResponse:
+  internal_auth.LoginResponse:
     properties:
       token:
         type: string
     type: object
-  auth.RegisterRequest:
+  internal_auth.RegisterRequest:
     properties:
       email:
         type: string
@@ -27,55 +218,49 @@ definitions:
     - name
     - password
     type: object
-  category.Category:
-    properties:
-      description:
-        type: string
-      image_url:
-        description: Ссылка на изображение категории
-        type: string
-      name:
-        type: string
-    type: object
-  home.HomeData:
+  internal_home.HomeData:
     properties:
       categories:
         items:
-          $ref: '#/definitions/category.Category'
+          $ref: '#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_category.Category'
+        type: array
+      featured_brands:
+        items:
+          $ref: '#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_brand.Brand'
         type: array
       featured_products:
         items:
-          $ref: '#/definitions/product.Product'
+          $ref: '#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_product.Product'
         type: array
     type: object
-  link.GetAllLinksResponse:
+  internal_link.GetAllLinksResponse:
     properties:
       count:
         type: integer
       links:
         items:
-          $ref: '#/definitions/link.Link'
+          $ref: '#/definitions/internal_link.Link'
         type: array
     type: object
-  link.Link:
+  internal_link.Link:
     properties:
       hash:
         type: string
       stats:
         items:
-          $ref: '#/definitions/stat.Stat'
+          $ref: '#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_stat.Stat'
         type: array
       url:
         type: string
     type: object
-  link.LinkCreateRequest:
+  internal_link.LinkCreateRequest:
     properties:
       url:
         type: string
     required:
     - url
     type: object
-  link.LinkUpdateRequest:
+  internal_link.LinkUpdateRequest:
     properties:
       hash:
         type: string
@@ -84,67 +269,218 @@ definitions:
     required:
     - url
     type: object
-  product.Product:
-    properties:
-      color:
-        type: string
-      description:
-        type: string
-      discount:
-        description: |-
-          CategoryID  uint   `gorm:"not null" json:"category_id"`//foreign key
-          BrandID      uint    `gorm:"not null"  json:"brand_id"`
-          Price        float64 `gorm:"not null"  json:"price"`
-        type: number
-      gallery:
-        description: JSON хранящий ссылки на изображения
-        type: string
-      gender:
-        type: string
-      is_available:
-        description: доступен
-        type: boolean
-      material:
-        type: string
-      name:
-        type: string
-      rating:
-        description: VendorCode   string  `gorm:"type:varchar(100);unique;not null"json:"vendor_code"`//артикул
-        type: number
-      reviews_count:
-        description: количество отзывов
-        type: integer
-      season:
-        type: string
-      size:
-        type: string
-      stock:
-        description: количество в наличии
-        type: integer
-      video_url:
-        description: ImageURL    string  `gorm:"type:varchar(255)" json:"image_url"`
-        type: string
-    type: object
-  stat.GetStatResponse:
+  internal_stat.GetStatResponse:
     properties:
       period:
         type: string
       sum:
         type: integer
     type: object
-  stat.Stat:
+  service.Brand:
     properties:
-      clicks:
-        type: integer
-      date:
-        description: поддерживается в postgres
-        format: date
+      description:
         type: string
+      logo:
+        type: string
+      model:
+        $ref: '#/definitions/service.Model'
+      name:
+        type: string
+      video_url:
+        type: string
+    type: object
+  service.Category:
+    properties:
+      description:
+        type: string
+      image_url:
+        type: string
+      model:
+        $ref: '#/definitions/service.Model'
+      name:
+        type: string
+    type: object
+  service.ClickRequest:
+    properties:
       link_id:
         type: integer
     type: object
+  service.CreateBrandRequest:
+    properties:
+      description:
+        type: string
+      logo:
+        type: string
+      name:
+        type: string
+      video_url:
+        type: string
+    type: object
+  service.DeleteBrandRequest:
+    properties:
+      name:
+        type: string
+      unscoped:
+        type: boolean
+    type: object
+  service.DeleteCategoryByNameRequest:
+    properties:
+      name:
+        type: string
+      unscoped:
+        type: boolean
+    type: object
+  service.DeleteProductRequest:
+    properties:
+      Unscoped:
+        type: boolean
+      id:
+        type: integer
+    type: object
+  service.DeleteUserRequest:
+    properties:
+      Unscoped:
+        type: boolean
+      id:
+        type: integer
+    type: object
+  service.EmailRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  service.ErrorResponse:
+    properties:
+      code:
+        description: Например, 200 — успех, num — ошибка
+        type: integer
+      message:
+        type: string
+    type: object
+  service.HomeDataResponse:
+    properties:
+      brands:
+        items:
+          $ref: '#/definitions/service.Brand'
+        type: array
+      categories:
+        items:
+          $ref: '#/definitions/service.Category'
+        type: array
+      error:
+        $ref: '#/definitions/service.ErrorResponse'
+      featured_products:
+        items:
+          $ref: '#/definitions/service.Product'
+        type: array
+    type: object
+  service.Model:
+    properties:
+      created_at:
+        $ref: '#/definitions/timestamp.Timestamp'
+      deleted_at:
+        $ref: '#/definitions/timestamp.Timestamp'
+      id:
+        type: integer
+      updated_at:
+        $ref: '#/definitions/timestamp.Timestamp'
+    type: object
+  service.Product:
+    properties:
+      brand_id:
+        type: integer
+      category_id:
+        type: integer
+      color:
+        type: string
+      description:
+        type: string
+      discount:
+        type: number
+      gallery:
+        type: string
+      gender:
+        type: integer
+      is_available:
+        type: boolean
+      material:
+        type: string
+      model:
+        $ref: '#/definitions/service.Model'
+      name:
+        type: string
+      rating:
+        type: number
+      reviews_count:
+        type: integer
+      season:
+        type: integer
+      size:
+        type: string
+      stock:
+        type: integer
+      video_url:
+        type: string
+    type: object
+  service.ProductList:
+    properties:
+      error:
+        $ref: '#/definitions/service.ErrorResponse'
+      products:
+        items:
+          $ref: '#/definitions/service.Product'
+        type: array
+    type: object
+  service.UpdateCategoryRequest:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  service.User:
+    properties:
+      email:
+        type: string
+      model:
+        $ref: '#/definitions/service.Model'
+      name:
+        type: string
+      role:
+        type: integer
+    type: object
+  timestamp.Timestamp:
+    properties:
+      nanos:
+        description: |-
+          Non-negative fractions of a second at nanosecond resolution. Negative
+          second values with fractions must still have non-negative nanos values
+          that count forward in time. Must be from 0 to 999,999,999
+          inclusive.
+        type: integer
+      seconds:
+        description: |-
+          Represents seconds of UTC time since Unix epoch
+          1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
+          9999-12-31T23:59:59Z inclusive.
+        type: integer
+    type: object
+host: localhost:8081
 info:
-  contact: {}
+  contact:
+    email: support@shopongo.com
+    name: Support Team
+    url: http://shopongo.com/support
+  description: API сервиса ShopOnGO, обеспечивающего авторизацию, управление пользователями,
+    товарами и аналитикой.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://shopongo.com/terms/
+  title: ShopOnGO API
+  version: "1.0"
 paths:
   /{hash}:
     get:
@@ -166,7 +502,735 @@ paths:
             type: string
       summary: Редирект по хешу
       tags:
-      - links
+      - link
+  /admin/brands:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет существующий бренд из базы данных
+      parameters:
+      - description: Данные для удаления бренда
+        in: body
+        name: brand
+        required: true
+        schema:
+          $ref: '#/definitions/service.DeleteBrandRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Бренд успешно удалён
+          schema:
+            type: string
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "404":
+          description: Бренд не найден
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Удаление бренда
+      tags:
+      - brand
+    post:
+      consumes:
+      - application/json
+      description: Создает новый бренд по имени и заносит его в базу
+      parameters:
+      - description: Данные для создания бренда
+        in: body
+        name: brand
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateBrandRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/service.Brand'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Новый бренд
+      tags:
+      - brand
+    put:
+      consumes:
+      - application/json
+      description: Изменяет данные существующего бренда
+      parameters:
+      - description: Данные для обновления бренда
+        in: body
+        name: brand
+        required: true
+        schema:
+          $ref: '#/definitions/service.Brand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновлённый бренд
+          schema:
+            $ref: '#/definitions/service.Brand'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Обновление бренда
+      tags:
+      - brand
+  /admin/brands/all:
+    delete:
+      description: Удаляет все бренды из базы данных
+      responses:
+        "200":
+          description: Все бренды успешно удалены
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Удаление всех брендов
+      tags:
+      - brand
+  /admin/brands/featured:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список популярных или продвигаемых брендов
+      parameters:
+      - description: Количество брендов
+        in: query
+        name: amount
+        type: integer
+      - description: Показывать архивные бренды
+        in: query
+        name: unscoped
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список брендов
+          schema:
+            items:
+              $ref: '#/definitions/service.Brand'
+            type: array
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Рекомендованные бренды
+      tags:
+      - brand
+  /admin/categories:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет существующую категорию из базы данных
+      parameters:
+      - description: Данные для удаления категории
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/service.DeleteCategoryByNameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Категория успешно удалена
+          schema:
+            type: string
+        "400":
+          description: Некорректное имя
+          schema:
+            type: string
+        "404":
+          description: Категория не найдена
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Удаление категории
+      tags:
+      - category
+    post:
+      consumes:
+      - application/json
+      description: Добавляет новую категорию в базу данных
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Созданная категория
+          schema:
+            $ref: '#/definitions/service.Category'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Создание категории
+      tags:
+      - category
+  /admin/categories/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает категорию по переданному ID
+      parameters:
+      - description: ID категории
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Найденная категория
+          schema:
+            $ref: '#/definitions/service.Category'
+        "400":
+          description: Некорректный ID
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Получение категории
+      tags:
+      - category
+    put:
+      consumes:
+      - application/json
+      description: Изменяет имя и/или описание категории
+      parameters:
+      - description: ID категории
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные для обновления категории
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновлённая категория
+          schema:
+            $ref: '#/definitions/service.Category'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "404":
+          description: Категория не найдена
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Обновление категории
+      tags:
+      - category
+  /admin/categories/all:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет все существующие категории из базы данных без возможности
+        восстановления
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Все категории успешно удалены
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Удаление всех категорий
+      tags:
+      - category
+  /admin/categories/featured:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список популярных или продвигаемых категорий
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список категорий
+          schema:
+            items:
+              $ref: '#/definitions/service.Category'
+            type: array
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Рекомендованные категории
+      tags:
+      - category
+  /admin/home:
+    get:
+      description: Получает информацию, необходимую для отображения главной страницы
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Данные для главной страницы
+          schema:
+            $ref: '#/definitions/service.HomeDataResponse'
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Получение данных для главной
+      tags:
+      - home
+  /admin/products:
+    delete:
+      description: Удаляет существующий продукт из базы данных
+      parameters:
+      - description: Данные для удаления продукта
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/service.DeleteProductRequest'
+      responses:
+        "200":
+          description: Продукт успешно удален
+          schema:
+            type: string
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Удаление продукта
+      tags:
+      - product
+    post:
+      consumes:
+      - application/json
+      description: Создает новый продукт по имени и заносит его в базу
+      parameters:
+      - description: Данные для создания продукта
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/service.Product'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Созданный продукт
+          schema:
+            $ref: '#/definitions/service.Product'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Новый продукт
+      tags:
+      - product
+    put:
+      consumes:
+      - application/json
+      description: Изменяет данные продукта
+      parameters:
+      - description: Данные для обновления продукта
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/service.Product'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновленный продукт
+          schema:
+            $ref: '#/definitions/service.Product'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Обновление продукта
+      tags:
+      - product
+  /admin/products/all:
+    delete:
+      description: Удаляет все продукты из базы данных
+      responses:
+        "200":
+          description: Все продукты успешно удалены
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Удаление всех продуктов
+      tags:
+      - product
+  /admin/products/featured:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список популярных или продвигаемых продуктов
+      parameters:
+      - description: Количество продуктов
+        in: query
+        name: amount
+        type: integer
+      - description: Случайный порядок
+        in: query
+        name: random
+        type: boolean
+      - description: Включать удалённые продукты
+        in: query
+        name: includeDeleted
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список продуктов
+          schema:
+            items:
+              $ref: '#/definitions/service.ProductList'
+            type: array
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Рекомендованные продукты
+      tags:
+      - product
+  /admin/stats/click:
+    post:
+      consumes:
+      - application/json
+      description: Добавляет информацию о клике по элементу
+      parameters:
+      - description: Данные клика
+        in: body
+        name: click
+        required: true
+        schema:
+          $ref: '#/definitions/service.ClickRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Клик успешно добавлен
+          schema:
+            type: string
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Добавление клика
+      tags:
+      - stats
+  /admin/users:
+    delete:
+      description: Удаляет существующего пользователя из базы данных
+      parameters:
+      - description: Данные для удаления пользователя
+        in: body
+        name: users
+        required: true
+        schema:
+          $ref: '#/definitions/service.DeleteUserRequest'
+      responses:
+        "200":
+          description: пользователь успешно удален
+          schema:
+            type: string
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Удаление пользователя
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Создает нового пользователя по имени и заносит его в базу
+      parameters:
+      - description: Данные для создания пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/service.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Созданный пользователь
+          schema:
+            $ref: '#/definitions/service.User'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Новый пользователь
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      description: Изменяет данные продукта
+      parameters:
+      - description: Данные для обновления пользователя
+        in: body
+        name: users
+        required: true
+        schema:
+          $ref: '#/definitions/service.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновленный пользователь
+          schema:
+            $ref: '#/definitions/service.User'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Обновление продукта
+      tags:
+      - users
+  /admin/users/all:
+    delete:
+      description: Удаляет всех пользователей из базы данных
+      responses:
+        "200":
+          description: Все пользователи успешно удалены
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Удаление всех пользователей
+      tags:
+      - users
+  /admin/users/by-email:
+    post:
+      consumes:
+      - application/json
+      description: Поиск пользователя в базе данных по его email
+      parameters:
+      - description: Email пользователя для поиска
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.EmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Найденный пользователь
+          schema:
+            $ref: '#/definitions/service.User'
+        "400":
+          description: Некорректный запрос
+          schema:
+            type: string
+        "404":
+          description: Пользователь не найден
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Получение пользователя по email
+      tags:
+      - user
+  /auth/change/password:
+    post:
+      consumes:
+      - application/json
+      description: Изменяет пароль пользователя, требует авторизации (Bearer токен)
+      parameters:
+      - description: Старый и новый пароль
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_auth.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Сообщение об успешной смене пароля
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректные данные или старый пароль неверен
+          schema:
+            type: string
+        "401":
+          description: Неавторизован
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Смена пароля
+      tags:
+      - auth
+  /auth/change/role:
+    post:
+      consumes:
+      - application/json
+      description: Изменяет роль пользователя, требует авторизации (Bearer токен)
+      parameters:
+      - description: Email пользователя и новая роль
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_auth.ChangeRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Сообщение об успешном изменении роли
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Некорректные данные
+          schema:
+            type: string
+        "401":
+          description: Неавторизован
+          schema:
+            type: string
+        "403":
+          description: Недостаточно прав
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера
+          schema:
+            type: string
+      summary: Изменение роли пользователя
+      tags:
+      - auth
   /auth/login:
     post:
       consumes:
@@ -179,14 +1243,14 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/auth.LoginRequest'
+          $ref: '#/definitions/internal_auth.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Успешный вход, возвращает JWT токен
           schema:
-            $ref: '#/definitions/auth.LoginResponse'
+            $ref: '#/definitions/internal_auth.LoginResponse'
         "401":
           description: Неверные учетные данные
           schema:
@@ -196,6 +1260,31 @@ paths:
           schema:
             type: string
       summary: Вход в систему
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Удаляет refresh-токен из хранилища и очищает cookie
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный выход, refresh-токен удален
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Refresh-токен не найден
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера при выходе
+          schema:
+            type: string
+      summary: Завершение сеанса пользователя
       tags:
       - auth
   /auth/register:
@@ -210,14 +1299,14 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/auth.RegisterRequest'
+          $ref: '#/definitions/internal_auth.RegisterRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Успешная регистрация, возвращает JWT токен
           schema:
-            $ref: '#/definitions/auth.LoginResponse'
+            $ref: '#/definitions/internal_auth.LoginResponse'
         "400":
           description: Некорректные данные для регистрации
           schema:
@@ -242,11 +1331,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/home.HomeData'
+            $ref: '#/definitions/internal_home.HomeData'
       summary: Главная страница
       tags:
       - home
-  /links:
+  /link:
     get:
       consumes:
       - application/json
@@ -266,14 +1355,16 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/link.GetAllLinksResponse'
+            $ref: '#/definitions/internal_link.GetAllLinksResponse'
         "400":
           description: Некорректные параметры limit/offset
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Получить все ссылки
       tags:
-      - links
+      - link
     post:
       consumes:
       - application/json
@@ -285,22 +1376,24 @@ paths:
         name: link
         required: true
         schema:
-          $ref: '#/definitions/link.LinkCreateRequest'
+          $ref: '#/definitions/internal_link.LinkCreateRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/link.Link'
+            $ref: '#/definitions/internal_link.Link'
         "400":
           description: Некорректный запрос
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Создание короткой ссылки
       tags:
-      - links
-  /links/{id}:
+      - link
+  /link/{id}:
     delete:
       description: Удаляет существующую короткую ссылку из базы данных
       parameters:
@@ -326,9 +1419,11 @@ paths:
           description: Ошибка сервера
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Удаление ссылки
       tags:
-      - links
+      - link
     put:
       consumes:
       - application/json
@@ -344,14 +1439,14 @@ paths:
         name: link
         required: true
         schema:
-          $ref: '#/definitions/link.LinkUpdateRequest'
+          $ref: '#/definitions/internal_link.LinkUpdateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/link.Link'
+            $ref: '#/definitions/internal_link.Link'
         "400":
           description: Некорректный запрос
           schema:
@@ -360,9 +1455,63 @@ paths:
           description: Ссылка не найдена
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Обновление ссылки
       tags:
-      - links
+      - link
+  /oauth/google/login:
+    get:
+      consumes:
+      - application/json
+      description: Перенаправляет пользователя на страницу авторизации Google, затем
+        получает токены и информацию о пользователе
+      parameters:
+      - description: Код авторизации от Google (автоматически передается после редиректа)
+        in: query
+        name: code
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT access-токен
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Ошибка при обмене кода на токен или получении данных пользователя
+          schema:
+            type: string
+      summary: Авторизация через Google
+      tags:
+      - auth
+  /oauth/token:
+    post:
+      consumes:
+      - application/json
+      description: Обновляет access-токен, используя refresh-токен из cookie
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Новый access-токен
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Refresh-токен отсутствует или недействителен
+          schema:
+            type: string
+        "500":
+          description: Ошибка сервера при обновлении токена
+          schema:
+            type: string
+      summary: Обновление access-токена
+      tags:
+      - auth
   /stats:
     get:
       consumes:
@@ -392,13 +1541,22 @@ paths:
           description: Успешный ответ со статистикой
           schema:
             items:
-              $ref: '#/definitions/stat.GetStatResponse'
+              $ref: '#/definitions/internal_stat.GetStatResponse'
             type: array
         "400":
           description: Некорректные параметры запроса
           schema:
             type: string
+      security:
+      - ApiKeyAuth: []
       summary: Получить статистику переходов
       tags:
       - statistics
+schemes:
+- http
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

@@ -1,7 +1,6 @@
 package product
 
 import (
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
 )
 
@@ -23,10 +22,10 @@ func (repo *ProductRepository) Create(product *Product) (*Product, error) {
 	return product, nil
 }
 
-func (repo *ProductRepository) GetByCategory(category *category.Category) ([]Product, error) { //limit 20
+func (repo *ProductRepository) GetByCategory(id uint) ([]Product, error) { //limit 20
 	var products []Product
 	result := repo.Database.DB.
-		Where("category_id = ?", category.ID).
+		Where("category_id = ?", id).
 		Limit(20).
 		Find(&products)
 	if result.Error != nil {
@@ -62,4 +61,20 @@ func (repo *ProductRepository) GetFeaturedProducts(amount uint, random bool) ([]
 	result := query.Limit(int(amount)).Find(&products).Where("deleted_at is null")
 
 	return products, result.Error
+}
+
+func (repo *ProductRepository) Update(product *Product) (*Product, error) {
+	result := repo.Database.DB.Model(&Product{}).Where("id = ?", product.ID).Updates(product)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return product, nil
+}
+
+func (repo *ProductRepository) Delete(id uint) error {
+	result := repo.Database.DB.Delete(&Product{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }

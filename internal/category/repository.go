@@ -44,3 +44,26 @@ func (repo *CategoryRepository) FindByName(name string) (*Category, error) {
 	}
 	return &category, nil
 }
+func (repo *CategoryRepository) Update(category *Category) (*Category, error) {
+	result := repo.Database.DB.Model(&Category{}).Where("id = ?", category.ID).Updates(category)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return category, nil
+}
+
+func (repo *CategoryRepository) Delete(id uint) error {
+	result := repo.Database.DB.Delete(&Category{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+func (repo *CategoryRepository) FindCategoryByID(id uint) (*Category, error) {
+	var category Category
+	result := repo.Database.DB.First(&category, id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &category, nil
+}

@@ -9,12 +9,1174 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "termsOfService": "http://shopongo.com/terms/",
+        "contact": {
+            "name": "Support Team",
+            "url": "http://shopongo.com/support",
+            "email": "support@shopongo.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/brands": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Изменяет данные существующего бренда",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "brand"
+                ],
+                "summary": "Обновление бренда",
+                "parameters": [
+                    {
+                        "description": "Данные для обновления бренда",
+                        "name": "brand",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.Brand"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Обновлённый бренд",
+                        "schema": {
+                            "$ref": "#/definitions/service.Brand"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Создает новый бренд по имени и заносит его в базу",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "brand"
+                ],
+                "summary": "Новый бренд",
+                "parameters": [
+                    {
+                        "description": "Данные для создания бренда",
+                        "name": "brand",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.CreateBrandRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/service.Brand"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Удаляет существующий бренд из базы данных",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "brand"
+                ],
+                "summary": "Удаление бренда",
+                "parameters": [
+                    {
+                        "description": "Данные для удаления бренда",
+                        "name": "brand",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.DeleteBrandRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Бренд успешно удалён",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Бренд не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/brands/all": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Удаляет все бренды из базы данных",
+                "tags": [
+                    "brand"
+                ],
+                "summary": "Удаление всех брендов",
+                "responses": {
+                    "200": {
+                        "description": "Все бренды успешно удалены",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/brands/featured": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает список популярных или продвигаемых брендов",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "brand"
+                ],
+                "summary": "Рекомендованные бренды",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Количество брендов",
+                        "name": "amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Показывать архивные бренды",
+                        "name": "unscoped",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список брендов",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/service.Brand"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/categories": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Добавляет новую категорию в базу данных",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "category"
+                ],
+                "summary": "Создание категории",
+                "responses": {
+                    "201": {
+                        "description": "Созданная категория",
+                        "schema": {
+                            "$ref": "#/definitions/service.Category"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Удаляет существующую категорию из базы данных",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "category"
+                ],
+                "summary": "Удаление категории",
+                "parameters": [
+                    {
+                        "description": "Данные для удаления категории",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.DeleteCategoryByNameRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Категория успешно удалена",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректное имя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Категория не найдена",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/categories/all": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Удаляет все существующие категории из базы данных без возможности восстановления",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "category"
+                ],
+                "summary": "Удаление всех категорий",
+                "responses": {
+                    "200": {
+                        "description": "Все категории успешно удалены",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/categories/featured": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает список популярных или продвигаемых категорий",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "category"
+                ],
+                "summary": "Рекомендованные категории",
+                "responses": {
+                    "200": {
+                        "description": "Список категорий",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/service.Category"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/categories/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает категорию по переданному ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "category"
+                ],
+                "summary": "Получение категории",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID категории",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Найденная категория",
+                        "schema": {
+                            "$ref": "#/definitions/service.Category"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Изменяет имя и/или описание категории",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "category"
+                ],
+                "summary": "Обновление категории",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID категории",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Данные для обновления категории",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.UpdateCategoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Обновлённая категория",
+                        "schema": {
+                            "$ref": "#/definitions/service.Category"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Категория не найдена",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/home": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Получает информацию, необходимую для отображения главной страницы",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "home"
+                ],
+                "summary": "Получение данных для главной",
+                "responses": {
+                    "200": {
+                        "description": "Данные для главной страницы",
+                        "schema": {
+                            "$ref": "#/definitions/service.HomeDataResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Изменяет данные продукта",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "product"
+                ],
+                "summary": "Обновление продукта",
+                "parameters": [
+                    {
+                        "description": "Данные для обновления продукта",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.Product"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Обновленный продукт",
+                        "schema": {
+                            "$ref": "#/definitions/service.Product"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Создает новый продукт по имени и заносит его в базу",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "product"
+                ],
+                "summary": "Новый продукт",
+                "parameters": [
+                    {
+                        "description": "Данные для создания продукта",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.Product"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Созданный продукт",
+                        "schema": {
+                            "$ref": "#/definitions/service.Product"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Удаляет существующий продукт из базы данных",
+                "tags": [
+                    "product"
+                ],
+                "summary": "Удаление продукта",
+                "parameters": [
+                    {
+                        "description": "Данные для удаления продукта",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.DeleteProductRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Продукт успешно удален",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/all": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Удаляет все продукты из базы данных",
+                "tags": [
+                    "product"
+                ],
+                "summary": "Удаление всех продуктов",
+                "responses": {
+                    "200": {
+                        "description": "Все продукты успешно удалены",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/products/featured": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Возвращает список популярных или продвигаемых продуктов",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "product"
+                ],
+                "summary": "Рекомендованные продукты",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Количество продуктов",
+                        "name": "amount",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Случайный порядок",
+                        "name": "random",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Включать удалённые продукты",
+                        "name": "includeDeleted",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список продуктов",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/service.ProductList"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/stats/click": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Добавляет информацию о клике по элементу",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "Добавление клика",
+                "parameters": [
+                    {
+                        "description": "Данные клика",
+                        "name": "click",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.ClickRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Клик успешно добавлен",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Изменяет данные продукта",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Обновление продукта",
+                "parameters": [
+                    {
+                        "description": "Данные для обновления пользователя",
+                        "name": "users",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Обновленный пользователь",
+                        "schema": {
+                            "$ref": "#/definitions/service.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Создает нового пользователя по имени и заносит его в базу",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Новый пользователь",
+                "parameters": [
+                    {
+                        "description": "Данные для создания пользователя",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.User"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Созданный пользователь",
+                        "schema": {
+                            "$ref": "#/definitions/service.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Удаляет существующего пользователя из базы данных",
+                "tags": [
+                    "users"
+                ],
+                "summary": "Удаление пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные для удаления пользователя",
+                        "name": "users",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.DeleteUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "пользователь успешно удален",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/all": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Удаляет всех пользователей из базы данных",
+                "tags": [
+                    "users"
+                ],
+                "summary": "Удаление всех пользователей",
+                "responses": {
+                    "200": {
+                        "description": "Все пользователи успешно удалены",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/by-email": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Поиск пользователя в базе данных по его email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Получение пользователя по email",
+                "parameters": [
+                    {
+                        "description": "Email пользователя для поиска",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.EmailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Найденный пользователь",
+                        "schema": {
+                            "$ref": "#/definitions/service.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/change/password": {
+            "post": {
+                "description": "Изменяет пароль пользователя, требует авторизации (Bearer токен)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Смена пароля",
+                "parameters": [
+                    {
+                        "description": "Старый и новый пароль",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.ChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Сообщение об успешной смене пароля",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные или старый пароль неверен",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/change/role": {
+            "post": {
+                "description": "Изменяет роль пользователя, требует авторизации (Bearer токен)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Изменение роли пользователя",
+                "parameters": [
+                    {
+                        "description": "Email пользователя и новая роль",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_auth.ChangeRoleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Сообщение об успешном изменении роли",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректные данные",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Недостаточно прав",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Аутентифицирует пользователя по email и паролю, возвращает JWT токен",
@@ -35,7 +1197,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.LoginRequest"
+                            "$ref": "#/definitions/internal_auth.LoginRequest"
                         }
                     }
                 ],
@@ -43,7 +1205,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Успешный вход, возвращает JWT токен",
                         "schema": {
-                            "$ref": "#/definitions/auth.LoginResponse"
+                            "$ref": "#/definitions/internal_auth.LoginResponse"
                         }
                     },
                     "401": {
@@ -54,6 +1216,44 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Ошибка сервера при создании токена",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "description": "Удаляет refresh-токен из хранилища и очищает cookie",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Завершение сеанса пользователя",
+                "responses": {
+                    "200": {
+                        "description": "Успешный выход, refresh-токен удален",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Refresh-токен не найден",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера при выходе",
                         "schema": {
                             "type": "string"
                         }
@@ -81,7 +1281,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.RegisterRequest"
+                            "$ref": "#/definitions/internal_auth.RegisterRequest"
                         }
                     }
                 ],
@@ -89,7 +1289,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Успешная регистрация, возвращает JWT токен",
                         "schema": {
-                            "$ref": "#/definitions/auth.LoginResponse"
+                            "$ref": "#/definitions/internal_auth.LoginResponse"
                         }
                     },
                     "400": {
@@ -127,14 +1327,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/home.HomeData"
+                            "$ref": "#/definitions/internal_home.HomeData"
                         }
                     }
                 }
             }
         },
-        "/links": {
+        "/link": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Возвращает список всех коротких ссылок с возможностью пагинации",
                 "consumes": [
                     "application/json"
@@ -143,7 +1348,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "links"
+                    "link"
                 ],
                 "summary": "Получить все ссылки",
                 "parameters": [
@@ -164,7 +1369,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/link.GetAllLinksResponse"
+                            "$ref": "#/definitions/internal_link.GetAllLinksResponse"
                         }
                     },
                     "400": {
@@ -176,6 +1381,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Генерирует короткую ссылку по переданному URL и сохраняет ее в базе",
                 "consumes": [
                     "application/json"
@@ -184,7 +1394,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "links"
+                    "link"
                 ],
                 "summary": "Создание короткой ссылки",
                 "parameters": [
@@ -194,7 +1404,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/link.LinkCreateRequest"
+                            "$ref": "#/definitions/internal_link.LinkCreateRequest"
                         }
                     }
                 ],
@@ -202,7 +1412,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/link.Link"
+                            "$ref": "#/definitions/internal_link.Link"
                         }
                     },
                     "400": {
@@ -214,8 +1424,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/links/{id}": {
+        "/link/{id}": {
             "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Изменяет URL или хеш существующей короткой ссылки",
                 "consumes": [
                     "application/json"
@@ -224,7 +1439,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "links"
+                    "link"
                 ],
                 "summary": "Обновление ссылки",
                 "parameters": [
@@ -241,7 +1456,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/link.LinkUpdateRequest"
+                            "$ref": "#/definitions/internal_link.LinkUpdateRequest"
                         }
                     }
                 ],
@@ -249,7 +1464,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/link.Link"
+                            "$ref": "#/definitions/internal_link.Link"
                         }
                     },
                     "400": {
@@ -267,9 +1482,14 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Удаляет существующую короткую ссылку из базы данных",
                 "tags": [
-                    "links"
+                    "link"
                 ],
                 "summary": "Удаление ссылки",
                 "parameters": [
@@ -309,8 +1529,91 @@ const docTemplate = `{
                 }
             }
         },
+        "/oauth/google/login": {
+            "get": {
+                "description": "Перенаправляет пользователя на страницу авторизации Google, затем получает токены и информацию о пользователе",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Авторизация через Google",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Код авторизации от Google (автоматически передается после редиректа)",
+                        "name": "code",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JWT access-токен",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при обмене кода на токен или получении данных пользователя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/oauth/token": {
+            "post": {
+                "description": "Обновляет access-токен, используя refresh-токен из cookie",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Обновление access-токена",
+                "responses": {
+                    "200": {
+                        "description": "Новый access-токен",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Refresh-токен отсутствует или недействителен",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера при обновлении токена",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/stats": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Возвращает агрегированную статистику по количеству переходов, сгруппированную по дням или месяцам",
                 "consumes": [
                     "application/json"
@@ -351,7 +1654,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/stat.GetStatResponse"
+                                "$ref": "#/definitions/internal_stat.GetStatResponse"
                             }
                         }
                     },
@@ -368,7 +1671,7 @@ const docTemplate = `{
             "get": {
                 "description": "Ищет короткую ссылку в базе по хешу и выполняет перенаправление",
                 "tags": [
-                    "links"
+                    "link"
                 ],
                 "summary": "Редирект по хешу",
                 "parameters": [
@@ -398,7 +1701,279 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.LoginRequest": {
+        "github_com_ShopOnGO_ShopOnGO_prod_internal_brand.Brand": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "logo": {
+                    "description": "JSON хранящий ссылку на статику(изображение)",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "video_url": {
+                    "description": "Ссылка на видео в облаке",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_ShopOnGO_ShopOnGO_prod_internal_category.Category": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "description": "Ссылка на изображение категории",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parentCategory": {
+                    "$ref": "#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_category.Category"
+                },
+                "parentCategoryID": {
+                    "description": "Внешний ключ может быть NULL",
+                    "type": "integer"
+                },
+                "subCategories": {
+                    "description": "Связь для подкатегорий",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_category.Category"
+                    }
+                }
+            }
+        },
+        "github_com_ShopOnGO_ShopOnGO_prod_internal_product.Product": {
+            "type": "object",
+            "properties": {
+                "brand": {
+                    "$ref": "#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_brand.Brand"
+                },
+                "brand_id": {
+                    "type": "integer"
+                },
+                "category": {
+                    "$ref": "#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_category.Category"
+                },
+                "category_id": {
+                    "description": "🔹 Внешние ключи",
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "discount": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "images": {
+                    "description": "🔹 Дополнительные данные",
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "variants": {
+                    "description": "Ссылка на варианты продукта",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_productVariant.ProductVariant"
+                    }
+                },
+                "video_url": {
+                    "description": "Видеообзор",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_ShopOnGO_ShopOnGO_prod_internal_productVariant.ProductVariant": {
+            "type": "object",
+            "properties": {
+                "barcode": {
+                    "description": "Weight          uint      ` + "`" + `gorm:\"default:0\"` + "`" + `                           // Вес в граммах",
+                    "type": "string"
+                },
+                "colors": {
+                    "description": "Храним цвета как JSON-массив",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "dimensions": {
+                    "description": "Габариты (например \"20x30x5 см\")",
+                    "type": "string"
+                },
+                "discount": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "images": {
+                    "description": "Массив URL изображений",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "isActive": {
+                    "description": "Активен ли вариант",
+                    "type": "boolean"
+                },
+                "material": {
+                    "description": "Материал изготовления",
+                    "type": "string"
+                },
+                "minOrder": {
+                    "description": "Минимальный заказ",
+                    "type": "integer"
+                },
+                "price": {
+                    "type": "integer"
+                },
+                "productID": {
+                    "description": "на всякий",
+                    "type": "integer"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "reservedStock": {
+                    "description": "бронь (пока оплатишь типа)",
+                    "type": "integer"
+                },
+                "sizes": {
+                    "description": "Храним размеры как JSON-массив",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "sku": {
+                    "description": "Уникальный артикул",
+                    "type": "string"
+                },
+                "stock": {
+                    "description": "Общий остаток на складе",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_ShopOnGO_ShopOnGO_prod_internal_stat.Stat": {
+            "type": "object",
+            "properties": {
+                "clicks": {
+                    "type": "integer"
+                },
+                "date": {
+                    "description": "поддерживается в postgres",
+                    "type": "string",
+                    "format": "date"
+                },
+                "link_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "gorm.DeletedAt": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "string"
+                },
+                "valid": {
+                    "description": "Valid is true if Time is not NULL",
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_auth.ChangePasswordRequest": {
+            "type": "object",
+            "properties": {
+                "new_password": {
+                    "type": "string"
+                },
+                "old_password": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth.ChangeRoleRequest": {
+            "type": "object",
+            "required": [
+                "current_password",
+                "email",
+                "name",
+                "new_role"
+            ],
+            "properties": {
+                "accept_terms": {
+                    "description": "Согласие с условиями",
+                    "type": "boolean"
+                },
+                "current_password": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "new_role": {
+                    "type": "string",
+                    "enum": [
+                        "buyer",
+                        "seller",
+                        "moderator"
+                    ]
+                },
+                "phone_number": {
+                    "type": "string"
+                },
+                "store_address": {
+                    "type": "string"
+                },
+                "store_name": {
+                    "description": "Поля для продавца",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_auth.LoginRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -413,7 +1988,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.LoginResponse": {
+        "internal_auth.LoginResponse": {
             "type": "object",
             "properties": {
                 "token": {
@@ -421,7 +1996,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.RegisterRequest": {
+        "internal_auth.RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -440,39 +2015,30 @@ const docTemplate = `{
                 }
             }
         },
-        "category.Category": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "image_url": {
-                    "description": "Ссылка на изображение категории",
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "home.HomeData": {
+        "internal_home.HomeData": {
             "type": "object",
             "properties": {
                 "categories": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/category.Category"
+                        "$ref": "#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_category.Category"
+                    }
+                },
+                "featured_brands": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_brand.Brand"
                     }
                 },
                 "featured_products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/product.Product"
+                        "$ref": "#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_product.Product"
                     }
                 }
             }
         },
-        "link.GetAllLinksResponse": {
+        "internal_link.GetAllLinksResponse": {
             "type": "object",
             "properties": {
                 "count": {
@@ -481,12 +2047,12 @@ const docTemplate = `{
                 "links": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/link.Link"
+                        "$ref": "#/definitions/internal_link.Link"
                     }
                 }
             }
         },
-        "link.Link": {
+        "internal_link.Link": {
             "type": "object",
             "properties": {
                 "hash": {
@@ -495,7 +2061,7 @@ const docTemplate = `{
                 "stats": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/stat.Stat"
+                        "$ref": "#/definitions/github_com_ShopOnGO_ShopOnGO_prod_internal_stat.Stat"
                     }
                 },
                 "url": {
@@ -503,7 +2069,7 @@ const docTemplate = `{
                 }
             }
         },
-        "link.LinkCreateRequest": {
+        "internal_link.LinkCreateRequest": {
             "type": "object",
             "required": [
                 "url"
@@ -514,7 +2080,7 @@ const docTemplate = `{
                 }
             }
         },
-        "link.LinkUpdateRequest": {
+        "internal_link.LinkUpdateRequest": {
             "type": "object",
             "required": [
                 "url"
@@ -528,61 +2094,7 @@ const docTemplate = `{
                 }
             }
         },
-        "product.Product": {
-            "type": "object",
-            "properties": {
-                "color": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "discount": {
-                    "description": "CategoryID  uint   ` + "`" + `gorm:\"not null\" json:\"category_id\"` + "`" + `//foreign key\nBrandID      uint    ` + "`" + `gorm:\"not null\"  json:\"brand_id\"` + "`" + `\nPrice        float64 ` + "`" + `gorm:\"not null\"  json:\"price\"` + "`" + `",
-                    "type": "number"
-                },
-                "gallery": {
-                    "description": "JSON хранящий ссылки на изображения",
-                    "type": "string"
-                },
-                "gender": {
-                    "type": "string"
-                },
-                "is_available": {
-                    "description": "доступен",
-                    "type": "boolean"
-                },
-                "material": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "rating": {
-                    "description": "VendorCode   string  ` + "`" + `gorm:\"type:varchar(100);unique;not null\"json:\"vendor_code\"` + "`" + `//артикул",
-                    "type": "number"
-                },
-                "reviews_count": {
-                    "description": "количество отзывов",
-                    "type": "integer"
-                },
-                "season": {
-                    "type": "string"
-                },
-                "size": {
-                    "type": "string"
-                },
-                "stock": {
-                    "description": "количество в наличии",
-                    "type": "integer"
-                },
-                "video_url": {
-                    "description": "ImageURL    string  ` + "`" + `gorm:\"type:varchar(255)\" json:\"image_url\"` + "`" + `",
-                    "type": "string"
-                }
-            }
-        },
-        "stat.GetStatResponse": {
+        "internal_stat.GetStatResponse": {
             "type": "object",
             "properties": {
                 "period": {
@@ -593,33 +2105,307 @@ const docTemplate = `{
                 }
             }
         },
-        "stat.Stat": {
+        "service.Brand": {
             "type": "object",
             "properties": {
-                "clicks": {
-                    "type": "integer"
+                "description": {
+                    "type": "string"
                 },
-                "date": {
-                    "description": "поддерживается в postgres",
-                    "type": "string",
-                    "format": "date"
+                "logo": {
+                    "type": "string"
                 },
+                "model": {
+                    "$ref": "#/definitions/service.Model"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "video_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.Category": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "model": {
+                    "$ref": "#/definitions/service.Model"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.ClickRequest": {
+            "type": "object",
+            "properties": {
                 "link_id": {
                     "type": "integer"
                 }
             }
+        },
+        "service.CreateBrandRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "video_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.DeleteBrandRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "unscoped": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "service.DeleteCategoryByNameRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "unscoped": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "service.DeleteProductRequest": {
+            "type": "object",
+            "properties": {
+                "Unscoped": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "service.DeleteUserRequest": {
+            "type": "object",
+            "properties": {
+                "Unscoped": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "service.EmailRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "Например, 200 — успех, num — ошибка",
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.HomeDataResponse": {
+            "type": "object",
+            "properties": {
+                "brands": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/service.Brand"
+                    }
+                },
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/service.Category"
+                    }
+                },
+                "error": {
+                    "$ref": "#/definitions/service.ErrorResponse"
+                },
+                "featured_products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/service.Product"
+                    }
+                }
+            }
+        },
+        "service.Model": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "$ref": "#/definitions/timestamp.Timestamp"
+                },
+                "deleted_at": {
+                    "$ref": "#/definitions/timestamp.Timestamp"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "$ref": "#/definitions/timestamp.Timestamp"
+                }
+            }
+        },
+        "service.Product": {
+            "type": "object",
+            "properties": {
+                "brand_id": {
+                    "type": "integer"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "color": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "discount": {
+                    "type": "number"
+                },
+                "gallery": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "integer"
+                },
+                "is_available": {
+                    "type": "boolean"
+                },
+                "material": {
+                    "type": "string"
+                },
+                "model": {
+                    "$ref": "#/definitions/service.Model"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "rating": {
+                    "type": "number"
+                },
+                "reviews_count": {
+                    "type": "integer"
+                },
+                "season": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "stock": {
+                    "type": "integer"
+                },
+                "video_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.ProductList": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/service.ErrorResponse"
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/service.Product"
+                    }
+                }
+            }
+        },
+        "service.UpdateCategoryRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.User": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "model": {
+                    "$ref": "#/definitions/service.Model"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "integer"
+                }
+            }
+        },
+        "timestamp.Timestamp": {
+            "type": "object",
+            "properties": {
+                "nanos": {
+                    "description": "Non-negative fractions of a second at nanosecond resolution. Negative\nsecond values with fractions must still have non-negative nanos values\nthat count forward in time. Must be from 0 to 999,999,999\ninclusive.",
+                    "type": "integer"
+                },
+                "seconds": {
+                    "description": "Represents seconds of UTC time since Unix epoch\n1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to\n9999-12-31T23:59:59Z inclusive.",
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
-	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Version:          "1.0",
+	Host:             "localhost:8081",
+	BasePath:         "/",
+	Schemes:          []string{"http"},
+	Title:            "ShopOnGO API",
+	Description:      "API сервиса ShopOnGO, обеспечивающего авторизацию, управление пользователями, товарами и аналитикой.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
