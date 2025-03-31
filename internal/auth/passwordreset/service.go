@@ -17,11 +17,11 @@ import (
 type ResetService struct {
     Conf                *configs.Config
     SMTP                *smtp.SMTPSender
-    Storage             di.IURedisResetRepository
+    Storage             di.IRedisResetRepository
     UserRepository      di.IUserRepository
 }
 
-func NewResetService(conf *configs.Config, smtpSender *smtp.SMTPSender, storage di.IURedisResetRepository, user di.IUserRepository) *ResetService {
+func NewResetService(conf *configs.Config, smtpSender *smtp.SMTPSender, storage di.IRedisResetRepository, user di.IUserRepository) *ResetService {
 	return &ResetService{
         Conf:           conf,
 		SMTP:           smtpSender,
@@ -113,7 +113,7 @@ func (service *ResetService) VerifyCodeByEmail(toEmail, code string) error {
     return nil
 }
 
-func (service *ResetService) ResetPassword(code, toEmail, newPassword string) error {
+func (service *ResetService) ResetPassword(toEmail, newPassword string) error {
 	user, err := service.UserRepository.FindByEmail(toEmail)
 	if err != nil {
 		logger.Error("❌ ошибка при поиске пользователя по email: " + err.Error())
@@ -124,7 +124,8 @@ func (service *ResetService) ResetPassword(code, toEmail, newPassword string) er
         return errors.New("сброс пароля недоступен для пользователей, зарегистрированных через Google")
     }
 
-    storedCode, expiresAt, err := service.Storage.GetToken(toEmail)
+    // storedCode, expiresAt, err := service.Storage.GetToken(toEmail)
+	_, expiresAt, err := service.Storage.GetToken(toEmail)
 	if err != nil {
 		logger.Error("❌ не удалось получить токен для email " + toEmail + ": " + err.Error())
 		return fmt.Errorf("код не найден, запросите сброс пароля повторно")
@@ -132,9 +133,9 @@ func (service *ResetService) ResetPassword(code, toEmail, newPassword string) er
 	if time.Now().After(expiresAt) {
 		return errors.New("код истек, запросите новый")
 	}
-	if storedCode != code {
-		return errors.New("неверный код")
-	}
+	// if storedCode != code {
+	// 	return errors.New("неверный код")
+	// }
 	if err := service.Storage.DeleteToken(toEmail); err != nil {
 		logger.Error("❌ ошибка при удалении токена для email " + toEmail + ": " + err.Error())
 		return err

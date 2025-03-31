@@ -45,8 +45,7 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	router.HandleFunc("POST /auth/login", handler.Login())
 	router.HandleFunc("GET /oauth/google/login", handler.GoogleLogin)
 	router.HandleFunc("POST /auth/register", handler.Register())
-	router.HandleFunc("POST /auth/logout", handler.Logout())
-	router.Handle("POST /auth/change/password", middleware.IsAuthed(handler.ChangePassword(), deps.Config))
+	router.Handle("POST /auth/logout", middleware.IsAuthed(handler.Logout(), deps.Config))
 	router.Handle("POST /auth/change/role", middleware.IsAuthed(handler.ChangeUserRole(), deps.Config))
 }
 
@@ -69,19 +68,19 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			return
 		}
 
-		email, err := h.AuthService.Login(body.Email, body.Password)
+		userID, err := h.AuthService.Login(body.Email, body.Password)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		role, err := h.AuthService.GetUserRole(email)
+		role, err := h.AuthService.GetUserRole(body.Email)
 		if err != nil {
 			http.Error(w, ErrFailedToGetUserRole+": "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(email, role)
+		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(userID, role)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -121,19 +120,19 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 			return
 		}
 
-		email, err := h.AuthService.Register(body.Email, body.Password, body.Name)
+		userID, err := h.AuthService.Register(body.Email, body.Password, body.Name)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		role, err := h.AuthService.GetUserRole(email)
+		role, err := h.AuthService.GetUserRole(body.Email)
 		if err != nil {
 			http.Error(w, ErrFailedToGetUserRole+": "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(email, role)
+		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(userID, role)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -213,7 +212,7 @@ func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(user.Email, user.Role)
+	jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(user.ID, user.Role)
 	if err != nil {
 		http.Error(w, ErrFailedToGenerateTokens+": "+err.Error(), http.StatusInternalServerError)
 		return
@@ -247,6 +246,8 @@ func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 // @Router        /auth/logout [post]
 func (h *AuthHandler) Logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		userID, _ := r.Context().Value(middleware.ContextUserIDKey).(uint)
+
 		// Извлекаем refresh-токен из cookie
 		refreshCookie, err := r.Cookie("refresh_token")
 		if err != nil {
@@ -256,7 +257,7 @@ func (h *AuthHandler) Logout() http.HandlerFunc {
 		refreshToken := refreshCookie.Value
 
 		// Вызываем метод logout сервиса, который удаляет refresh-токен
-		if err := h.OAuth2Service.Logout(refreshToken); err != nil {
+		if err := h.OAuth2Service.Logout(refreshToken, userID); err != nil {
 			http.Error(w, ErrFailedToLogout+": "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -275,43 +276,6 @@ func (h *AuthHandler) Logout() http.HandlerFunc {
 			"message":      "Logout successful",
 			"removeToken":  "Please remove access token from your storage",
 		}, http.StatusOK)
-	}
-}
-
-
-// ChangePassword меняет пароль пользователя
-// @Summary        Смена пароля
-// @Description    Изменяет пароль пользователя, требует авторизации (Bearer токен)
-// @Tags           auth
-// @Accept         json
-// @Produce        json
-// @Param          body body ChangePasswordRequest true "Старый и новый пароль"
-// @Success        200 {object} map[string]string "Сообщение об успешной смене пароля"
-// @Failure        400 {string} string "Некорректные данные или старый пароль неверен"
-// @Failure        401 {string} string "Неавторизован"
-// @Failure        500 {string} string "Ошибка сервера"
-// @Router         /auth/change/password [post]
-func (h *AuthHandler) ChangePassword() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := req.HandleBody[ChangePasswordRequest](&w, r)
-		if err != nil {
-			return
-		}
-
-		// Извлекаем email пользователя из контекста (middleware.IsAuthed добавляет его)
-		emailAny := r.Context().Value(middleware.ContextEmailKey)
-		email, ok := emailAny.(string)
-		if !ok || email == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		if err := h.AuthService.ChangePassword(email, body.OldPassword, body.NewPassword); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		res.Json(w, map[string]string{"message": "Password changed successfully"}, http.StatusOK)
 	}
 }
 
@@ -342,8 +306,14 @@ func (h *AuthHandler) ChangeUserRole() http.HandlerFunc {
             return
         }
 
+		userID, ok := r.Context().Value(middleware.ContextUserIDKey).(uint)
+        if !ok {
+            http.Error(w, "user id not found", http.StatusUnauthorized)
+            return
+        }
+
         // Генерируем новый JWT и refresh-токен с обновленной ролью
-        jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(body.Email, body.NewRole)
+        jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(userID, body.NewRole)
         if err != nil {
             http.Error(w, err.Error(), http.StatusInternalServerError)
             return

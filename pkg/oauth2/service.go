@@ -17,10 +17,9 @@ import (
 
 // OAuth2Service определяет бизнес-методы для работы с токенами.
 type OAuth2Service interface {
-	GenerateTokens(userID, role string) (accessToken, refreshToken string, err error)
+	GenerateTokens(userID uint, role string) (accessToken, refreshToken string, err error)
 	RefreshTokens(refreshToken string) (accessToken, newRefreshToken string, err error)
-	Logout(refreshToken string) error
-	// UserRole(email string) (string, error)
+	Logout(refreshToken string, userID uint) error
 }
 
 // oauth2ServiceImpl – реализация OAuth2Service.
@@ -66,9 +65,9 @@ func NewOAuth2Service(config *configs.Config, repo RefreshTokenRepository) OAuth
 }
 
 // GenerateTokens генерирует новый access‑и refresh‑токены.
-func (s *oauth2ServiceImpl) GenerateTokens(userID, role string) (string, string, error) {
+func (s *oauth2ServiceImpl) GenerateTokens(userID uint, role string) (string, string, error) {
 	// Генерация access‑токена с использованием JWT
-	accessToken, err := jwt.NewJWT(s.secret).Create(jwt.JWTData{Email: userID, Role: role}, s.jwtTTL)
+	accessToken, err := jwt.NewJWT(s.secret).Create(jwt.JWTData{UserID: userID, Role: role}, s.jwtTTL)
 	if err != nil {
 		return "", "", err
 	}
@@ -78,7 +77,7 @@ func (s *oauth2ServiceImpl) GenerateTokens(userID, role string) (string, string,
 	// Формируем запрос для генерации токена через OAuth2 менеджер
 	tgr := &oauth2.TokenGenerateRequest{
 		ClientID: "default",
-		UserID:   userID,
+		UserID:   fmt.Sprint(userID),
 	}
 
 	ti, err := s.manager.GenerateAccessToken(s.ctx, oauth2.PasswordCredentials, tgr)
@@ -125,6 +124,6 @@ func (s *oauth2ServiceImpl) RefreshTokens(refreshToken string) (string, string, 
 }
 
 // Logout удаляет refresh-токен, вызывая метод репозитория.
-func (s *oauth2ServiceImpl) Logout(refreshToken string) error {
-	return s.repo.DeleteRefreshToken(refreshToken)
+func (s *oauth2ServiceImpl) Logout(refreshToken string, userID uint) error {
+	return s.repo.DeleteRefreshToken(refreshToken, userID)
 }

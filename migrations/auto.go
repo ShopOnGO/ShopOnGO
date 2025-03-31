@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/brand"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/cart"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/link"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
@@ -41,7 +42,7 @@ func RunMigrations() error {
 		panic(err)
 	}
 
-	err = db.AutoMigrate(&link.Link{}, &user.User{}, &stat.Stat{}, &product.Product{}, &category.Category{}, &brand.Brand{})
+	err = db.AutoMigrate(&link.Link{}, &user.User{}, &stat.Stat{}, &product.Product{}, &category.Category{}, &brand.Brand{}, &cart.Cart{})
 	if err != nil {
 		return err
 	}

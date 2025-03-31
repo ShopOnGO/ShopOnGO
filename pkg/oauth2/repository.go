@@ -10,16 +10,10 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-type RefreshTokenData struct {
-	UserID string `json:"user_id"`
-	Role   string `json:"role"`
-}
-
-// RefreshTokenRepository описывает методы для работы с refresh‑токенами.
 type RefreshTokenRepository interface {
 	GetRefreshTokenData(refreshToken string) (*RefreshTokenData, error)
 	StoreRefreshToken(data *RefreshTokenData, refreshToken string, expiresIn time.Duration) error
-	DeleteRefreshToken(refreshToken string) error
+	DeleteRefreshToken(refreshToken string, userID uint) error
 }
 
 // RedisRefreshTokenRepository реализует RefreshTokenRepository с помощью Redis.
@@ -37,7 +31,7 @@ func NewRedisRefreshTokenRepository(redis *redisdb.RedisDB) *RedisRefreshTokenRe
 }
 
 func (r *RedisRefreshTokenRepository) StoreRefreshToken(data *RefreshTokenData, refreshToken string, expiresIn time.Duration) error {
-	oldKey := fmt.Sprintf("refresh:user:%s", data.UserID)
+	oldKey := fmt.Sprintf("refresh:user:%d", data.UserID)
 	newKey := fmt.Sprintf("refresh:%s", refreshToken)
 
 	jsonData, err := json.Marshal(data)
@@ -80,7 +74,10 @@ func (r *RedisRefreshTokenRepository) GetRefreshTokenData(refreshToken string) (
 	return &data, nil
 }
 
-func (r *RedisRefreshTokenRepository) DeleteRefreshToken(refreshToken string) error {
-	key := fmt.Sprintf("refresh:%s", refreshToken)
-	return r.redis.Del(r.ctx, key).Err()
+func (r *RedisRefreshTokenRepository) DeleteRefreshToken(refreshToken string, userID uint) error {
+    tokenKey := fmt.Sprintf("refresh:%s", refreshToken)
+    userKey := fmt.Sprintf("refresh:user:%d", userID)
+    
+    return r.redis.Del(r.ctx, tokenKey, userKey).Err()
 }
+

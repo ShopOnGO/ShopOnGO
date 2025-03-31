@@ -14,7 +14,7 @@ type TokenManager interface {
 	Parse(accessToken string) (bool, *JWTData, error)
 }
 type JWTData struct {
-	Email string
+	UserID uint
 	Role string
 }
 type JWT struct {
@@ -34,7 +34,7 @@ func (j *JWT) Create(data JWTData, ttl time.Duration) (string, error) {
 
 	//метод шифрования
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": data.Email,
+		"user_id": data.UserID,
 		"role": data.Role,
 		"exp":   time.Now().Add(ttl).Unix(),
 		//данные
@@ -61,11 +61,12 @@ func (j *JWT) Parse(token string) (bool, *JWTData, error) {
 		return false, nil, errors.New("invalid token claims")
 	}
 
-	email, ok := claims["email"].(string)
+	userID, ok := claims["user_id"].(float64) // JWT хранит числовые значения как float64
 	if !ok {
-		logger.Error("�� Invalid token: missing email")
-		return false, nil, errors.New("invalid token: missing email")
+		logger.Error("Invalid token: missing user_id")
+		return false, nil, errors.New("invalid token: missing user_id")
 	}
+	userIDUint := uint(userID)
 
 	role, ok := claims["role"].(string)
 	if !ok {
@@ -74,7 +75,7 @@ func (j *JWT) Parse(token string) (bool, *JWTData, error) {
 	}
 
 	return t.Valid, &JWTData{
-		Email: email,
+		UserID: userIDUint,
 		Role:  role,
 	}, nil
 

@@ -113,7 +113,7 @@ func (h *ResetHandler) ResetPassword() http.HandlerFunc {
 			return
 		}
 		logger.Info("🔑 Запрос на установку нового пароля для email: " + req.Email)
-		if err := h.ResetService.ResetPassword(req.Code, req.Email, req.NewPassword); err != nil {
+		if err := h.ResetService.ResetPassword(req.Email, req.NewPassword); err != nil {
 			logger.Error("❌ ошибка при установке нового пароля для email " + req.Email + ": " + err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

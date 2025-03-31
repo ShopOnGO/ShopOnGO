@@ -27,6 +27,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/auth"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/auth/passwordreset"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/brand"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/cart"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/home"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/link"
@@ -66,6 +67,7 @@ func App() http.Handler {
 	categoryRepository := category.NewCategoryRepository(db)
 	productsRepository := product.NewProductRepository(db)
 	brandsRepository := brand.NewBrandRepository(db)
+	cartRepository := cart.NewCartRepository(db)
 	refreshTokenRepository := oauth2.NewRedisRefreshTokenRepository(redis)
 	resetPasswordRepository := passwordreset.NewRedisResetRepository(redis)
 
@@ -73,6 +75,7 @@ func App() http.Handler {
 	// Services
 	authService := auth.NewAuthService(userRepository)
 	homeService := home.NewHomeService(categoryRepository, productsRepository, brandsRepository)
+	cartService := cart.NewCartService(cartRepository)
 	statService := stat.NewStatService(&stat.StatServiceDeps{
 		StatRepository: statRepository,
 		EventBus:       eventBus,
@@ -99,6 +102,10 @@ func App() http.Handler {
 		HomeService: homeService,
 		Config:      conf,
 	})
+	cart.NewCartHandler(router, cart.CartHandlerDeps{
+		CartService: cartService,
+		Config:      conf,
+    })
 	oauth2.NewOAuth2Handler(router, oauth2.OAuth2HandlerDeps{
 		Service: oauth2Service,
 		Config: conf,

@@ -5,6 +5,7 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
 )
 
@@ -24,8 +25,7 @@ func NewHomeHandler(router *http.ServeMux, deps HomeHandlerDeps) {
 	}
 	//router.HandleFunc("GET /{hash}", handler.GoTo())
 	//router.Handle("GET /link", middleware.IsAuthed(handler.GetAll(), deps.Config))
-	router.Handle("GET /home", handler.GetHomePage()) // mb Handle
-
+	router.Handle("GET /home", middleware.IsGuest(handler.GetHomePage(), deps.Config)) // mb Handle
 }
 
 // func (h *HomeHandler) GetAll() http.Handler {
@@ -54,3 +54,5 @@ func (h *HomeHandler) GetHomePage() http.HandlerFunc {
 		res.Json(w, homeData, 200)
 	}
 }
+
+//Generate

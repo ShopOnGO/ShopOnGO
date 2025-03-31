@@ -4,11 +4,10 @@ import (
 	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/brand"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/cart"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
-
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2"
 )
 
 type IStatRepository interface {
@@ -25,14 +24,7 @@ type IUserRepository interface {
 	UpdateRole(user *user.User, newRole string) (error)
 }
 
-type IURefreshTokenRepository interface {
-	GetRefreshTokenData(refreshToken string) (*oauth2.RefreshTokenData, error)
-	StoreRefreshToken(data *oauth2.RefreshTokenData, refreshToken string, expiresIn time.Duration) error
-	DeleteRefreshToken(refreshToken string) error
-	// GetUserRoleByEmail(email string) (string, error)
-}
-
-type IURedisResetRepository interface {
+type IRedisResetRepository interface {
     SaveToken(email, code string, expiresAt time.Time) error
     GetToken(email string) (string, time.Time, error)
     DeleteToken(email string) error
@@ -63,4 +55,13 @@ type IBrandRepository interface {
 	FindByName(name string) (*brand.Brand, error)
 	Update(brand *brand.Brand) (*brand.Brand, error)
 	Delete(id uint) error
+}
+
+type ICartRepository interface {
+	CreateCart(cart *cart.Cart) error
+	GetCartByID(id uint) (*cart.Cart, error)
+	DeleteCart(id uint) error
+	CreateCartItem(cartItem *cart.CartItem) error
+	GetCartItemsByCartID(cartID uint) ([]cart.CartItem, error)
+	DeleteCartItem(id uint) error
 }

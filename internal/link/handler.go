@@ -1,7 +1,6 @@
 package link
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -89,10 +88,6 @@ func (h *LinkHandler) Create() http.HandlerFunc {
 // @Router        /link/{id} [put]
 func (h *LinkHandler) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		email, ok := r.Context().Value(middleware.ContextEmailKey).(string)
-		if ok {
-			fmt.Println(email)
-		}
 		body, err := req.HandleBody[LinkUpdateRequest](&w, r)
 		if err != nil {
 			return
