@@ -13,14 +13,10 @@ import (
 type key string // делается чтобы не затирать другие значения в программе
 
 const (
-	ContextEmailKey key = "ContentEmailKey"
+	ContextUserIDKey key = "ContextUserIDKey"
 	ContextRolesKey key = "ContextRolesKey"
 )
 
-func writeUnauthed(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusUnauthorized)
-	w.Write([]byte(http.StatusText(http.StatusUnauthorized)))
-}
 func IsAuthed(next http.Handler, config *configs.Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authedHeader := r.Header.Get("Authorization")
@@ -48,10 +44,15 @@ func IsAuthed(next http.Handler, config *configs.Config) http.Handler {
 			writeUnauthed(w)
 			return
 		}
-		logger.Info("✅ Token is valid for:", data.Email)
-		ctx := context.WithValue(r.Context(), ContextEmailKey, data.Email)
+		logger.Info("✅ Token is valid for:", data.UserID)
+		ctx := context.WithValue(r.Context(), ContextUserIDKey, data.UserID)
 		ctx = context.WithValue(ctx, ContextRolesKey, data.Role)
 		req := r.WithContext(ctx) // для передачи контекста необходимо пересоздать запроc
 		next.ServeHTTP(w, req)    //все handlers теперь обогащены необходимым контекстом
 	})
+}
+
+func writeUnauthed(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusUnauthorized)
+	w.Write([]byte(http.StatusText(http.StatusUnauthorized)))
 }

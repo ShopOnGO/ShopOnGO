@@ -10,11 +10,10 @@ import (
 type MockUserRepository struct{}
 
 func (repo *MockUserRepository) Create(u *user.User) (*user.User, error) {
-	return &user.User{
-		Email: "a@a.ru",
-	}, nil
-
+    u.ID = 1
+    return u, nil
 }
+
 func (repo *MockUserRepository) FindByEmail(email string) (*user.User, error) {
 	return nil, nil
 }
@@ -43,15 +42,13 @@ func (repo *MockUserRepository) UpdateRole(user *user.User, role string) error {
 func TestRegisterSuccess(t *testing.T) {
 	authService := auth.NewAuthService(&MockUserRepository{})
 
-	const initialEmail = "a@a.ru"
-	email, err := authService.Register(initialEmail, "password123", "dan")
+	const expectedID uint = 1
+	userID, err := authService.Register("a@a.ru", "password123", "dan")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if email != initialEmail {
-		t.Fatalf("email %s do not match expected %s", email, initialEmail)
+	if userID != expectedID {
+		t.Fatalf("userID %d does not match expected %d", userID, expectedID)
 	}
-	// по сути обычный юнит тест для регистрации, только делаем вид записи в базу
-	// для написания просто изучаем функцию и имитируем работу ее зависимостей
 }

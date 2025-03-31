@@ -3,10 +3,12 @@ module github.com/ShopOnGO/ShopOnGO/prod
 go 1.23.3
 
 require (
+	github.com/go-gomail/gomail v0.0.0-20160411212932-81ebce5c23df
 	github.com/ShopOnGO/admin-proto v0.0.0-20250325182951-03ae22714a0f
 	github.com/go-oauth2/oauth2/v4 v4.5.2
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.4
@@ -26,6 +28,8 @@ require (
 	github.com/urfave/cli/v2 v2.27.6 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	golang.org/x/net v0.37.0 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
 	google.golang.org/protobuf v1.36.4 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -45,11 +49,9 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
-	github.com/redis/go-redis/v9 v9.7.1
 	github.com/tidwall/btree v0.0.0-20191029221954-400434d76274 // indirect
 	github.com/tidwall/buntdb v1.1.2 // indirect
 	github.com/tidwall/gjson v1.12.1 // indirect

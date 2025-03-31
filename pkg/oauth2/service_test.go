@@ -11,7 +11,7 @@ import (
 )
 
 type RefreshTokenData struct {
-	UserID string `json:"user_id"`
+	UserID uint `json:"user_id"`
 	Role   string `json:"role"`
 }
 
@@ -19,7 +19,7 @@ type RefreshTokenData struct {
 type fakeRefreshTokenRepo struct {
 	storeFunc  func(data *oauth2.RefreshTokenData, refreshToken string, expiresIn time.Duration) error
 	getFunc    func(refreshToken string) (*oauth2.RefreshTokenData, error)
-	deleteFunc func(refreshToken string) error
+	deleteFunc func(refreshToken string, userID uint) error
 }
 
 func (f *fakeRefreshTokenRepo) StoreRefreshToken(data *oauth2.RefreshTokenData, refreshToken string, expiresIn time.Duration) error {
@@ -36,17 +36,17 @@ func (f *fakeRefreshTokenRepo) GetRefreshTokenData(refreshToken string) (*oauth2
 	return nil, errors.New("token not found")
 }
 
-func (f *fakeRefreshTokenRepo) DeleteRefreshToken(refreshToken string) error {
+func (f *fakeRefreshTokenRepo) DeleteRefreshToken(refreshToken string, userID uint) error {
 	if f.deleteFunc != nil {
-		return f.deleteFunc(refreshToken)
+		return f.deleteFunc(refreshToken, userID)
 	}
 	return nil
 }
 
 type OAuth2Service interface {
-	GenerateTokens(userID, role string) (string, string, error)
+	GenerateTokens(userID uint, role string) (string, string, error)
 	RefreshTokens(refreshToken string) (string, string, error)
-	Logout(refreshToken string) error
+	Logout(refreshToken string, userID uint) error
 }
 
 // Для простоты тестирования можно создать минимальную конфигурацию и использовать in-memory хранилище.
@@ -76,7 +76,7 @@ func TestGenerateTokens_Success(t *testing.T) {
 
 	service := oauth2.NewOAuth2Service(conf, fakeRepo)
 
-	accessToken, refreshToken, err := service.GenerateTokens("user@example.com", "admin")
+	accessToken, refreshToken, err := service.GenerateTokens(123, "admin")
 	if err != nil {
 		t.Fatalf("ожидалась успешная генерация токенов, получена ошибка: %v", err)
 	}
@@ -105,7 +105,7 @@ func TestGenerateTokens_RepoStoreError(t *testing.T) {
 
 	service := oauth2.NewOAuth2Service(conf, fakeRepo)
 
-	_, _, err := service.GenerateTokens("user@example.com", "admin")
+	_, _, err := service.GenerateTokens(123, "admin")
 	if err == nil {
 		t.Error("ожидалась ошибка при сохранении refresh-токена, получено nil")
 	}
@@ -134,7 +134,7 @@ func TestGenerateTokens_StoredData(t *testing.T) {
 
 	service := oauth2.NewOAuth2Service(conf, fakeRepo)
 
-	userID := "user@example.com"
+	userID := uint(123)
 	role := "admin"
 	_, refreshToken, err := service.GenerateTokens(userID, role)
 	if err != nil {
@@ -146,7 +146,7 @@ func TestGenerateTokens_StoredData(t *testing.T) {
 		t.Fatal("данные не были сохранены в репозитории")
 	}
 	if storedData.UserID != userID || storedData.Role != role {
-		t.Errorf("ожидались данные UserID=%s, Role=%s, получены UserID=%s, Role=%s", userID, role, storedData.UserID, storedData.Role)
+		t.Errorf("ожидались данные UserID=%d, Role=%s, получены UserID=%d, Role=%s", userID, role, storedData.UserID, storedData.Role)
 	}
 	if storedToken != refreshToken {
 		t.Errorf("ожидался refreshToken=%s, получен %s", refreshToken, storedToken)
@@ -173,7 +173,7 @@ func TestRefreshTokens_Success(t *testing.T) {
 			return nil
 		},
 		getFunc: func(refreshToken string) (*oauth2.RefreshTokenData, error) {
-			return &oauth2.RefreshTokenData{UserID: "user@example.com", Role: "admin"}, nil
+			return &oauth2.RefreshTokenData{UserID: 123, Role: "admin"}, nil
 		},
 	}
 
@@ -211,14 +211,14 @@ func TestLogout_Success(t *testing.T) {
 	conf := getTestConfig()
 
 	fakeRepo := &fakeRefreshTokenRepo{
-		deleteFunc: func(refreshToken string) error {
+		deleteFunc: func(refreshToken string, userID uint) error {
 			return nil
 		},
 	}
 
 	service := oauth2.NewOAuth2Service(conf, fakeRepo)
 
-	err := service.Logout("valid_refresh_token")
+	err := service.Logout("valid_refresh_token", 1)
 	if err != nil {
 		t.Fatalf("ожидалось успешное удаление токена, получена ошибка: %v", err)
 	}
@@ -231,14 +231,14 @@ func TestLogout_Failure(t *testing.T) {
 	expectedErr := errors.New("failed to delete refresh token")
 
 	fakeRepo := &fakeRefreshTokenRepo{
-		deleteFunc: func(refreshToken string) error {
+		deleteFunc: func(refreshToken string, userID uint) error {
 			return expectedErr
 		},
 	}
 
 	service := oauth2.NewOAuth2Service(conf, fakeRepo)
 
-	err := service.Logout("valid_refresh_token")
+	err := service.Logout("valid_refresh_token", 1)
 	if err == nil || !errors.Is(err, expectedErr) {
 		t.Errorf("ожидалась ошибка %v, получена %v", expectedErr, err)
 	}

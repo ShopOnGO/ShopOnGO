@@ -6,6 +6,7 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/di"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"gorm.io/gorm"
 
 	"golang.org/x/crypto/bcrypt"
@@ -22,28 +23,28 @@ func NewAuthService(userRepository di.IUserRepository) *AuthService {
 }
 
 // Methods
-func (service *AuthService) Register(email, password, name string) (string, error) {
+func (service *AuthService) Register(email, password, name string) (uint, error) {
 	existedUser, err := service.UserRepository.FindByEmail(email)
 
 	if err != nil && err != gorm.ErrRecordNotFound {
-        return "", err
+        return 0, err
     }
 
     if existedUser != nil {
         // Если пользователь найден, проверяем его провайдера
-        if existedUser.Provider == "google" || existedUser.Password == "" {
-            return "", errors.New(ErrWrongCredentials) // У Google-юзеров нет пароля
+        if existedUser.Provider == "google" || existedUser.PasswordHash == "" {
+            return 0, errors.New(ErrGoogleAuthToLocalFailed) // У Google-юзеров нет пароля
         }
-        return "", errors.New(ErrUserExists) // Пользователь с таким email уже существует
+        return 0, errors.New(ErrUserExists) // Пользователь с таким email уже существует
     }
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost) //дефолтная cost даёт 2^10 раундов шифрования
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	user := &user.User{
 		Email:    email,
-		Password: string(hashedPassword),
+		PasswordHash: string(hashedPassword),
 		Name:     name,
 		Role: "buyer",
 		Provider: "local",
@@ -51,27 +52,32 @@ func (service *AuthService) Register(email, password, name string) (string, erro
 
 	_, err = service.UserRepository.Create(user)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	return user.Email, nil
+	return user.ID, nil
 }
 
-func (service *AuthService) Login(email, password string) (string, error) {
+func (service *AuthService) Login(email, password string) (uint, error) {
 	existedUser, _ := service.UserRepository.FindByEmail(email)
 	if existedUser == nil {
-		return "", errors.New(ErrWrongCredentials)
+		return 0, errors.New(ErrWrongCredentials)
 	}
 
-	if existedUser.Provider == "google" || existedUser.Password == "" {
-		return "", errors.New(ErrWrongCredentials) // У Google-юзеров нет пароля
+	if existedUser.Provider == "google" || existedUser.PasswordHash == "" {
+		return 0, errors.New(ErrGoogleAuthToLocalFailed) // У Google-юзеров нет пароля
 	}
+	logger.Info("Сохраненный пароль в БД:", existedUser.PasswordHash)
 
-	err := bcrypt.CompareHashAndPassword([]byte(existedUser.Password), []byte(password)) //дефолтная cost даёт 2^10 раундов шифрования
+	logger.Info("Введенный пароль: " + password)
+	logger.Info("Хеш пароля из БД: " + existedUser.PasswordHash)
+
+	err := bcrypt.CompareHashAndPassword([]byte(existedUser.PasswordHash), []byte(password)) //дефолтная cost даёт 2^10 раундов шифрования
 	if err != nil {
-		return "", errors.New(ErrWrongCredentials)
+		logger.Error("❌ Ошибка сравнения паролей: " + err.Error())
+		return 0, errors.New(ErrWrongCredentials)
 	}
 
-	return email, nil
+	return existedUser.ID, nil
 }
 
 func (service *AuthService) GetOrCreateUserByGoogle(userInfo GoogleUserInfo) (*user.User, error) {
@@ -82,8 +88,8 @@ func (service *AuthService) GetOrCreateUserByGoogle(userInfo GoogleUserInfo) (*u
 			// Если пользователь не найден, создаём нового
 			role = "buyer"
 			newUser := &user.User{
-				Email:    userInfo.Email,
 				Name:     userInfo.Name,
+				Email:    userInfo.Email,
 				Role:     role,
 				Provider: "google",
 			}
@@ -98,45 +104,25 @@ func (service *AuthService) GetOrCreateUserByGoogle(userInfo GoogleUserInfo) (*u
 	return userInPostgres, nil
 }
 
-func (service *AuthService) ChangePassword(email, oldPassword, newPassword string) error {
-	userData, _ := service.UserRepository.FindByEmail(email)
-	if userData == nil {
-		return errors.New(ErrWrongCredentials)
-	}
-
-	if userData.Provider == "google" || userData.Password == "" {
-		return errors.New(ErrWrongCredentials) // У Google-юзеров нет пароля
-	}
-
-	err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(oldPassword))
-	if err != nil {
-		return errors.New(ErrWrongCredentials)
-	}
-
-	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-
-	if err != nil {
-		return fmt.Errorf(FailedToHashNewPassword+": %w", err)
-	}
-
-	if err := service.UserRepository.UpdateUserPassword(userData.ID, string(newPasswordHash)); err != nil {
-		return fmt.Errorf(FailedToUpdatePassword+": %w", err)
-	}
-
-	return nil
-}
-
-func (service *AuthService) UpdateUserRole(email, newRole string) error {
-    userData, err := service.UserRepository.FindByEmail(email)
+func (service *AuthService) UpdateUser(data *ChangeRoleRequest) error {
+    userData, err := service.UserRepository.FindByEmail(data.Email)
     if err != nil {
         return fmt.Errorf(ErrFailedToFindUser+": %w", err)
     }
-
     if userData == nil {
         return errors.New(ErrUserNotFound)
     }
 
-    err = service.UserRepository.UpdateRole(userData, newRole)
+    userData.Role = data.NewRole
+	userData.Phone = data.Phone
+    if data.NewRole == "seller" {
+        userData.StoreName = &data.StoreName
+        userData.StoreAddress = &data.StoreAddress
+        userData.StorePhone = &data.StorePhone
+    }
+    userData.AcceptTerms = data.AcceptTerms
+
+	_, err = service.UserRepository.Update(userData)
     if err != nil {
         return fmt.Errorf(ErrFailedToUpdateUserRole+": %w", err)
     }
