@@ -10,16 +10,16 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/req"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
-
-	"gorm.io/gorm"
 )
 
 type LinkHandlerDeps struct { // содержит все необходимые элементы заполнения. это DC
+	LinkService    *LinkService
 	LinkRepository *LinkRepository
 	Config         *configs.Config
 	EventBus       *event.EventBus
 }
 type LinkHandler struct { // это уже рабоая структура
+	LinkService    *LinkService
 	LinkRepository *LinkRepository
 	EventBus       *event.EventBus
 }
@@ -27,6 +27,7 @@ type LinkHandler struct { // это уже рабоая структура
 func NewLinkHandler(router *http.ServeMux, deps LinkHandlerDeps) {
 	handler := &LinkHandler{
 		LinkRepository: deps.LinkRepository,
+		LinkService:    deps.LinkService,
 		EventBus:       deps.EventBus,
 	}
 	router.Handle("POST /link", middleware.IsAuthed(handler.Create(), deps.Config))
@@ -55,16 +56,7 @@ func (h *LinkHandler) Create() http.HandlerFunc {
 			return
 		}
 
-		link := NewLink(body.Url) // может быть коллизия
-		for {
-			existedLink, _ := h.LinkRepository.GetByHash(link.Hash)
-			if existedLink == nil {
-				break
-			}
-			link.GenereteHash()
-		}
-
-		createdLink, err := h.LinkRepository.Create(link)
+		createdLink, err := h.LinkService.CreateLink(body.Url) // может быть коллизия
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -98,11 +90,8 @@ func (h *LinkHandler) Update() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		link, err := h.LinkRepository.Update(&Link{
-			Model: gorm.Model{ID: uint(id)},
-			Url:   body.Url,
-			Hash:  body.Hash,
-		})
+
+		link, err := h.LinkService.UpdateLink(uint(id), body.Url, body.Hash)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -131,17 +120,16 @@ func (h *LinkHandler) Delete() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		_, err = h.LinkRepository.GetById(uint(id))
+		err = h.LinkService.DeleteLink(uint(id))
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		}
-		err = h.LinkRepository.Delete(uint(id))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			if err.Error() == "link not found" {
+				http.Error(w, err.Error(), http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		}
 		res.Json(w, nil, 200)
+
 	}
 }
 
@@ -156,16 +144,12 @@ func (h *LinkHandler) Delete() http.HandlerFunc {
 func (h *LinkHandler) GoTo() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		hash := r.PathValue("hash")
-		link, err := h.LinkRepository.GetByHash(hash)
+
+		link, err := h.LinkService.GoTo(hash)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
-		//h.StatRepository.AddClick(link.ID) // полное описание вызываемого метода для sideEffect
-		go h.EventBus.Publish(event.Event{
-			Type: event.LInkVisitedEvent,
-			Data: link.ID, // Обработка этой штуки сидит вообще в main
-		})
 		http.Redirect(w, r, link.Url, http.StatusTemporaryRedirect)
 	}
 }
@@ -182,7 +166,7 @@ func (h *LinkHandler) GoTo() http.HandlerFunc {
 // @Success       200 {object} GetAllLinksResponse
 // @Failure       400 {string} string "Некорректные параметры limit/offset"
 // @Router        /link [get]
-func (h *LinkHandler) GetAll() http.HandlerFunc {
+func (h *LinkHandler) GetAll() http.HandlerFunc { //recheck
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 		if err != nil {
@@ -193,11 +177,18 @@ func (h *LinkHandler) GetAll() http.HandlerFunc {
 		if err != nil {
 			http.Error(w, "Invalid offset", http.StatusBadRequest)
 			return
+		} // here ->
+		links, count, err := h.LinkService.GetAll(limit, offset)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		links := GetAllLinksResponse{
-			Links: h.LinkRepository.GetAll(limit, offset),
-			Count: h.LinkRepository.Count(),
+
+		linksResponse := GetAllLinksResponse{
+			Links: links,
+			Count: count,
 		}
-		res.Json(w, links, 200)
+
+		res.Json(w, linksResponse, 200)
 	}
 }

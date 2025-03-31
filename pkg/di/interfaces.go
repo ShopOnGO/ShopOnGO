@@ -35,7 +35,7 @@ type IRedisResetRepository interface {
 
 type IProductRepository interface {
 	Create(product *product.Product) (*product.Product, error)
-	GetByCategory(category *category.Category) ([]product.Product, error)
+	GetByCategory(id uint) ([]product.Product, error)
 	GetByName(name string) ([]product.Product, error)
 	GetFeaturedProducts(amount uint, random bool) ([]product.Product, error)
 	Update(product *product.Product) (*product.Product, error)
