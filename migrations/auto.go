@@ -43,7 +43,14 @@ func RunMigrations() error {
 		panic(err)
 	}
 
-	err = db.AutoMigrate(&link.Link{}, &user.User{}, &stat.Stat{}, &product.Product{}, &category.Category{}, &brand.Brand{}, &productVariant.ProductVariant{}, &cart.Cart{})
+	err = db.AutoMigrate(
+		&link.Link{}, 
+		&stat.Stat{}, 
+		&user.User{}, 
+		&product.Product{}, &productVariant.ProductVariant{}, 
+		&category.Category{}, 
+		&brand.Brand{}, 
+		&cart.Cart{}, &cart.CartItem{})
 
 	if err != nil {
 		return err

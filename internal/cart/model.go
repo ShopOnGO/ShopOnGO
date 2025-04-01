@@ -7,7 +7,7 @@ import (
 type Cart struct {
 	gorm.Model   `swaggerignore:"true"`
 	UserID    uint       `gorm:"index"`
-	GuestID   string 	 `gorm:"index"`
+	GuestID   []byte 	 `gorm:"type:bytea;index"`
 	CartItems []CartItem `gorm:"foreignKey:CartID"`
 }
 

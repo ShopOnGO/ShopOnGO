@@ -25,7 +25,7 @@ func NewHomeHandler(router *http.ServeMux, deps HomeHandlerDeps) {
 	}
 	//router.HandleFunc("GET /{hash}", handler.GoTo())
 	//router.Handle("GET /link", middleware.IsAuthed(handler.GetAll(), deps.Config))
-	router.Handle("GET /home", middleware.IsGuest(handler.GetHomePage(), deps.Config)) // mb Handle
+	router.Handle("GET /home", middleware.AuthOrGuest(handler.GetHomePage(), deps.Config)) // mb Handle
 }
 
 // func (h *HomeHandler) GetAll() http.Handler {
