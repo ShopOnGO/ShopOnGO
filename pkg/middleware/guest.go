@@ -3,49 +3,71 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/jwt"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/google/uuid"
+	"github.com/gorilla/sessions"
 )
 
-const ContextGuestIDKey key = "ContextGuestIDKey"
+type contextKey string
 
-func IsGuest(next http.Handler, config *configs.Config) http.Handler {
+const (
+	ContextGuestIDKey contextKey = "guest_id"
+)
+
+var store = sessions.NewCookieStore([]byte("super-secret-key"))
+
+func AuthOrGuest(next http.Handler, config *configs.Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Проверяем, есть ли уже userID в контексте (значит, пользователь авторизован)
-		if userID, ok := r.Context().Value(ContextUserIDKey).(uint); ok && userID != 0 {
-			next.ServeHTTP(w, r) // Если авторизован, пропускаем дальше
+		logger.Infof("Received request: %s %s", r.Method, r.URL.Path)
+		authedHeader := r.Header.Get("Authorization")
+		if strings.HasPrefix(authedHeader, "Bearer ") {
+			token := strings.TrimPrefix(authedHeader, "Bearer ")
+			isValid, data, err := jwt.NewJWT(config.OAuth.Secret).Parse(token)
+
+			if err != nil || !isValid {
+				http.Error(w, "Invalid token", http.StatusUnauthorized)
+				logger.Errorf("Invalid token: %v", err)
+				return
+			}
+			logger.Infof("Token valid, UserID: %d, Role: %s", data.UserID, data.Role)
+
+			// Токен валиден, добавляем userID в контекст
+			ctx := context.WithValue(r.Context(), ContextUserIDKey, data.UserID)
+			ctx = context.WithValue(ctx, ContextRolesKey, data.Role)
+			req := r.WithContext(ctx)
+			next.ServeHTTP(w, req)
 			return
 		}
 
-		cookie, err := r.Cookie("guestID")
-		var guestID string
-		if err != nil {
-			guestID = GenerateGuestID()
-			http.SetCookie(w, &http.Cookie{
-				Name:     "guestID",
-				Value:    guestID,
-				HttpOnly: true,
-				Path:     "/",
-			})
+		session, _ := store.Get(r, "guest-session")
+		if session.Values["guest_id"] == nil {
+			guestID := generateGuestID()
+			session.Values["guest_id"] = guestID
+			session.Save(r, w)
+			logger.Infof("New guest session created with guest_id: %d", guestID)
 		} else {
-			guestID = cookie.Value
-			if _, err := uuid.Parse(guestID); err != nil {
-				http.Error(w, "Invalid guestID", http.StatusBadRequest)
-				return
-			}
+			// Логируем использование существующего guest_id
+			logger.Infof("Found existing guest session with guest_id: %v", session.Values["guest_id"])
+		}
+
+		guestID, ok := session.Values["guest_id"].([]byte)
+		if !ok {
+			logger.Errorf("Failed to get valid guest_id from session")
+			http.Error(w, "Ошибка получения guest_id", http.StatusInternalServerError)
+			return
 		}
 
 		ctx := context.WithValue(r.Context(), ContextGuestIDKey, guestID)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		req := r.WithContext(ctx)
+		next.ServeHTTP(w, req)
 	})
 }
 
-func IsAuthedOrGuest(next http.Handler, config *configs.Config) http.Handler {
-	return IsAuthed(IsGuest(next, config), config)
-}
-
-
-func GenerateGuestID() string {
-	return uuid.NewString() // Генерируем строковый UUID
+func generateGuestID() []byte {
+    newUUID := uuid.New()
+    return newUUID[:]
 }
