@@ -7,6 +7,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/cart"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/review"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 )
 
@@ -67,4 +68,12 @@ type ICartRepository interface {
 	DeleteCartItem(id uint) error
 	ClearCartItems(cartID uint) error
 	DeleteCart(id uint) error
+}
+
+type IReviewRepository interface {
+	CreateReview(review *review.Review) error
+	GetReviewByID(id uint) (*review.Review, error)
+	GetReviewsByProductVariantID(productVariantID uint) ([]review.Review, error)
+	UpdateReview(review *review.Review) error
+	DeleteReview(review *review.Review) error
 }
