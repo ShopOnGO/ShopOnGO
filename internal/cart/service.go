@@ -50,7 +50,6 @@ func (s *CartService) AddItemToCart(userID *uint, guestID []byte, item CartItem)
 	if err != nil {
 		return err
 	}
-
 	existingItem, err := s.Repo.GetCartItemByProductVariantID(cart.ID, item.ProductVariantID)
 	if err == nil {
 		existingItem.Quantity += item.Quantity

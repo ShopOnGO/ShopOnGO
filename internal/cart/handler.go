@@ -77,9 +77,15 @@ func (h *CartHandler) GetCart() http.HandlerFunc {
 // @Router       /cart/item [post]
 func (h *CartHandler) AddCartItem() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var item CartItem
-		if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
+		// 1. Декодируем запрос в структуру AddCartItemRequest
+		var req AddCartItemRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid input", http.StatusBadRequest)
+			return
+		}
+
+		if req.ProductVariantID == 0 || req.Quantity <= 0 {
+			http.Error(w, "Invalid ProductVariantID or Quantity", http.StatusBadRequest)
 			return
 		}
 
@@ -88,6 +94,11 @@ func (h *CartHandler) AddCartItem() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			logger.Error(err.Error())
 			return
+		}
+		
+		item := CartItem{
+			ProductVariantID: req.ProductVariantID,
+			Quantity:         req.Quantity,
 		}
 
 		if err := h.CartService.AddItemToCart(userID, guestID, item); err != nil {
@@ -112,9 +123,14 @@ func (h *CartHandler) AddCartItem() http.HandlerFunc {
 // @Router       /cart/item [put]
 func (h *CartHandler) UpdateCartItem() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var item CartItem
-		if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
+		var req UpdateCartItemRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid input", http.StatusBadRequest)
+			return
+		}
+
+		if req.ProductVariantID == 0 || req.Quantity <= 0 {
+			http.Error(w, "Invalid ProductVariantID or Quantity", http.StatusBadRequest)
 			return
 		}
 
@@ -123,6 +139,11 @@ func (h *CartHandler) UpdateCartItem() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			logger.Error(err.Error())
 			return
+		}
+
+		item := CartItem{
+			ProductVariantID: req.ProductVariantID,
+			Quantity:         req.Quantity,
 		}
 
 		if err := h.CartService.UpdateItemQuantity(userID, guestID, item); err != nil {
@@ -147,9 +168,13 @@ func (h *CartHandler) UpdateCartItem() http.HandlerFunc {
 // @Router       /cart/item [delete]
 func (h *CartHandler) RemoveCartItem() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var item CartItem
-		if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
+		var req RemoveCartItemRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid input", http.StatusBadRequest)
+			return
+		}
+		if req.ProductVariantID == 0 {
+			http.Error(w, "Invalid ProductVariantID", http.StatusBadRequest)
 			return
 		}
 
@@ -158,6 +183,10 @@ func (h *CartHandler) RemoveCartItem() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			logger.Error(err.Error())
 			return
+		}
+
+		item := CartItem{
+			ProductVariantID: req.ProductVariantID,
 		}
 
 		if err := h.CartService.RemoveItemFromCart(userID, guestID, item); err != nil {

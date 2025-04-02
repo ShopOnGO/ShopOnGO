@@ -20,3 +20,7 @@ type CartItemResponse struct {
 	ProductVariantID uint `json:"product_variant_id"`
 	Quantity         int  `json:"quantity"`
 }
+
+type RemoveCartItemRequest struct {
+	ProductVariantID uint `json:"product_variant_id" binding:"required"`
+}
