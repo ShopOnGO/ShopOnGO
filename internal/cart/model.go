@@ -1,12 +1,13 @@
 package cart
 
 import (
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/productVariant"
 	"gorm.io/gorm"
 )
 
 type Cart struct {
 	gorm.Model   `swaggerignore:"true"`
-	UserID    uint       `gorm:"index"`
+	UserID    *uint      `gorm:"index"`
 	GuestID   []byte 	 `gorm:"type:bytea;index"`
 	CartItems []CartItem `gorm:"foreignKey:CartID"`
 }
@@ -16,4 +17,6 @@ type Cart struct {
 	CartID           uint `gorm:"not null;index"`
 	ProductVariantID uint `gorm:"not null;index"`
 	Quantity         int `gorm:"not null;default:1"`
+
+	ProductVariant   productVariant.ProductVariant `gorm:"foreignKey:ProductVariantID"`
 }

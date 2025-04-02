@@ -12,7 +12,7 @@ func NewCartRepository(db *db.Db) *CartRepository {
 	}
 }
 
-func (r *CartRepository) GetCartByUserID(userID uint) (*Cart, error) {
+func (r *CartRepository) GetCartByUserID(userID *uint) (*Cart, error) {
 	var cart Cart
 	if err := r.Db.Where("user_id = ?", userID).First(&cart).Error; err != nil {
 		return nil, err

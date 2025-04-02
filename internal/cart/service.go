@@ -17,8 +17,8 @@ func NewCartService(repo *CartRepository) *CartService {
 	}
 }
 
-func (s *CartService) GetCart(userID uint, guestID []byte) (*Cart, error) {
-	if userID != 0 {
+func (s *CartService) GetCart(userID *uint, guestID []byte) (*Cart, error) {
+	if userID != nil {
 		cart, err := s.Repo.GetCartByUserID(userID)
 		if err == nil {
 			return cart, nil
@@ -45,7 +45,7 @@ func (s *CartService) GetCart(userID uint, guestID []byte) (*Cart, error) {
 	return nil, fmt.Errorf("no valid userID or guestID provided")
 }
 
-func (s *CartService) AddItemToCart(userID uint, guestID []byte, item CartItem) error {
+func (s *CartService) AddItemToCart(userID *uint, guestID []byte, item CartItem) error {
 	cart, err := s.GetCart(userID, guestID)
 	if err != nil {
 		return err
@@ -68,7 +68,7 @@ func (s *CartService) AddItemToCart(userID uint, guestID []byte, item CartItem) 
 	return nil
 }
 
-func (s *CartService) UpdateItemQuantity(userID uint, guestID []byte, item CartItem) error {
+func (s *CartService) UpdateItemQuantity(userID *uint, guestID []byte, item CartItem) error {
 	cart, err := s.GetCart(userID, guestID)
 	if err != nil {
 		logger.Error("failed to get cart: ", err)
@@ -94,7 +94,7 @@ func (s *CartService) UpdateItemQuantity(userID uint, guestID []byte, item CartI
 	return nil
 }
 
-func (s *CartService) RemoveItemFromCart(userID uint, guestID []byte, item CartItem) error {
+func (s *CartService) RemoveItemFromCart(userID *uint, guestID []byte, item CartItem) error {
 	cart, err := s.GetCart(userID, guestID)
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func (s *CartService) RemoveItemFromCart(userID uint, guestID []byte, item CartI
 	return nil
 }
 
-func (s *CartService) ClearCart(userID uint, guestID []byte) error {
+func (s *CartService) ClearCart(userID *uint, guestID []byte) error {
 	cart, err := s.GetCart(userID, guestID)
 	if err != nil {
 		return err

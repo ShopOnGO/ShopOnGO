@@ -195,26 +195,18 @@ func (h *CartHandler) ClearCart() http.HandlerFunc {
 	}
 }
 
-// getUserOrGuestID извлекает userID или guestID из контекста запроса.
-// Если ни один из идентификаторов не найден, возвращает ошибку.
-// @Summary      Извлечение идентификатора пользователя или гостя
-// @Description  Извлекает из контекста запроса идентификатор авторизованного пользователя или гостя.
-// @Tags         auth
-// @Produce      json
-// @Success      200   {object}  struct{UserID uint; GuestID []byte}  "Идентификаторы"
-// @Failure      500   {string}  string  "Не удалось определить пользователя"
-// @Router       /[internal] [get]
-func getUserOrGuestID(r *http.Request) (uint, []byte, error) {
-	var userID uint
+func getUserOrGuestID(r *http.Request) (*uint, []byte, error) {
+	var userID *uint
 	var guestID []byte
 
 	if id, ok := r.Context().Value(middleware.ContextUserIDKey).(uint); ok && id != 0 {
-		userID = id
+		userID = &id // Сохраняем `userID` как указатель
 	} else if id, ok := r.Context().Value(middleware.ContextGuestIDKey).([]byte); ok {
 		guestID = id
 	} else {
-		return 0, nil, fmt.Errorf("не удалось определить пользователя: no user or guest ID in context")
+		return nil, nil, fmt.Errorf("не удалось определить пользователя: no user or guest ID in context")
 	}
 
 	return userID, guestID, nil
 }
+

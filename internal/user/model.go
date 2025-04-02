@@ -1,6 +1,9 @@
 package user
 
-import "gorm.io/gorm"
+import (
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/cart"
+	"gorm.io/gorm"
+)
 
 type User struct {
 	gorm.Model   `swaggerignore:"true"` // Включает ID, CreatedAt, UpdatedAt, DeletedAt
@@ -18,4 +21,6 @@ type User struct {
 	StorePhone   *string `gorm:"default:null"`
 
 	AcceptTerms  bool `gorm:"not null;default:false"`
+
+	Cart *cart.Cart `gorm:"foreignKey:UserID"`
 }
