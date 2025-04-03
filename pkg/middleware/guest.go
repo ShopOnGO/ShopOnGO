@@ -38,6 +38,17 @@ func AuthOrGuest(next http.Handler, config *configs.Config) http.Handler {
 			// Токен валиден, добавляем userID в контекст
 			ctx := context.WithValue(r.Context(), ContextUserIDKey, data.UserID)
 			ctx = context.WithValue(ctx, ContextRolesKey, data.Role)
+
+			session, _ := store.Get(r, "guest-session")
+			if session.Values["guest_id"] != nil {
+				if guestID, ok := session.Values["guest_id"].([]byte); ok {
+					ctx = context.WithValue(ctx, ContextGuestIDKey, guestID)
+					logger.Infof("Added guest_id from session: %v", guestID)
+				} else {
+					logger.Errorf("Failed to assert guest_id from session")
+				}
+			}
+			
 			req := r.WithContext(ctx)
 			next.ServeHTTP(w, req)
 			return

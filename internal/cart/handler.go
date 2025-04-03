@@ -225,16 +225,23 @@ func (h *CartHandler) ClearCart() http.HandlerFunc {
 }
 
 func getUserOrGuestID(r *http.Request) (*uint, []byte, error) {
+	userIDVal := r.Context().Value(middleware.ContextUserIDKey)
 	var userID *uint
-	var guestID []byte
+	if id, ok := userIDVal.(uint); ok && id != 0 {
+		userID = &id
+	}
 
-	if id, ok := r.Context().Value(middleware.ContextUserIDKey).(uint); ok && id != 0 {
-		userID = &id // Сохраняем `userID` как указатель
-	} else if id, ok := r.Context().Value(middleware.ContextGuestIDKey).([]byte); ok {
+	guestIDVal := r.Context().Value(middleware.ContextGuestIDKey)
+	var guestID []byte
+	if id, ok := guestIDVal.([]byte); ok {
 		guestID = id
-	} else {
+	}
+
+	if userID == nil && len(guestID) == 0 {
 		return nil, nil, fmt.Errorf("не удалось определить пользователя: no user or guest ID in context")
 	}
+
+	logger.Infof("Raw guestID: %v", guestID)
 
 	return userID, guestID, nil
 }

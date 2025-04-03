@@ -61,11 +61,14 @@ type IBrandRepository interface {
 type ICartRepository interface {
 	GetCartByUserID(id uint) (*cart.Cart, error)
 	GetCartByGuestID(guestID []byte) (*cart.Cart, error)
+	GetCartItemByProductVariantID(cartID uint, productVariantID uint) (*cart.CartItem, error)
 	CreateCart(cart *cart.Cart) error
 	CreateCartItem(cartItem *cart.CartItem) error
 	FindCartItem(cartID uint, productVariantID uint) (*cart.CartItem, error)
 	UpdateCartItemQuantity(item *cart.CartItem) error
+	UpdateCart(cart *cart.Cart) error
 	DeleteCartItem(id uint) error
+	DeleteAllCartItemsByCartID(cartID uint) error
 	ClearCartItems(cartID uint) error
 	DeleteCart(id uint) error
 }
