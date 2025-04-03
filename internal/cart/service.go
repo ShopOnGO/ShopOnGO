@@ -19,6 +19,11 @@ func NewCartService(repo *CartRepository) *CartService {
 
 func (s *CartService) GetCart(userID *uint, guestID []byte) (*Cart, error) {
 	if userID != nil {
+		if len(guestID) > 0 {
+            if err := s.MergeCarts(userID, guestID); err != nil {
+                logger.Error("Ошибка при объединении корзин: ", err)
+            }
+        }
 		cart, err := s.Repo.GetCartByUserID(userID)
 		if err == nil {
 			return cart, nil
@@ -50,7 +55,6 @@ func (s *CartService) AddItemToCart(userID *uint, guestID []byte, item CartItem)
 	if err != nil {
 		return err
 	}
-
 	existingItem, err := s.Repo.GetCartItemByProductVariantID(cart.ID, item.ProductVariantID)
 	if err == nil {
 		existingItem.Quantity += item.Quantity
@@ -132,4 +136,44 @@ func (s *CartService) ClearCart(userID *uint, guestID []byte) error {
 	}
 
 	return nil
+}
+
+
+func (s *CartService) MergeCarts(userID *uint, guestID []byte) error {
+    if userID == nil || len(guestID) == 0 {
+        return nil
+    }
+    
+    guestCart, err := s.Repo.GetCartByGuestID(guestID)
+    if err != nil {
+        return nil
+    }
+    
+    userCart, err := s.Repo.GetCartByUserID(userID)
+    if err != nil {
+        guestCart.UserID = userID
+        guestCart.GuestID = nil
+        return s.Repo.UpdateCart(guestCart)
+    }
+    
+    for _, guestItem := range guestCart.CartItems {
+        existingItem, err := s.Repo.GetCartItemByProductVariantID(userCart.ID, guestItem.ProductVariantID)
+        if err == nil {
+            existingItem.Quantity += guestItem.Quantity
+            if err := s.Repo.UpdateCartItemQuantity(existingItem); err != nil {
+                return fmt.Errorf("failed to update item quantity: %w", err)
+            }
+        } else {
+            guestItem.CartID = userCart.ID
+            if err := s.Repo.CreateCartItem(&guestItem); err != nil {
+                return fmt.Errorf("failed to create cart item: %w", err)
+            }
+        }
+    }
+
+	if err := s.Repo.DeleteAllCartItemsByCartID(guestCart.ID); err != nil {
+        return fmt.Errorf("failed to delete guest cart items: %w", err)
+    }
+    
+    return s.Repo.DeleteCart(guestCart.ID)
 }

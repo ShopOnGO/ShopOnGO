@@ -6,9 +6,11 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/brand"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/cart"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/comment"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/link"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/productVariant"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/review"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/stat"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
@@ -50,7 +52,8 @@ func RunMigrations() error {
 		&product.Product{}, &productVariant.ProductVariant{}, 
 		&category.Category{}, 
 		&brand.Brand{}, 
-		&cart.Cart{}, &cart.CartItem{})
+		&cart.Cart{}, &cart.CartItem{}, 
+		&review.Review{}, comment.Comment{},)
 
 	if err != nil {
 		return err
