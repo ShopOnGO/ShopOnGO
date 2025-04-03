@@ -14,7 +14,7 @@ func NewCartRepository(db *db.Db) *CartRepository {
 
 func (r *CartRepository) GetCartByUserID(userID *uint) (*Cart, error) {
 	var cart Cart
-	if err := r.Db.Where("user_id = ?", userID).First(&cart).Error; err != nil {
+	if err := r.Db.Preload("CartItems").Where("user_id = ?", userID).First(&cart).Error; err != nil {
 		return nil, err
 	}
 	return &cart, nil
@@ -22,7 +22,7 @@ func (r *CartRepository) GetCartByUserID(userID *uint) (*Cart, error) {
 
 func (r *CartRepository) GetCartByGuestID(guestID []byte) (*Cart, error) {
 	var cart Cart
-	if err := r.Db.Where("guest_id = ?", guestID).First(&cart).Error; err != nil {
+	if err := r.Db.Preload("CartItems").Where("guest_id = ?", guestID).First(&cart).Error; err != nil {
 		return nil, err
 	}
 	return &cart, nil
