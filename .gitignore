@@ -1,0 +1,5 @@
+/.env
+/cmd/.env
+/ShopOnGO.code-workspace
+/postgres-data
+/.vscode

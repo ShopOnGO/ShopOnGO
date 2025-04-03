@@ -1,6 +1,6 @@
 package req
 
-import "github.com/go-playground/validator"
+import "github.com/go-playground/validator/v10"
 
 func Validate[T any](payload T) error {
 	validate := validator.New()
