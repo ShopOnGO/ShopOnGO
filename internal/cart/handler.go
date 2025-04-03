@@ -6,6 +6,7 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
+	"github.com/gorilla/mux"
 )
 
 type CartHandlerDeps struct {
@@ -17,10 +18,10 @@ type CartHandler struct {
 	*CartService
 }
 
-func NewCartHandler(router *http.ServeMux, deps CartHandlerDeps) {
+func NewCartHandler(router *mux.Router, deps CartHandlerDeps) {
 	handler := &CartHandler{
-		Config:        deps.Config,
-		CartService:   deps.CartService,
+		Config:      deps.Config,
+		CartService: deps.CartService,
 	}
 	router.Handle("GET /cart", middleware.IsGuest(handler.GetCart(), deps.Config))
 	router.Handle("POST /cart/item", middleware.IsAuthed(handler.AddCartItem(), deps.Config))
@@ -28,7 +29,6 @@ func NewCartHandler(router *http.ServeMux, deps CartHandlerDeps) {
 	router.Handle("DELETE /cart/item", middleware.IsAuthed(handler.RemoveCartItem(), deps.Config))
 	router.Handle("DELETE /cart", middleware.IsAuthed(handler.ClearCart(), deps.Config))
 }
-
 
 func (h *CartHandler) GetCart() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -12,6 +12,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/req"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
+	"github.com/gorilla/mux"
 
 	googleOAuth2 "golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -36,7 +37,7 @@ type GoogleUserInfo struct {
 	Picture       string `json:"picture"`
 }
 
-func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
+func NewAuthHandler(router *mux.Router, deps AuthHandlerDeps) {
 	handler := &AuthHandler{
 		Config:        deps.Config,
 		AuthService:   deps.AuthService,
@@ -48,7 +49,6 @@ func NewAuthHandler(router *http.ServeMux, deps AuthHandlerDeps) {
 	router.Handle("POST /auth/logout", middleware.IsAuthed(handler.Logout(), deps.Config))
 	router.Handle("POST /auth/change/role", middleware.IsAuthed(handler.ChangeUserRole(), deps.Config))
 }
-
 
 // Login аутентифицирует пользователя и выдает JWT токен
 // @Summary        Вход в систему
@@ -273,8 +273,8 @@ func (h *AuthHandler) Logout() http.HandlerFunc {
 		})
 
 		res.Json(w, map[string]string{
-			"message":      "Logout successful",
-			"removeToken":  "Please remove access token from your storage",
+			"message":     "Logout successful",
+			"removeToken": "Please remove access token from your storage",
 		}, http.StatusOK)
 	}
 }
@@ -293,40 +293,40 @@ func (h *AuthHandler) Logout() http.HandlerFunc {
 // @Failure        500 {string} string "Ошибка сервера"
 // @Router         /auth/change/role [post]
 func (h *AuthHandler) ChangeUserRole() http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        body, err := req.HandleBody[ChangeRoleRequest](&w, r)
-        if err != nil {
-            http.Error(w, ErrInvalidRequestData, http.StatusBadRequest)
-            return
-        }
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := req.HandleBody[ChangeRoleRequest](&w, r)
+		if err != nil {
+			http.Error(w, ErrInvalidRequestData, http.StatusBadRequest)
+			return
+		}
 
-        // Обновляем роль пользователя в базе данных
+		// Обновляем роль пользователя в базе данных
 		if err := h.AuthService.UpdateUser(body); err != nil {
-            http.Error(w, err.Error(), http.StatusInternalServerError)
-            return
-        }
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		userID, ok := r.Context().Value(middleware.ContextUserIDKey).(uint)
-        if !ok {
-            http.Error(w, "user id not found", http.StatusUnauthorized)
-            return
-        }
+		if !ok {
+			http.Error(w, "user id not found", http.StatusUnauthorized)
+			return
+		}
 
-        // Генерируем новый JWT и refresh-токен с обновленной ролью
-        jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(userID, body.NewRole)
-        if err != nil {
-            http.Error(w, err.Error(), http.StatusInternalServerError)
-            return
-        }
+		// Генерируем новый JWT и refresh-токен с обновленной ролью
+		jwtToken, refreshToken, err := h.OAuth2Service.GenerateTokens(userID, body.NewRole)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-        http.SetCookie(w, &http.Cookie{
-            Name:     "refresh_token",
-            Value:    refreshToken,
-            HttpOnly: true,
-            Path:     "/",
-            Expires:  time.Now().Add(h.Config.Redis.RefreshTokenTTL),
-        })
+		http.SetCookie(w, &http.Cookie{
+			Name:     "refresh_token",
+			Value:    refreshToken,
+			HttpOnly: true,
+			Path:     "/",
+			Expires:  time.Now().Add(h.Config.Redis.RefreshTokenTTL),
+		})
 
-        res.Json(w, map[string]string{"message": "Role changed successfully", "token": jwtToken}, http.StatusOK)
-    }
+		res.Json(w, map[string]string{"message": "Role changed successfully", "token": jwtToken}, http.StatusOK)
+	}
 }

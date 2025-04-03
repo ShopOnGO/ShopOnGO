@@ -1,6 +1,8 @@
 package category
 
 import (
+	"errors"
+
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
 )
 
@@ -21,6 +23,9 @@ func (repo *CategoryRepository) Create(category *Category) (*Category, error) {
 	return category, nil
 }
 func (repo *CategoryRepository) GetFeaturedCategories(amount int) ([]Category, error) {
+	if amount > 20 {
+		amount = 20
+	}
 	var categories []Category
 	query := repo.Database.DB
 
@@ -53,6 +58,9 @@ func (repo *CategoryRepository) Update(category *Category) (*Category, error) {
 }
 
 func (repo *CategoryRepository) Delete(id uint) error {
+	if id == 0 {
+		return errors.New("invalid  ID")
+	}
 	result := repo.Database.DB.Delete(&Category{}, id)
 	if result.Error != nil {
 		return result.Error
@@ -60,6 +68,9 @@ func (repo *CategoryRepository) Delete(id uint) error {
 	return nil
 }
 func (repo *CategoryRepository) FindCategoryByID(id uint) (*Category, error) {
+	if id == 0 {
+		return nil, errors.New("invalid category ID")
+	}
 	var category Category
 	result := repo.Database.DB.First(&category, id)
 	if result.Error != nil {

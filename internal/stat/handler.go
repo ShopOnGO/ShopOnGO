@@ -8,6 +8,7 @@ import (
 	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -23,7 +24,7 @@ type StatHandler struct { // это уже рабоая структура
 	StatRepository *StatRepository
 }
 
-func NewStatHandler(router *http.ServeMux, deps StatHandlerDeps) {
+func NewStatHandler(router *mux.Router, deps StatHandlerDeps) {
 	handler := &StatHandler{
 		StatRepository: deps.StatRepository,
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/gorilla/mux"
 )
 
 type ResetHandlerDeps struct {
@@ -18,15 +19,15 @@ type ResetHandler struct {
 	*ResetService
 }
 
-func NewResetHandler(router *http.ServeMux, deps ResetHandlerDeps) {
+func NewResetHandler(router *mux.Router, deps ResetHandlerDeps) {
 	handler := &ResetHandler{
-		Config:        deps.Config,
-		ResetService:   deps.ResetService,
+		Config:       deps.Config,
+		ResetService: deps.ResetService,
 	}
 	router.HandleFunc("POST /auth/reset", handler.Reset())
 	router.HandleFunc("POST /auth/reset/verify", handler.VerifyCode())
-    router.HandleFunc("POST /auth/reset/password", handler.ResetPassword())
-    router.HandleFunc("POST /auth/reset/resend", handler.ResendCode())
+	router.HandleFunc("POST /auth/reset/password", handler.ResetPassword())
+	router.HandleFunc("POST /auth/reset/resend", handler.ResendCode())
 }
 
 // Reset инициирует процедуру сброса пароля, генерирует код и отправляет его на указанный email
@@ -41,7 +42,7 @@ func NewResetHandler(router *http.ServeMux, deps ResetHandlerDeps) {
 // @Failure      500   {string}  string  "Ошибка сервера при инициировании сброса пароля"
 // @Router       /auth/reset [post]
 func (h *ResetHandler) Reset() http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var req ResetRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			logger.Error("❌ error decoding request body: " + err.Error())
@@ -60,7 +61,7 @@ func (h *ResetHandler) Reset() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
-    }
+	}
 }
 
 // VerifyCode проверяет корректность кода, отправленного пользователю для сброса пароля
@@ -75,7 +76,7 @@ func (h *ResetHandler) Reset() http.HandlerFunc {
 // @Failure      401   {string}  string  "Неверный или просроченный код"
 // @Router       /auth/reset/verify [post]
 func (h *ResetHandler) VerifyCode() http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var req VerifyCodeRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Неверные данные", http.StatusBadRequest)
@@ -89,7 +90,7 @@ func (h *ResetHandler) VerifyCode() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
-    }
+	}
 }
 
 // ResetPassword обновляет пароль пользователя после проверки кода сброса пароля.
@@ -120,9 +121,9 @@ func (h *ResetHandler) ResetPassword() http.HandlerFunc {
 		}
 		logger.Info("✅ Пароль успешно обновлен для email: " + req.Email)
 		response := map[string]string{"message": "Password successfully updated"}
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(http.StatusOK)
-        json.NewEncoder(w).Encode(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
 	}
 }
 
@@ -139,7 +140,7 @@ func (h *ResetHandler) ResetPassword() http.HandlerFunc {
 // @Router       /auth/reset/resend [post]
 func (h *ResetHandler) ResendCode() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-        var req ResetRequest
+		var req ResetRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			logger.Error("❌ error decoding request body: " + err.Error())
 			http.Error(w, "Неверные данные", http.StatusBadRequest)
@@ -153,8 +154,8 @@ func (h *ResetHandler) ResendCode() http.HandlerFunc {
 		}
 		logger.Info("✅ Код успешно отправлен повторно для email: " + req.Email)
 		response := map[string]string{"message": "Reset code resent successfully"}
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(http.StatusOK)
-        json.NewEncoder(w).Encode(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
 	}
 }

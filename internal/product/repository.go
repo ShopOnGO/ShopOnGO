@@ -1,6 +1,8 @@
 package product
 
 import (
+	"errors"
+
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
 )
 
@@ -15,6 +17,9 @@ func NewProductRepository(database *db.Db) *ProductRepository {
 }
 
 func (repo *ProductRepository) Create(product *Product) (*Product, error) {
+	if product.Name == "" || product.CategoryID == 0 {
+		return nil, errors.New("product name and category ID are required")
+	}
 	result := repo.Database.DB.Create(product)
 	if result.Error != nil {
 		return nil, result.Error
@@ -22,10 +27,13 @@ func (repo *ProductRepository) Create(product *Product) (*Product, error) {
 	return product, nil
 }
 
-func (repo *ProductRepository) GetByCategory(id uint) ([]Product, error) { //limit 20
+func (repo *ProductRepository) GetByCategory(CategoryID uint) ([]Product, error) { //limit 20
+	if CategoryID == 0 {
+		return nil, errors.New("category cannot be nil")
+	}
 	var products []Product
 	result := repo.Database.DB.
-		Where("category_id = ?", id).
+		Where("category_id = ?", CategoryID).
 		Limit(20).
 		Find(&products)
 	if result.Error != nil {
@@ -36,6 +44,9 @@ func (repo *ProductRepository) GetByCategory(id uint) ([]Product, error) { //lim
 
 // func (repo *ProductRepository) GetByVendorCode(code *uuid)
 func (repo *ProductRepository) GetByName(name string) ([]Product, error) {
+	if name == "" {
+		return nil, errors.New("product name cannot be empty")
+	}
 	var products []Product
 	result := repo.Database.DB.
 		Where("name = ?", name).
@@ -48,6 +59,9 @@ func (repo *ProductRepository) GetByName(name string) ([]Product, error) {
 }
 
 func (repo *ProductRepository) GetFeaturedProducts(amount uint, random bool) ([]Product, error) {
+	if amount == 0 {
+		return nil, errors.New("amount must be greater than zero")
+	}
 	var products []Product
 	query := repo.Database.DB
 
@@ -64,6 +78,9 @@ func (repo *ProductRepository) GetFeaturedProducts(amount uint, random bool) ([]
 }
 
 func (repo *ProductRepository) Update(product *Product) (*Product, error) {
+	if product.ID == 0 {
+		return nil, errors.New("product ID is required for update")
+	}
 	result := repo.Database.DB.Model(&Product{}).Where("id = ?", product.ID).Updates(product)
 	if result.Error != nil {
 		return nil, result.Error
@@ -72,6 +89,9 @@ func (repo *ProductRepository) Update(product *Product) (*Product, error) {
 }
 
 func (repo *ProductRepository) Delete(id uint) error {
+	if id == 0 {
+		return errors.New("product ID is required for deletion")
+	}
 	result := repo.Database.DB.Delete(&Product{}, id)
 	if result.Error != nil {
 		return result.Error
