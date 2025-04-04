@@ -4,18 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	pb "github.com/ShopOnGO/admin-proto/pkg/service"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type AdminHandler struct {
@@ -23,7 +26,7 @@ type AdminHandler struct {
 }
 
 func InitGRPCClients() *GRPCClients {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial("admin_container:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 		log.Fatalf("Ошибка подключения к gRPC серверу: %v", err)
@@ -68,11 +71,14 @@ func NewAdminHandler(router *mux.Router) {
 	router.HandleFunc("/admin/products/{product_id}/variants/{id}", handler.DeleteVariant).Methods("DELETE")
 
 	// Products
-	router.HandleFunc("POST /admin/products", handler.CreateProduct)
-	router.HandleFunc("GET /admin/products/featured", handler.GetFeaturedProducts)
-	router.HandleFunc("PUT /admin/products", handler.UpdateProduct)
-	router.HandleFunc("DELETE /admin/products", handler.DeleteProduct)
-	//router.HandleFunc("DELETE /admin/products/all", handler.DeleteAllProducts)
+	router.HandleFunc("/admin/products", handler.CreateProduct).Methods("POST")
+	router.HandleFunc("/admin/products/featured", handler.GetFeaturedProducts).Methods("GET")
+	router.HandleFunc("/admin/products", handler.UpdateProduct).Methods("PUT")
+	router.HandleFunc("/admin/products", handler.DeleteProduct).Methods("DELETE")
+	// router.HandleFunc("/admin/products/all", handler.DeleteAllProducts).Methods("DELETE")
+	//Дописать как реализовать?
+	// при нажатии нужно получать сразу все варианты, и потом пользователь уже будет с кешем этих данных разбираться, что ему нужно.
+	//
 
 	//Brands
 	router.HandleFunc("POST /admin/brands", handler.CreateBrand)
@@ -458,18 +464,35 @@ func (a *AdminHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 // @Failure      500 {string} string "Ошибка сервера"
 // @Router       /admin/products/featured [get]
 func (a *AdminHandler) GetFeaturedProducts(w http.ResponseWriter, r *http.Request) {
+	// Получаем Query-параметры
+	query := r.URL.Query()
+
+	amount, err := strconv.Atoi(query.Get("amount"))
+	if err != nil || amount <= 0 {
+		amount = 5 // Значение по умолчанию
+	}
+
+	random, _ := strconv.ParseBool(query.Get("random"))
+	includeDeleted, _ := strconv.ParseBool(query.Get("include_deleted"))
+
+	// Создаем gRPC-запрос с параметрами
+	req := &pb.FeaturedRequest{
+		Amount:         uint32(amount),
+		Random:         random,
+		IncludeDeleted: includeDeleted,
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	resp, err := a.Clients.ProductClient.GetFeaturedProducts(ctx, &pb.FeaturedRequest{
-		Amount:         5,
-		Random:         true,
-		IncludeDeleted: false,
-	})
+	resp, err := a.Clients.ProductClient.GetFeaturedProducts(ctx, req)
 	if err != nil {
 		http.Error(w, "Failed to get products", http.StatusInternalServerError)
 		return
 	}
+
+	// Отправляем JSON-ответ
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp.Products)
 }
 
@@ -780,7 +803,6 @@ func (a *AdminHandler) GetHomeData(w http.ResponseWriter, r *http.Request) {
 // @Failure        500 {string} string "Ошибка сервера"
 // @Router         /admin/products/{product_id}/variants/add [post]
 func (a *AdminHandler) CreateProductVariant(w http.ResponseWriter, r *http.Request) {
-	log.Println("Запрос на создание варианта получен")
 
 	// Получаем параметры из URL
 	vars := mux.Vars(r)
@@ -814,7 +836,6 @@ func (a *AdminHandler) CreateProductVariant(w http.ResponseWriter, r *http.Reque
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
-	fmt.Println(req.ProductId)
 	// Отправляем запрос в gRPC-сервис
 	resp, err := a.Clients.ProductVariantClient.CreateVariant(ctx, &req)
 	if err != nil {
@@ -863,21 +884,40 @@ func (a *AdminHandler) CreateProductVariant(w http.ResponseWriter, r *http.Reque
 // @Failure        500 {string} string "Ошибка сервера"
 // @Router         /admin/products/{product_id}/find [post]
 func (a *AdminHandler) GetVariant(w http.ResponseWriter, r *http.Request) {
-	var req pb.VariantRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	// Получаем параметры из URL
+	vars := mux.Vars(r)
+	productID, err := strconv.ParseUint(vars["product_id"], 10, 32)
+	if err != nil || productID == 0 {
+		http.Error(w, "Invalid product ID", http.StatusBadRequest)
 		return
 	}
 
-	// Проверка наличия хотя бы одного идентификатора
-	if req.GetSku() == "" && req.GetBarcode() == "" && req.GetId() == 0 {
+	var req pb.VariantRequest
+
+	// Используем protojson для декодирования тела запроса
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := protojson.Unmarshal(body, &req); err != nil {
+		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if req.Identifier == nil {
 		http.Error(w, "At least one identifier must be provided", http.StatusBadRequest)
 		return
 	}
 
+	// Можно использовать productID, если он нужен
+	// req.ProductId = uint32(productID) // если есть поле ProductId в proto
+
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
+	// Отправляем запрос в gRPC-сервис
 	resp, err := a.Clients.ProductVariantClient.GetVariant(ctx, &req)
 	if err != nil {
 		st, _ := status.FromError(err)
@@ -897,6 +937,7 @@ func (a *AdminHandler) GetVariant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Ответ в обычном JSON
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp.Variant); err != nil {
 		log.Printf("Failed to encode response: %v", err)
@@ -968,6 +1009,7 @@ func (a *AdminHandler) UpdateProductVariant(w http.ResponseWriter, r *http.Reque
 		case codes.AlreadyExists:
 			http.Error(w, "SKU or barcode conflict", http.StatusConflict)
 		default:
+			logger.Info(err)
 			http.Error(w, "Failed to update variant", http.StatusInternalServerError)
 		}
 		return
@@ -1002,44 +1044,37 @@ func (a *AdminHandler) UpdateProductVariant(w http.ResponseWriter, r *http.Reque
 // @Failure        500        {object} pb.Error "Внутренняя ошибка сервера"
 // @Router         /admin/products/{product_id}/variants/{id}/stock [post]
 func (a *AdminHandler) ManageStock(w http.ResponseWriter, r *http.Request) {
-	// Извлекаем параметры из пути
-	pathRe := regexp.MustCompile(`^/admin/products/(\d+)/variants/(\d+)/stock$`)
-	matches := pathRe.FindStringSubmatch(r.URL.Path)
-	if len(matches) != 3 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
-		return
-	}
+	// Получаем параметры из URL
+	vars := mux.Vars(r)
 
-	// Парсим product_id
-	productID, err := strconv.ParseInt(matches[1], 10, 64)
-	if err != nil || productID <= 0 {
+	productID, err := strconv.ParseUint(vars["product_id"], 10, 32)
+	if err != nil || productID == 0 {
 		http.Error(w, "Invalid product ID", http.StatusBadRequest)
 		return
 	}
 
-	// Парсим variant_id
-	variantID, err := strconv.ParseInt(matches[2], 10, 64)
-	if err != nil || variantID <= 0 {
+	variantID, err := strconv.ParseUint(vars["id"], 10, 32)
+	if err != nil || variantID == 0 {
 		http.Error(w, "Invalid variant ID", http.StatusBadRequest)
 		return
 	}
 
-	// Декодируем тело запроса
 	var req pb.StockRequest
+
+	// Декодируем JSON в структуру
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Устанавливаем ID из URL в запрос
+	// Устанавливаем ID варианта
 	req.VariantId = uint32(variantID)
 
-	// Дополнительная проверка принадлежности варианта к продукту
-	// (реализуйте эту проверку в вашем сервисе)
+	// Контекст с таймаутом
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	// Выполняем операцию с запасом
+	// Отправляем запрос в gRPC-сервис
 	_, err = a.Clients.ProductVariantClient.ManageStock(ctx, &req)
 	if err != nil {
 		st, _ := status.FromError(err)
@@ -1177,41 +1212,38 @@ func (a *AdminHandler) ListVariants(w http.ResponseWriter, r *http.Request) {
 // @Failure        500 {string} string "Ошибка сервера"
 // @Router         /admin/products/{product_id}/variants/{id} [delete]
 func (a *AdminHandler) DeleteVariant(w http.ResponseWriter, r *http.Request) {
-	// Извлекаем параметры из пути
-	pathRe := regexp.MustCompile(`^/admin/products/(\d+)/variants/(\d+)$`)
-	matches := pathRe.FindStringSubmatch(r.URL.Path)
-	if len(matches) != 3 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
-		return
-	}
+	// Получаем параметры из URL
+	vars := mux.Vars(r)
 
 	// Парсим product_id
-	productID, err := strconv.ParseInt(matches[1], 10, 64)
+	productID, err := strconv.ParseInt(vars["product_id"], 10, 64)
 	if err != nil || productID <= 0 {
 		http.Error(w, "Invalid product ID", http.StatusBadRequest)
 		return
 	}
 
 	// Парсим variant_id
-	variantID, err := strconv.ParseInt(matches[2], 10, 64)
+	variantID, err := strconv.ParseInt(vars["id"], 10, 64)
 	if err != nil || variantID <= 0 {
 		http.Error(w, "Invalid variant ID", http.StatusBadRequest)
 		return
 	}
 
-	// Парсим query-параметр unscoped
-	unscoped := false
-	if unscopedParam := r.URL.Query().Get("unscoped"); unscopedParam != "" {
-		if unscoped, err = strconv.ParseBool(unscopedParam); err != nil {
-			http.Error(w, "Invalid unscoped parameter", http.StatusBadRequest)
-			return
-		}
+	// Структура для парсинга тела запроса
+	var body struct {
+		Unscoped bool `json:"unscoped"`
 	}
 
-	// Формируем запрос
+	// Читаем тело запроса
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil && err != io.EOF {
+		http.Error(w, "Invalid JSON body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Формируем gRPC-запрос
 	req := &pb.DeleteVariantRequest{
 		Id:       uint32(variantID),
-		Unscoped: unscoped,
+		Unscoped: body.Unscoped,
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
