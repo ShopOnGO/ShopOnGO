@@ -10,6 +10,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/req"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
+	"github.com/gorilla/mux"
 )
 
 type LinkHandlerDeps struct { // содержит все необходимые элементы заполнения. это DC
@@ -24,7 +25,7 @@ type LinkHandler struct { // это уже рабоая структура
 	EventBus       *event.EventBus
 }
 
-func NewLinkHandler(router *http.ServeMux, deps LinkHandlerDeps) {
+func NewLinkHandler(router *mux.Router, deps LinkHandlerDeps) {
 	handler := &LinkHandler{
 		LinkRepository: deps.LinkRepository,
 		LinkService:    deps.LinkService,

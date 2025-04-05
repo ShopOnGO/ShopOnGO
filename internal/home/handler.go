@@ -7,6 +7,7 @@ import (
 	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
+	"github.com/gorilla/mux"
 )
 
 type HomeHandlerDeps struct { //  DC
@@ -18,7 +19,7 @@ type HomeHandler struct {
 	*HomeService
 }
 
-func NewHomeHandler(router *http.ServeMux, deps HomeHandlerDeps) {
+func NewHomeHandler(router *mux.Router, deps HomeHandlerDeps) {
 	handler := &HomeHandler{
 		Config:      deps.Config,
 		HomeService: deps.HomeService,

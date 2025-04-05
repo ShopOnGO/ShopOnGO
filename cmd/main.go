@@ -24,6 +24,7 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/admin"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/auth"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/auth/passwordreset"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/brand"
@@ -36,7 +37,6 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/migrations"
-
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/email/smtp"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/event"
@@ -44,6 +44,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/redisdb"
+	"github.com/gorilla/mux"
 
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -56,10 +57,10 @@ func App() http.Handler {
 	conf := configs.LoadConfig()
 	db := db.NewDB(conf)
 	redis := redisdb.NewRedisDB(conf)
-	router := http.NewServeMux()
+	router := mux.NewRouter()
 	eventBus := event.NewEventBus() // передаем как зависимость в handle
 	smtp := smtp.NewSMTPSender(conf.SMTP.Name, conf.SMTP.From, conf.SMTP.Pass, conf.SMTP.Host, conf.SMTP.Port)
-	
+
 	// REPOSITORIES
 	linkRepository := link.NewLinkRepository(db)
 	userRepository := user.NewUserRepository(db)
@@ -70,7 +71,6 @@ func App() http.Handler {
 	cartRepository := cart.NewCartRepository(db)
 	refreshTokenRepository := oauth2.NewRedisRefreshTokenRepository(redis)
 	resetPasswordRepository := passwordreset.NewRedisResetRepository(redis)
-
 
 	// Services
 	authService := auth.NewAuthService(userRepository)
@@ -83,11 +83,6 @@ func App() http.Handler {
 
 	oauth2Service := oauth2.NewOAuth2Service(conf, refreshTokenRepository)
 	resetService := passwordreset.NewResetService(conf, smtp, resetPasswordRepository, userRepository)
-	//categoryService := category.NewCategoryService(categoryRepository)
-	//brandService := brand.NewBrandService(brandsRepository)
-	//statService := stat.NewStatService(statRepository)
-	//prodService := product.NewProductService(productRepository)
-	//userService := user.NewUserService(userRepository)
 
 	//Handlers
 	auth.NewAuthHandler(router, auth.AuthHandlerDeps{
@@ -111,15 +106,16 @@ func App() http.Handler {
 	cart.NewCartHandler(router, cart.CartHandlerDeps{
 		CartService: cartService,
 		Config:      conf,
-    })
+	})
 	oauth2.NewOAuth2Handler(router, oauth2.OAuth2HandlerDeps{
 		Service: oauth2Service,
-		Config: conf,
+		Config:  conf,
 	})
 	passwordreset.NewResetHandler(router, passwordreset.ResetHandlerDeps{
 		ResetService: resetService,
-        Config:       conf,
+		Config:       conf,
 	})
+	admin.NewAdminHandler(router)
 
 	// swagger
 	router.Handle("/swagger/", httpSwagger.WrapHandler)

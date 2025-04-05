@@ -27,3 +27,7 @@ services:
     - REDIS_PASSWORD=${REDIS_PASSWORD}
     ports:
       - "6379:6379"
+
+networks:
+  shopongo_default:
+    external: true
