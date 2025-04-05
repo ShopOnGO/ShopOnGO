@@ -1,8 +1,6 @@
 package review
 
 import (
-	"time"
-
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/productVariant"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 
@@ -17,5 +15,4 @@ type Review struct {
 	Rating             int16     `gorm:"not null;check:rating >= 1 AND rating <= 5" json:"rating"`
 
 	ProductVariant     productVariant.ProductVariant `gorm:"foreignKey:ProductVariantID;constraint:OnDelete:CASCADE" json:"product_variant"`
-	PublicationDate    time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"publication_date"`
 }
