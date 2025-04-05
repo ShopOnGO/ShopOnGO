@@ -21,6 +21,9 @@ func (repo *UserRepository) Create(user *User) (*User, error) {
 		return nil, errors.New("email is required")
 	}
 	result := repo.Database.DB.Create(user)
+	if user.Email == "" {
+		return nil, errors.New("email is required")
+	}
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -65,7 +68,8 @@ func (repo *UserRepository) Delete(id uint) error {
 
 func (repo *UserRepository) UpdateUserPassword(id uint, newPassword string) error {
 	if id == 0 {
-		return errors.New("user ID is required for deletion")
+
+		return errors.New("user ID is required for UpdateUserPassword")
 	}
 	result := repo.Database.DB.Model(&User{}).Where("id = ?", id).Update("password", newPassword)
 	return result.Error
@@ -76,14 +80,18 @@ func (repo *UserRepository) GetUserRoleByEmail(email string) (string, error) {
 		return "", errors.New("email cannot be empty")
 	}
 	var role string
-	result := repo.Database.DB.Model(&User{}).Select("role").Where("email = ?", email).First(&role)
-	if result.Error != nil {
-		return "", result.Error
-	}
-	return role, nil
+
+    result := repo.Database.DB.Model(&User{}).Select("role").Where("email = ?", email).First(&role)
+    if result.Error != nil {
+        return "", result.Error
+    }
+    return role, nil
 }
 
 func (repo *UserRepository) UpdateRole(user *User, newRole string) error {
+    if user.ID == 0 {
+		return errors.New("user ID is required for UpdateUserPassword")
+	}
 	result := repo.Database.DB.Model(&User{}).Where("id = ?", user.ID).Update("role", newRole)
-	return result.Error
+    return result.Error
 }

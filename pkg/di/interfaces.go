@@ -7,6 +7,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/cart"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/review"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 )
 
@@ -58,10 +59,24 @@ type IBrandRepository interface {
 }
 
 type ICartRepository interface {
+	GetCartByUserID(id uint) (*cart.Cart, error)
+	GetCartByGuestID(guestID []byte) (*cart.Cart, error)
+	GetCartItemByProductVariantID(cartID uint, productVariantID uint) (*cart.CartItem, error)
 	CreateCart(cart *cart.Cart) error
-	GetCartByID(id uint) (*cart.Cart, error)
-	DeleteCart(id uint) error
 	CreateCartItem(cartItem *cart.CartItem) error
-	GetCartItemsByCartID(cartID uint) ([]cart.CartItem, error)
+	FindCartItem(cartID uint, productVariantID uint) (*cart.CartItem, error)
+	UpdateCartItemQuantity(item *cart.CartItem) error
+	UpdateCart(cart *cart.Cart) error
 	DeleteCartItem(id uint) error
+	DeleteAllCartItemsByCartID(cartID uint) error
+	ClearCartItems(cartID uint) error
+	DeleteCart(id uint) error
+}
+
+type IReviewRepository interface {
+	CreateReview(review *review.Review) error
+	GetReviewByID(id uint) (*review.Review, error)
+	GetReviewsByProductVariantID(productVariantID uint) ([]review.Review, error)
+	UpdateReview(review *review.Review) error
+	DeleteReview(review *review.Review) error
 }
