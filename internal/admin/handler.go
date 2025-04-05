@@ -55,12 +55,12 @@ func NewAdminHandler(router *mux.Router) {
 	router.HandleFunc("POST /stats/click", handler.AddClick)
 
 	// Users
-	router.HandleFunc("POST /admin/users", handler.CreateUser)
-	router.HandleFunc("GET /admin/users", handler.GetUserByEmail)
-	router.HandleFunc("PUT /admin/users", handler.UpdateUser)
-	router.HandleFunc("DELETE /admin/users", handler.DeleteUser)
-	router.HandleFunc("POST /admin/by-email", handler.GetUserByEmail)
-	// router.HandleFunc("DELETE /admin/users/all", handler.DeleteAllUsers)
+	router.HandleFunc("/admin/users", handler.CreateUser).Methods("POST")
+	router.HandleFunc("/admin/users/by-email", handler.GetUserByEmail).Methods("POST")
+	router.HandleFunc("/admin/users", handler.GetUserByEmail).Methods("GET")
+	router.HandleFunc("/admin/users/{id}", handler.UpdateUser).Methods("PUT")
+	router.HandleFunc("/admin/users/{id}", handler.DeleteUser).Methods("DELETE")
+	// router.HandleFunc("/admin/users/all", handler.DeleteAllUsers).Methods("DELETE")
 
 	//ProductVariants
 	router.HandleFunc("/admin/products/{product_id}/variants/add", handler.CreateProductVariant).Methods("POST")
@@ -81,18 +81,19 @@ func NewAdminHandler(router *mux.Router) {
 	//
 
 	//Brands
-	router.HandleFunc("POST /admin/brands", handler.CreateBrand)
-	router.HandleFunc("GET /admin/brands/featured", handler.GetFeaturedBrands)
-	router.HandleFunc("PUT /admin/brands", handler.UpdateBrand)
-	router.HandleFunc("DELETE /admin/brands", handler.DeleteBrand)
-	//router.HandleFunc("DELETE /admin/brands/all", handler.DeleteAllBrands)
+	router.HandleFunc("/admin/brands", handler.CreateBrand).Methods("POST")
+	router.HandleFunc("/admin/brands/featured", handler.GetFeaturedBrands).Methods("GET")
+	router.HandleFunc("/admin/brands/{id}", handler.UpdateBrand).Methods("PUT")
+	router.HandleFunc("/admin/brands", handler.DeleteBrand).Methods("DELETE")
+	// router.HandleFunc("/admin/brands/all", handler.DeleteAllBrands).Methods("DELETE")
 
 	// Categories
-	router.HandleFunc("POST /admin/categories", handler.CreateCategory)
-	router.HandleFunc("GET /admin/categories/featured", handler.GetFeaturedCategories)
-	router.HandleFunc("PUT /admin/categories/{id}", handler.UpdateCategory) // {id}???????????
-	router.HandleFunc("DELETE /admin/categories/", handler.DeleteCategory)
-	//router.HandleFunc("DELETE /admin/categories/all", handler.DeleteAllCategories)
+	router.HandleFunc("/admin/categories", handler.CreateCategory).Methods("POST")
+	router.HandleFunc("/admin/categories/featured", handler.GetFeaturedCategories).Methods("GET")
+	router.HandleFunc("/admin/categories/{id:[0-9]+}", handler.GetCategoryByID).Methods("GET")
+	router.HandleFunc("/admin/categories/{id:[0-9]+}", handler.UpdateCategory).Methods("PUT")
+	router.HandleFunc("/admin/categories", handler.DeleteCategory).Methods("DELETE") // по имени из body
+	router.HandleFunc("/admin/categories/all", handler.DeleteAllCategories).Methods("DELETE")
 
 }
 
@@ -139,7 +140,9 @@ func (a *AdminHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 // @Failure      500 {string} string "Ошибка сервера"
 // @Router       /admin/categories/{id} [get]
 func (a *AdminHandler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
+
 	categoryID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid category ID", http.StatusBadRequest)
@@ -172,7 +175,9 @@ func (a *AdminHandler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 // @Failure        500 {string} string "Ошибка сервера"
 // @Router         /admin/categories/{id} [put]
 func (a *AdminHandler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	vars := mux.Vars(r)
+	id := vars["id"]
+
 	categoryID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		http.Error(w, "Invalid category ID", http.StatusBadRequest)
@@ -345,11 +350,21 @@ func (a *AdminHandler) GetFeaturedBrands(w http.ResponseWriter, r *http.Request)
 // @Failure        500 {string} string "Ошибка сервера"
 // @Router         /admin/brands [put]
 func (a *AdminHandler) UpdateBrand(w http.ResponseWriter, r *http.Request) {
-	var req pb.Brand
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	brandID, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid brand ID", http.StatusBadRequest)
+		return
+	}
+
+	var req pb.UpdateBrandRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	req.Id = brandID
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -654,11 +669,20 @@ func (a *AdminHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 // @Failure        500 {string} string "Ошибка сервера"
 // @Router         /admin/users [put]
 func (a *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	userID, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
 	var req pb.User
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	req.Model = &pb.Model{Id: uint32(userID)}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -682,16 +706,18 @@ func (a *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 // @Failure        500 {string} string "Ошибка сервера"
 // @Router         /admin/users [delete]
 func (a *AdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	var req pb.DeleteUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	userID, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := a.Clients.UserClient.DeleteUser(ctx, &req)
+	_, err = a.Clients.UserClient.DeleteUser(ctx, &pb.DeleteUserRequest{Id: userID})
 	if err != nil {
 		http.Error(w, "Failed to delete user", http.StatusInternalServerError)
 		return

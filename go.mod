@@ -3,7 +3,7 @@ module github.com/ShopOnGO/ShopOnGO/prod
 go 1.23.3
 
 require (
-	github.com/ShopOnGO/admin-proto v0.0.0-20250330184913-939f08b67840
+	github.com/ShopOnGO/admin-proto v0.0.0-20250405161041-88a0054c6c2a
 	github.com/go-gomail/gomail v0.0.0-20160411212932-81ebce5c23df
 	github.com/go-oauth2/oauth2/v4 v4.5.2
 	github.com/go-playground/validator/v10 v10.25.0

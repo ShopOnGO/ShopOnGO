@@ -7,6 +7,8 @@ github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/ShopOnGO/admin-proto v0.0.0-20250330184913-939f08b67840 h1:rPGU6lGL758gBhjFsYylrCTgwvyMl3ePim5RS+xloq8=
 github.com/ShopOnGO/admin-proto v0.0.0-20250330184913-939f08b67840/go.mod h1:uczjtQeuZ6fADE/x9BHyanvSUlK+OP8X3UgSoVTVabI=
+github.com/ShopOnGO/admin-proto v0.0.0-20250405161041-88a0054c6c2a h1:mbtEX+Rg4i8I28uWl5corht3/s5FYpr1yCncCmP9N1E=
+github.com/ShopOnGO/admin-proto v0.0.0-20250405161041-88a0054c6c2a/go.mod h1:uczjtQeuZ6fADE/x9BHyanvSUlK+OP8X3UgSoVTVabI=
 github.com/ajg/form v1.5.1/go.mod h1:uL1WgH+h2mgNtvBq0339dVnzXdBETtL2LeUXaIv25UY=
 github.com/andybalholm/brotli v1.0.4/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
