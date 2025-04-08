@@ -20,6 +20,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
@@ -40,6 +41,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/email/smtp"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/event"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/kafkaService"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2"
@@ -60,6 +62,23 @@ func App() http.Handler {
 	eventBus := event.NewEventBus() // передаем как зависимость в handle
 	smtp := smtp.NewSMTPSender(conf.SMTP.Name, conf.SMTP.From, conf.SMTP.Pass, conf.SMTP.Host, conf.SMTP.Port)
 	
+	
+	// Подключение к Kafka
+	brokers := []string{"kafka:9092"}
+	topic := "review-events"
+
+	kafka := kafkaService.NewProducer(brokers, topic)
+	defer kafka.Close()
+
+	// Отправляем сообщение
+	ctx := context.Background()
+	err := kafka.Produce(ctx, []byte("review-id-123"), []byte(`{"action":"created","review_id":123}`))
+	if err != nil {
+		logger.Errorf("Ошибка при отправке сообщения в Kafka: %v", err)
+	}
+	logger.Info("✅ Сообщение отправлено в Kafka")
+
+
 	// REPOSITORIES
 	linkRepository := link.NewLinkRepository(db)
 	userRepository := user.NewUserRepository(db)
