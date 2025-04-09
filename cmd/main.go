@@ -20,8 +20,10 @@
 package main
 
 import (
-	"context"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
@@ -33,6 +35,8 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/home"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/link"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/question"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/review"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/stat"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 
@@ -68,15 +72,14 @@ func App() http.Handler {
 	topic := "review-events"
 
 	kafka := kafkaService.NewProducer(brokers, topic)
-	defer kafka.Close()
-
-	// Отправляем сообщение
-	ctx := context.Background()
-	err := kafka.Produce(ctx, []byte("review-id-123"), []byte(`{"action":"created","review_id":123}`))
-	if err != nil {
-		logger.Errorf("Ошибка при отправке сообщения в Kafka: %v", err)
-	}
-	logger.Info("✅ Сообщение отправлено в Kafka")
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		<-c
+		// Закрываем продюсер при получении сигнала
+		kafka.Close()
+		os.Exit(0)
+	}()
 
 
 	// REPOSITORIES
@@ -138,6 +141,14 @@ func App() http.Handler {
 	passwordreset.NewResetHandler(router, passwordreset.ResetHandlerDeps{
 		ResetService: resetService,
         Config:       conf,
+	})
+	review.NewReviewHandler(router, review.ReviewHandlerDeps{
+		Kafka: kafka,
+		Config: conf,
+	})
+	question.NewQuestionHandler(router, question.QuestionHandlerDeps{
+		Kafka: kafka,
+		Config: conf,
 	})
 
 	// swagger
