@@ -29,9 +29,9 @@ func NewReviewHandler(router *mux.Router, deps ReviewHandlerDeps){
 		Config:     deps.Config,
 		Kafka: 		deps.Kafka,
 	}
-	router.Handle("POST /review", middleware.IsAuthed(handler.AddReview(), deps.Config))
-	router.Handle("PUT /review/", middleware.IsAuthed(handler.UpdateReview(), deps.Config))
-	router.Handle("DELETE /review/", middleware.IsAuthed(handler.DeleteReview(), deps.Config))
+	router.Handle("/review", middleware.IsAuthed(handler.AddReview(), deps.Config)).Methods("POST")
+	router.Handle("/review/{id}", middleware.IsAuthed(handler.UpdateReview(), deps.Config)).Methods("PUT")
+	router.Handle("/review/{id}", middleware.IsAuthed(handler.DeleteReview(), deps.Config)).Methods("DELETE")
 }
 
 

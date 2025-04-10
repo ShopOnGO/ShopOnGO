@@ -25,11 +25,11 @@ func NewCartHandler(router *mux.Router, deps CartHandlerDeps) {
 		Config:      deps.Config,
 		CartService: deps.CartService,
 	}
-	router.Handle("GET /cart", middleware.AuthOrGuest(handler.GetCart(), deps.Config))
-	router.Handle("POST /cart/item", middleware.AuthOrGuest(handler.AddCartItem(), deps.Config))
-	router.Handle("PUT /cart/item", middleware.AuthOrGuest(handler.UpdateCartItem(), deps.Config))
-	router.Handle("DELETE /cart/item", middleware.AuthOrGuest(handler.RemoveCartItem(), deps.Config))
-	router.Handle("DELETE /cart", middleware.AuthOrGuest(handler.ClearCart(), deps.Config))
+	router.Handle("/cart", middleware.AuthOrGuest(handler.GetCart(), deps.Config)).Methods("GET")
+	router.Handle("/cart/item", middleware.AuthOrGuest(handler.AddCartItem(), deps.Config)).Methods("POST")
+	router.Handle("/cart/item", middleware.AuthOrGuest(handler.UpdateCartItem(), deps.Config)).Methods("PUT")
+	router.Handle("/cart/item", middleware.AuthOrGuest(handler.RemoveCartItem(), deps.Config)).Methods("DELETE")
+	router.Handle("/cart", middleware.AuthOrGuest(handler.ClearCart(), deps.Config)).Methods("DELETE")	
 }
 
 

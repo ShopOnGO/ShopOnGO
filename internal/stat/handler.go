@@ -28,8 +28,7 @@ func NewStatHandler(router *mux.Router, deps StatHandlerDeps) {
 	handler := &StatHandler{
 		StatRepository: deps.StatRepository,
 	}
-	router.Handle("GET /stat", middleware.IsAuthed(handler.GetStat(), deps.Config))
-
+	router.Handle("/stat", middleware.IsAuthed(handler.GetStat(), deps.Config)).Methods("GET")
 }
 
 // GetStat получает статистику переходов по ссылкам за указанный период

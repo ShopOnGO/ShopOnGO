@@ -31,12 +31,11 @@ func NewLinkHandler(router *mux.Router, deps LinkHandlerDeps) {
 		LinkService:    deps.LinkService,
 		EventBus:       deps.EventBus,
 	}
-	router.Handle("POST /link", middleware.IsAuthed(handler.Create(), deps.Config))
-	router.Handle("PATCH /link/{id}", middleware.IsAuthed(handler.Update(), deps.Config)) // mv для одного типа запросов
-	router.Handle("DELETE /link/{id}", middleware.IsAuthed(handler.Delete(), deps.Config))
-	router.HandleFunc("GET /goto/{hash}", handler.GoTo()) //CHANGED!!!
-	router.Handle("GET /link", middleware.IsAuthed(handler.GetAll(), deps.Config))
-
+	router.Handle("/link", middleware.IsAuthed(handler.Create(), deps.Config)).Methods("POST")
+	router.Handle("/link/{id}", middleware.IsAuthed(handler.Update(), deps.Config)).Methods("PATCH")
+	router.Handle("/link/{id}", middleware.IsAuthed(handler.Delete(), deps.Config)).Methods("DELETE")
+	router.HandleFunc("/goto/{hash}", handler.GoTo()).Methods("GET")
+	router.Handle("/link", middleware.IsAuthed(handler.GetAll(), deps.Config)).Methods("GET")	
 }
 
 // Create создает новую короткую ссылку
