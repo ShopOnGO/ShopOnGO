@@ -66,23 +66,19 @@ func App() http.Handler {
 	router := mux.NewRouter()
 	eventBus := event.NewEventBus() // передаем как зависимость в handle
 	smtp := smtp.NewSMTPSender(conf.SMTP.Name, conf.SMTP.From, conf.SMTP.Pass, conf.SMTP.Host, conf.SMTP.Port)
-
-  
-	// Подключение к Kafka
-	brokers := []string{"kafka:9092"}
-	topic := "review-events"
-
-	kafka := kafkaService.NewProducer(brokers, topic)
+	
+	kafkaProducer := kafkaService.NewProducer(
+		conf.Kafka.Brokers,
+		conf.Kafka.Topic,
+	)
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		<-c
-		// Закрываем продюсер при получении сигнала
-		kafka.Close()
+		kafkaProducer.Close()
 		os.Exit(0)
 	}()
 
-  
 	// REPOSITORIES
 	linkRepository := link.NewLinkRepository(db)
 	userRepository := user.NewUserRepository(db)
@@ -138,11 +134,11 @@ func App() http.Handler {
 		Config:       conf,
 	})
 	review.NewReviewHandler(router, review.ReviewHandlerDeps{
-		Kafka: kafka,
+		Kafka: kafkaProducer,
 		Config: conf,
 	})
 	question.NewQuestionHandler(router, question.QuestionHandlerDeps{
-		Kafka: kafka,
+		Kafka: kafkaProducer,
 		Config: conf,
 	})
 	admin.NewAdminHandler(router)

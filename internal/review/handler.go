@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"github.com/gorilla/mux"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/kafkaService"
@@ -23,7 +24,7 @@ type ReviewHandler struct {
 	Kafka *kafkaService.KafkaService
 }
 
-func NewReviewHandler(router *http.ServeMux, deps ReviewHandlerDeps){
+func NewReviewHandler(router *mux.Router, deps ReviewHandlerDeps){
 	handler := &ReviewHandler{
 		Config:     deps.Config,
 		Kafka: 		deps.Kafka,
