@@ -74,15 +74,11 @@ func (rh *ReviewHandler) AddReview() http.HandlerFunc {
 func (rh *ReviewHandler) UpdateReview() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Извлечение идентификатора отзыва из URL ("/reviews/{id}")
-		idStr := strings.TrimPrefix(r.URL.Path, "/reviews/")
+		idStr := strings.TrimPrefix(r.URL.Path, "/review/")
 		reviewID, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil || reviewID == 0 {
 			http.Error(w, "invalid review id", http.StatusBadRequest)
 			return
-		}
-		type updateReviewRequest struct {
-			Rating  int16  `json:"rating"`
-			Comment string `json:"comment"`
 		}
 		var req updateReviewRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -117,7 +113,7 @@ func (rh *ReviewHandler) UpdateReview() http.HandlerFunc {
 
 func (rh *ReviewHandler) DeleteReview() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		idStr := strings.TrimPrefix(r.URL.Path, "/reviews/")
+		idStr := strings.TrimPrefix(r.URL.Path, "/review/")
 		reviewID, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil || reviewID == 0 {
 			http.Error(w, "invalid review id", http.StatusBadRequest)

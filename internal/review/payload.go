@@ -6,3 +6,7 @@ type addReviewRequest struct {
 	Comment          string `json:"comment"`
 }
 
+type updateReviewRequest struct {
+	Rating  int16  `json:"rating"`
+	Comment string `json:"comment"`
+}
