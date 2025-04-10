@@ -85,12 +85,7 @@ func (repo *ProductVariantRepository) ReleaseStock(variantID uint, quantity uint
 		if err := tx.First(&variant, variantID).Error; err != nil {
 			return err
 		}
-
 		newReserved := variant.ReservedStock - quantity
-		if newReserved < 0 {
-			return errors.New("invalid quantity to release")
-		}
-
 		return tx.Model(&variant).
 			Update("reserved_stock", newReserved).Error
 	})

@@ -21,6 +21,9 @@ package main
 
 import (
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
 	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
@@ -33,6 +36,8 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/home"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/link"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/question"
+	"github.com/ShopOnGO/ShopOnGO/prod/internal/review"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/stat"
 	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
 
@@ -40,6 +45,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/email/smtp"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/event"
+	"github.com/ShopOnGO/ShopOnGO/prod/pkg/kafkaService"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2"
@@ -61,6 +67,22 @@ func App() http.Handler {
 	eventBus := event.NewEventBus() // передаем как зависимость в handle
 	smtp := smtp.NewSMTPSender(conf.SMTP.Name, conf.SMTP.From, conf.SMTP.Pass, conf.SMTP.Host, conf.SMTP.Port)
 
+  
+	// Подключение к Kafka
+	brokers := []string{"kafka:9092"}
+	topic := "review-events"
+
+	kafka := kafkaService.NewProducer(brokers, topic)
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		<-c
+		// Закрываем продюсер при получении сигнала
+		kafka.Close()
+		os.Exit(0)
+	}()
+
+  
 	// REPOSITORIES
 	linkRepository := link.NewLinkRepository(db)
 	userRepository := user.NewUserRepository(db)
@@ -114,6 +136,14 @@ func App() http.Handler {
 	passwordreset.NewResetHandler(router, passwordreset.ResetHandlerDeps{
 		ResetService: resetService,
 		Config:       conf,
+	})
+	review.NewReviewHandler(router, review.ReviewHandlerDeps{
+		Kafka: kafka,
+		Config: conf,
+	})
+	question.NewQuestionHandler(router, question.QuestionHandlerDeps{
+		Kafka: kafka,
+		Config: conf,
 	})
 	admin.NewAdminHandler(router)
 
