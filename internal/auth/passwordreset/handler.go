@@ -24,10 +24,10 @@ func NewResetHandler(router *mux.Router, deps ResetHandlerDeps) {
 		Config:       deps.Config,
 		ResetService: deps.ResetService,
 	}
-	router.HandleFunc("POST /auth/reset", handler.Reset())
-	router.HandleFunc("POST /auth/reset/verify", handler.VerifyCode())
-	router.HandleFunc("POST /auth/reset/password", handler.ResetPassword())
-	router.HandleFunc("POST /auth/reset/resend", handler.ResendCode())
+	router.Handle("/auth/reset", handler.Reset()).Methods("POST")
+	router.Handle("/auth/reset/verify", handler.VerifyCode()).Methods("POST")
+	router.Handle("/auth/reset/password", handler.ResetPassword()).Methods("POST")
+	router.Handle("/auth/reset/resend", handler.ResendCode()).Methods("POST")
 }
 
 // Reset инициирует процедуру сброса пароля, генерирует код и отправляет его на указанный email

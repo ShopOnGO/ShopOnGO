@@ -43,11 +43,11 @@ func NewAuthHandler(router *mux.Router, deps AuthHandlerDeps) {
 		AuthService:   deps.AuthService,
 		OAuth2Service: deps.OAuth2Service,
 	}
-	router.HandleFunc("POST /auth/login", handler.Login())
-	router.HandleFunc("GET /oauth/google/login", handler.GoogleLogin)
-	router.HandleFunc("POST /auth/register", handler.Register())
-	router.Handle("POST /auth/logout", middleware.IsAuthed(handler.Logout(), deps.Config))
-	router.Handle("POST /auth/change/role", middleware.IsAuthed(handler.ChangeUserRole(), deps.Config))
+	router.HandleFunc("/auth/login", handler.Login()).Methods("POST")
+	router.HandleFunc("/oauth/google/login", handler.GoogleLogin).Methods("GET")
+	router.HandleFunc("/auth/register", handler.Register()).Methods("POST")
+	router.Handle("/auth/logout", middleware.IsAuthed(handler.Logout(), deps.Config)).Methods("POST")
+	router.Handle("/auth/change/role", middleware.IsAuthed(handler.ChangeUserRole(), deps.Config)).Methods("POST")
 }
 
 // Login аутентифицирует пользователя и выдает JWT токен
