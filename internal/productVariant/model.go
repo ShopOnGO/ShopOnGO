@@ -23,3 +23,7 @@ type ProductVariant struct {
 	MinOrder   uint     `gorm:"default:1"`        // Минимальный заказ
 	Dimensions string   `gorm:"type:varchar(50)"` // Габариты (например "20x30x5 см")
 }
+
+func (ProductVariant) TableName() string {
+	return "product_variants"
+}

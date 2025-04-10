@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/configs"
-
+	"github.com/gorilla/mux"
 )
+
 type OAuth2HandlerDeps struct {
 	Service OAuth2Service
 	*configs.Config
@@ -18,7 +19,7 @@ type OAuth2Handler struct {
 	*configs.Config
 }
 
-func NewOAuth2Handler(router *http.ServeMux, deps OAuth2HandlerDeps) {
+func NewOAuth2Handler(router *mux.Router, deps OAuth2HandlerDeps) {
 	handler := &OAuth2Handler{
 		service: deps.Service,
 		Config:  deps.Config,
@@ -26,7 +27,6 @@ func NewOAuth2Handler(router *http.ServeMux, deps OAuth2HandlerDeps) {
 
 	router.HandleFunc("/oauth/token", handler.HandleToken)
 }
-
 
 // HandleToken обновляет access-токен по refresh-токену
 // @Summary        Обновление access-токена

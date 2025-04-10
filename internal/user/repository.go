@@ -17,6 +17,9 @@ func NewUserRepository(database *db.Db) *UserRepository {
 }
 
 func (repo *UserRepository) Create(user *User) (*User, error) {
+	if user.Email == "" {
+		return nil, errors.New("email is required")
+	}
 	result := repo.Database.DB.Create(user)
 	if user.Email == "" {
 		return nil, errors.New("email is required")
@@ -65,6 +68,7 @@ func (repo *UserRepository) Delete(id uint) error {
 
 func (repo *UserRepository) UpdateUserPassword(id uint, newPassword string) error {
 	if id == 0 {
+
 		return errors.New("user ID is required for UpdateUserPassword")
 	}
 	result := repo.Database.DB.Model(&User{}).Where("id = ?", id).Update("password", newPassword)
@@ -76,6 +80,7 @@ func (repo *UserRepository) GetUserRoleByEmail(email string) (string, error) {
 		return "", errors.New("email cannot be empty")
 	}
 	var role string
+
     result := repo.Database.DB.Model(&User{}).Select("role").Where("email = ?", email).First(&role)
     if result.Error != nil {
         return "", result.Error

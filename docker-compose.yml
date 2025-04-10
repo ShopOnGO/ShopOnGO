@@ -78,6 +78,7 @@ services:
 networks:
   shopongo_default:
     external: true
+    
 volumes:
   kafka-volume:
   zookeeper-volume:
