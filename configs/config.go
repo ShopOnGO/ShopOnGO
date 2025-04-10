@@ -3,6 +3,7 @@ package configs
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
@@ -16,6 +17,7 @@ type Config struct {
 	Google GoogleConfig
 	Code CodeConfig
 	SMTP SMTPConfig
+	Kafka KafkaConfig
 }
 
 type DbConfig struct {
@@ -52,6 +54,11 @@ type GoogleConfig struct {
     ClientID     string
     ClientSecret string
     RedirectURL  string
+}
+
+type KafkaConfig struct {
+	Brokers []string
+	Topic   string
 }
 
 func LoadConfig() *Config {
@@ -107,7 +114,9 @@ func LoadConfig() *Config {
 			logger.Error("Invalid CODE_RATE_LIMIT_TTL, using default 24h", err.Error())
 		}
 	}
-	
+	brokersRaw := os.Getenv("KAFKA_BROKERS")
+	brokers := strings.Split(brokersRaw, ",")
+
 
 	return &Config{
 		Db: DbConfig{
@@ -140,6 +149,10 @@ func LoadConfig() *Config {
             Pass: os.Getenv("SMTP_PASS"),
             Host: os.Getenv("SMTP_HOST"),
             Port: 587, // TLS
+		},
+		Kafka: KafkaConfig{
+			Brokers: brokers,
+			Topic:   os.Getenv("KAFKA_TOPIC"),
 		},
 	}
 }

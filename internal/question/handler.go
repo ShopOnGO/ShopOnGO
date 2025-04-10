@@ -11,6 +11,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
+	"github.com/gorilla/mux"
 )
 
 type QuestionHandlerDeps struct {
@@ -24,7 +25,7 @@ type QuestionHandler struct {
 }
 
 // NewQuestionHandler регистрирует пути для работы с вопросами.
-func NewQuestionHandler(router *http.ServeMux, deps QuestionHandlerDeps) {
+func NewQuestionHandler(router *mux.Router, deps QuestionHandlerDeps) {
 	handler := &QuestionHandler{
 		Config: deps.Config,
 		Kafka:  deps.Kafka,
