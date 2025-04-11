@@ -31,7 +31,7 @@ func NewQuestionHandler(router *mux.Router, deps QuestionHandlerDeps) {
 		Kafka:  deps.Kafka,
 	}
 
-	router.Handle("/question", middleware.IsAuthed(handler.AddQuestion(), deps.Config)).Methods("POST")
+	router.Handle("/question", handler.AddQuestion()).Methods("POST")
 	router.Handle("/question/{id}", middleware.IsAuthed(handler.AnswerQuestion(), deps.Config)).Methods("PUT")
 	router.Handle("/question/{id}", middleware.IsAuthed(handler.DeleteQuestion(), deps.Config)).Methods("DELETE")	
 }
