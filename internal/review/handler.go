@@ -29,9 +29,9 @@ func NewReviewHandler(router *mux.Router, deps ReviewHandlerDeps){
 		Config:     deps.Config,
 		Kafka: 		deps.Kafka,
 	}
-	router.Handle("/review", middleware.IsAuthed(handler.AddReview(), deps.Config)).Methods("POST")
-	router.Handle("/review/{id}", middleware.IsAuthed(handler.UpdateReview(), deps.Config)).Methods("PUT")
-	router.Handle("/review/{id}", middleware.IsAuthed(handler.DeleteReview(), deps.Config)).Methods("DELETE")
+	router.Handle("/reviews", middleware.IsAuthed(handler.AddReview(), deps.Config)).Methods("POST")
+	router.Handle("/reviews/{id}", middleware.IsAuthed(handler.UpdateReview(), deps.Config)).Methods("PUT")
+	router.Handle("/reviews/{id}", middleware.IsAuthed(handler.DeleteReview(), deps.Config)).Methods("DELETE")
 }
 
 
@@ -75,7 +75,7 @@ func (rh *ReviewHandler) AddReview() http.HandlerFunc {
 func (rh *ReviewHandler) UpdateReview() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Извлечение идентификатора отзыва из URL ("/reviews/{id}")
-		idStr := strings.TrimPrefix(r.URL.Path, "/review/")
+		idStr := strings.TrimPrefix(r.URL.Path, "/reviews/")
 		reviewID, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil || reviewID == 0 {
 			http.Error(w, "invalid review id", http.StatusBadRequest)
@@ -114,7 +114,7 @@ func (rh *ReviewHandler) UpdateReview() http.HandlerFunc {
 
 func (rh *ReviewHandler) DeleteReview() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		idStr := strings.TrimPrefix(r.URL.Path, "/review/")
+		idStr := strings.TrimPrefix(r.URL.Path, "/reviews/")
 		reviewID, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil || reviewID == 0 {
 			http.Error(w, "invalid review id", http.StatusBadRequest)
