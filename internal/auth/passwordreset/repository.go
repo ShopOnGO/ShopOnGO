@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-redis/redis/v8"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/redisdb"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/redisdb"
 )
 
 type RedisResetRepository struct {

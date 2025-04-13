@@ -3,7 +3,7 @@ package cart
 import (
 	"fmt"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 	"gorm.io/gorm"
 )
 

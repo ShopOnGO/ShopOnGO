@@ -3,8 +3,8 @@ package auth_test
 import (
 	"testing"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/auth"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
+	"github.com/ShopOnGO/ShopOnGO/internal/auth"
+	"github.com/ShopOnGO/ShopOnGO/internal/user"
 )
 
 type MockUserRepository struct{}

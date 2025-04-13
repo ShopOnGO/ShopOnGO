@@ -1,7 +1,7 @@
 package home
 
 import (
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/di"
+	"github.com/ShopOnGO/ShopOnGO/pkg/di"
 )
 
 type HomeService struct {

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/configs"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/di"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/email"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/email/smtp"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/configs"
+	"github.com/ShopOnGO/ShopOnGO/pkg/di"
+	"github.com/ShopOnGO/ShopOnGO/pkg/email"
+	"github.com/ShopOnGO/ShopOnGO/pkg/email/smtp"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 	"golang.org/x/crypto/bcrypt"
 )
 

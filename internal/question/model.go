@@ -2,7 +2,7 @@ package question
 
 import (
 	"gorm.io/gorm"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
+	"github.com/ShopOnGO/ShopOnGO/internal/user"
 )
 
 type Question struct {

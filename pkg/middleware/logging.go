@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 )
 
 func Logging(next http.Handler) http.Handler {
