@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/configs"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/kafkaService"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
+	"github.com/ShopOnGO/ShopOnGO/configs"
+	"github.com/ShopOnGO/ShopOnGO/pkg/kafkaService"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/middleware"
+	"github.com/ShopOnGO/ShopOnGO/pkg/res"
 	"github.com/gorilla/mux"
 )
 

@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/configs"
+	"github.com/ShopOnGO/ShopOnGO/configs"
 )
 
 type KafkaProducers map[string]*KafkaService
