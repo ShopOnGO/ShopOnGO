@@ -3,8 +3,8 @@ package product
 import (
 	"errors"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/review"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
+	"github.com/ShopOnGO/ShopOnGO/internal/review"
+	"github.com/ShopOnGO/ShopOnGO/pkg/db"
 )
 
 type ProductRepository struct {

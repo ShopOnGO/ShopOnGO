@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/configs"
-	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/req"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
+	"github.com/ShopOnGO/ShopOnGO/configs"
+	_ "github.com/ShopOnGO/ShopOnGO/docs"
+	"github.com/ShopOnGO/ShopOnGO/pkg/middleware"
+	"github.com/ShopOnGO/ShopOnGO/pkg/oauth2"
+	"github.com/ShopOnGO/ShopOnGO/pkg/req"
+	"github.com/ShopOnGO/ShopOnGO/pkg/res"
 	"github.com/gorilla/mux"
 
 	googleOAuth2 "golang.org/x/oauth2"

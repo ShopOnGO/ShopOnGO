@@ -3,7 +3,7 @@ package stat
 import (
 	"time"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
+	"github.com/ShopOnGO/ShopOnGO/pkg/db"
 
 	"gorm.io/datatypes"
 	"gorm.io/gorm"

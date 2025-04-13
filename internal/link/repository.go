@@ -1,7 +1,7 @@
 package link
 
 import (
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
+	"github.com/ShopOnGO/ShopOnGO/pkg/db"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

@@ -1,8 +1,8 @@
 package review
 
 import (
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/productVariant"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
+	"github.com/ShopOnGO/ShopOnGO/internal/productVariant"
+	"github.com/ShopOnGO/ShopOnGO/internal/user"
 
 	"gorm.io/gorm"
 )

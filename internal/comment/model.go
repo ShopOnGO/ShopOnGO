@@ -3,8 +3,8 @@ package comment
 import (
 	"time"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/review"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
+	"github.com/ShopOnGO/ShopOnGO/internal/review"
+	"github.com/ShopOnGO/ShopOnGO/internal/user"
 	"gorm.io/gorm"
 )
 

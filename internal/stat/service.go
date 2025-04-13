@@ -1,9 +1,9 @@
 package stat
 
 import (
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/event"
+	"github.com/ShopOnGO/ShopOnGO/pkg/event"
 )
 
 type StatServiceDeps struct {

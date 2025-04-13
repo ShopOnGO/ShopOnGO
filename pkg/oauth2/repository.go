@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/redisdb"
+	"github.com/ShopOnGO/ShopOnGO/pkg/redisdb"
 	"github.com/go-redis/redis/v8"
 )
 

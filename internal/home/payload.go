@@ -1,9 +1,9 @@
 package home
 
 import (
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/brand"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
+	"github.com/ShopOnGO/ShopOnGO/internal/brand"
+	"github.com/ShopOnGO/ShopOnGO/internal/category"
+	"github.com/ShopOnGO/ShopOnGO/internal/product"
 )
 
 type HomeData struct {

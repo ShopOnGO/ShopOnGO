@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 	pb "github.com/ShopOnGO/admin-proto/pkg/service"
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"

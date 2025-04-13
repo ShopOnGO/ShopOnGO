@@ -1,10 +1,10 @@
 package product
 
 import (
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/brand"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/productVariant"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/review"
+	"github.com/ShopOnGO/ShopOnGO/internal/brand"
+	"github.com/ShopOnGO/ShopOnGO/internal/category"
+	"github.com/ShopOnGO/ShopOnGO/internal/productVariant"
+	"github.com/ShopOnGO/ShopOnGO/internal/review"
 	"gorm.io/gorm"
 )
 
