@@ -85,8 +85,6 @@ func (k *KafkaService) Produce(ctx context.Context, key, value []byte) error {
 	return k.Writer.WriteMessages(ctx, msg)
 }
 
-// --- ОБЩЕЕ ---
-
 func waitForKafka(brokers []string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {

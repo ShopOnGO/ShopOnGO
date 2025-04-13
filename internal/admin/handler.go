@@ -118,7 +118,11 @@ func (a *AdminHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
+	if req.Name == "" {
+		log.Printf("CreateCategory error: category name is required")
+		http.Error(w, "Name can't be empty", http.StatusBadRequest)
+		return
+	}
 	resp, err := a.Clients.CategoryClient.CreateCategory(ctx, &req)
 	if err != nil {
 		http.Error(w, "Failed to create category", http.StatusInternalServerError)
@@ -152,6 +156,10 @@ func (a *AdminHandler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	if categoryID == 0 {
+		http.Error(w, "Invalid category ID", http.StatusBadRequest)
+		return
+	}
 	resp, err := a.Clients.CategoryClient.FindCategoryByID(ctx, &pb.FindCategoryByIDRequest{Id: uint32(categoryID)})
 	if err != nil {
 		http.Error(w, "Failed to fetch category", http.StatusInternalServerError)
@@ -190,7 +198,10 @@ func (a *AdminHandler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Id = uint32(categoryID)
-
+	if req.Id == 0 {
+		http.Error(w, "Category ID can't be null", http.StatusBadRequest)
+		return
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -301,6 +312,10 @@ func (a *AdminHandler) CreateBrand(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	if req.Name == "" {
+		http.Error(w, "name can't be empty", http.StatusBadRequest)
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -368,6 +383,11 @@ func (a *AdminHandler) UpdateBrand(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
+	if req.Name == "" {
+		http.Error(w, "Name can't be empty", http.StatusBadRequest)
+		return
+	}
 
 	resp, err := a.Clients.BrandClient.UpdateBrand(ctx, &req)
 	if err != nil {
@@ -457,6 +477,11 @@ func (a *AdminHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	if req.Name == "" || req.CategoryId == 0 {
+		http.Error(w, "Name and CategoryId can't be empty", http.StatusBadRequest)
+		return
+	}
+
 	resp, err := a.Clients.ProductClient.CreateProduct(ctx, &req)
 	if err != nil {
 		http.Error(w, "Failed to create product", http.StatusInternalServerError)
@@ -533,6 +558,10 @@ func (a *AdminHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	if req.Model.Id == 0 {
+		http.Error(w, "Id can't be null", http.StatusBadRequest)
+		return
+	}
 	resp, err := a.Clients.ProductClient.UpdateProduct(ctx, &req)
 	if err != nil {
 		http.Error(w, "Failed to update product", http.StatusInternalServerError)
@@ -561,6 +590,11 @@ func (a *AdminHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	if req.Id == 0 {
+		http.Error(w, "Id can't be empty", http.StatusBadRequest)
+
+		return
+	}
 	_, err := a.Clients.ProductClient.DeleteProduct(ctx, &req)
 	if err != nil {
 		http.Error(w, "Failed to delete product", http.StatusInternalServerError)
@@ -616,7 +650,10 @@ func (a *AdminHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
+	if req.Email == "" {
+		http.Error(w, "Email can't be null", http.StatusBadRequest)
+		return
+	}
 	resp, err := a.Clients.UserClient.CreateUser(ctx, &req)
 	if err != nil {
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
@@ -647,6 +684,11 @@ func (a *AdminHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
+	if req.Email == "" {
+		http.Error(w, "Email can't be empty", http.StatusBadRequest)
+		return
+	}
 
 	resp, err := a.Clients.UserClient.FindUserByEmail(ctx, &req)
 	if err != nil {
@@ -686,6 +728,12 @@ func (a *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	if req.Model.Id == 0 {
+		errMsg := "user ID is required for update"
+		http.Error(w, errMsg, http.StatusBadRequest)
+
+		return
+	}
 
 	resp, err := a.Clients.UserClient.UpdateUser(ctx, &req)
 	if err != nil {
@@ -716,7 +764,12 @@ func (a *AdminHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	if userID == 0 {
+		errMsg := "user ID is required for update"
+		http.Error(w, errMsg, http.StatusBadRequest)
 
+		return
+	}
 	_, err = a.Clients.UserClient.DeleteUser(ctx, &pb.DeleteUserRequest{Id: userID})
 	if err != nil {
 		http.Error(w, "Failed to delete user", http.StatusInternalServerError)
@@ -1275,7 +1328,10 @@ func (a *AdminHandler) DeleteVariant(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	// Выполняем удаление
+	if req.GetId() == 0 {
+		http.Error(w, "Id can't be null", http.StatusBadRequest)
+		return
+	}
 	_, err = a.Clients.ProductVariantClient.DeleteVariant(ctx, req)
 	if err != nil {
 		st, _ := status.FromError(err)
