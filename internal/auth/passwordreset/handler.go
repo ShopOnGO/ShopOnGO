@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/configs"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/configs"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 	"github.com/gorilla/mux"
 )
 

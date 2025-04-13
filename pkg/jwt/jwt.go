@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 	"github.com/golang-jwt/jwt/v5"
 )
 

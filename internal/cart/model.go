@@ -1,7 +1,7 @@
 package cart
 
 import (
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/productVariant"
+	"github.com/ShopOnGO/ShopOnGO/internal/productVariant"
 	"gorm.io/gorm"
 )
 

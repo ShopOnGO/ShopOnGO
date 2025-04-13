@@ -3,7 +3,7 @@ package user
 import (
 	"errors"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
+	"github.com/ShopOnGO/ShopOnGO/pkg/db"
 )
 
 type UserRepository struct {

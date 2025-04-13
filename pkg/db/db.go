@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/ShopOnGO/ShopOnGO/prod/configs"
+	"github.com/ShopOnGO/ShopOnGO/configs"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

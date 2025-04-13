@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 	"github.com/joho/godotenv"
 )
 

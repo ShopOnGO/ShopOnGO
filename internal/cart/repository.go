@@ -1,8 +1,8 @@
 package cart
 
 import (
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/db"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 )
 
 type CartRepository struct {

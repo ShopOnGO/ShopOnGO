@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/configs"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/jwt"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/configs"
+	"github.com/ShopOnGO/ShopOnGO/pkg/jwt"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 )
 
 type key string // делается чтобы не затирать другие значения в программе
