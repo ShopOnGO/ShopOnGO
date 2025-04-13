@@ -1,17 +1,16 @@
 #!/bin/sh
 
 set -e
-#данные из  DSN(ENV)
 host="postgres"
 port="5432"
 user="postgres"
 
-echo "Ожидание PostgreSQL ($host:$port)..."
-#проверка бд на доступность подключения + инициализации
+echo "Waiting PostgreSQL ($host:$port)..."
+
 until PGPASSWORD=my_pass pg_isready -h "$host" -p "$port" -U "$user"; do
-  echo "БД недоступна, жду..."
+  echo "DB unavailable, waiting..."
   sleep 2
 done
 
-echo "БД доступна, запускаем приложение!"
+echo "DB ACCEPTING QUERIES, starting app!"
 exec "$@"
