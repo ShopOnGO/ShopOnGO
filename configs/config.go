@@ -11,13 +11,13 @@ import (
 )
 
 type Config struct {
-	Db    DbConfig
-	Redis RedisConfig
-	OAuth OAuthConfig
+	Db     DbConfig
+	Redis  RedisConfig
+	OAuth  OAuthConfig
 	Google GoogleConfig
-	Code CodeConfig
-	SMTP SMTPConfig
-	Kafka KafkaConfig
+	Code   CodeConfig
+	SMTP   SMTPConfig
+	Kafka  KafkaConfig
 }
 
 type DbConfig struct {
@@ -32,13 +32,13 @@ type RedisConfig struct {
 }
 
 type OAuthConfig struct {
-	Secret        string
+	Secret string
 	JWTTTL time.Duration
 }
 
 type CodeConfig struct {
-	CodeTTL time.Duration
-	MaxRequests int
+	CodeTTL      time.Duration
+	MaxRequests  int
 	RateLimitTTL time.Duration
 }
 
@@ -51,14 +51,14 @@ type SMTPConfig struct {
 }
 
 type GoogleConfig struct {
-    ClientID     string
-    ClientSecret string
-    RedirectURL  string
+	ClientID     string
+	ClientSecret string
+	RedirectURL  string
 }
 
 type KafkaConfig struct {
 	Brokers []string
-	Topic   string
+	Topics  map[string]string // например: {"notifications": "notifications-topic", "reviews": "review-events"}
 }
 
 func LoadConfig() *Config {
@@ -117,13 +117,12 @@ func LoadConfig() *Config {
 	brokersRaw := os.Getenv("KAFKA_BROKERS")
 	brokers := strings.Split(brokersRaw, ",")
 
-
 	return &Config{
 		Db: DbConfig{
 			Dsn: os.Getenv("DSN"),
 		},
 		Redis: RedisConfig{
-			Addr:            os.Getenv("REDIS_ADDRESS"),
+			Addr: os.Getenv("REDIS_ADDRESS"),
 			// Password:        os.Getenv("REDIS_PASSWORD"),
 			Password:        "",
 			DB:              0,
@@ -134,25 +133,37 @@ func LoadConfig() *Config {
 			JWTTTL: jwtTTL,
 		},
 		Google: GoogleConfig{
-			ClientID: os.Getenv("CLIENT_ID"),
+			ClientID:     os.Getenv("CLIENT_ID"),
 			ClientSecret: os.Getenv("CLIENT_SECRET"),
-			RedirectURL: os.Getenv("REDIRECT_URL"),
+			RedirectURL:  os.Getenv("REDIRECT_URL"),
 		},
 		Code: CodeConfig{
-            CodeTTL: codeTTL,
-			MaxRequests: maxRequests,
+			CodeTTL:      codeTTL,
+			MaxRequests:  maxRequests,
 			RateLimitTTL: rateLimitTTL,
-        },
+		},
 		SMTP: SMTPConfig{
 			Name: os.Getenv("SMTP_NAME"),
 			From: os.Getenv("SMTP_FROM"),
-            Pass: os.Getenv("SMTP_PASS"),
-            Host: os.Getenv("SMTP_HOST"),
-            Port: 587, // TLS
+			Pass: os.Getenv("SMTP_PASS"),
+			Host: os.Getenv("SMTP_HOST"),
+			Port: 587, // TLS
 		},
 		Kafka: KafkaConfig{
 			Brokers: brokers,
-			Topic:   os.Getenv("KAFKA_TOPIC"),
+			Topics:  parseKafkaTopics(os.Getenv("KAFKA_TOPICS")),
 		},
 	}
+
+}
+func parseKafkaTopics(s string) map[string]string {
+	topics := map[string]string{}
+	pairs := strings.Split(s, ",")
+	for _, p := range pairs {
+		kv := strings.SplitN(p, ":", 2)
+		if len(kv) == 2 {
+			topics[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
+		}
+	}
+	return topics
 }
