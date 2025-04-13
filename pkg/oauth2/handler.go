@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/configs"
+	"github.com/ShopOnGO/ShopOnGO/configs"
 	"github.com/gorilla/mux"
 )
 

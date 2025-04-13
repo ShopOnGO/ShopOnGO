@@ -3,6 +3,7 @@ package kafkaService
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/segmentio/kafka-go"
@@ -11,6 +12,51 @@ import (
 type KafkaService struct {
 	Writer *kafka.Writer
 	Reader *kafka.Reader
+}
+
+// --- CONSUMER ---
+
+func NewConsumer(brokers []string, topic, groupID, clientID string) *KafkaService {
+	waitForKafka(brokers, 30*time.Second)
+
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  brokers,
+		GroupID:  groupID,
+		Topic:    topic,
+		MinBytes: 10e3,
+		MaxBytes: 10e6,
+		Dialer: &kafka.Dialer{
+			Timeout:  10 * time.Second,
+			ClientID: clientID,
+		},
+	})
+
+	return &KafkaService{
+		Reader: reader,
+	}
+}
+
+func (k *KafkaService) Consume(ctx context.Context, handler func(message kafka.Message) error) {
+	for {
+		msg, err := k.Reader.ReadMessage(ctx)
+		if err != nil {
+			if ctx.Err() != nil {
+				fmt.Println("Контекст отменён, остановка консьюмера")
+				break
+			}
+			if strings.Contains(err.Error(), "Group Coordinator Not Available") {
+				fmt.Println("Координатор группы не доступен, повтор через 5 секунд...")
+				time.Sleep(5 * time.Second)
+				continue
+			}
+			fmt.Printf("Ошибка чтения: %v\n", err)
+			continue
+		}
+
+		if err := handler(msg); err != nil {
+			fmt.Printf("Ошибка обработки: %v\n", err)
+		}
+	}
 }
 
 // --- PRODUCER ---
@@ -31,7 +77,6 @@ func NewProducer(brokers []string, topic string) *KafkaService {
 	}
 }
 
-// Produce отправляет сообщение в Kafka.
 func (k *KafkaService) Produce(ctx context.Context, key, value []byte) error {
 	msg := kafka.Message{
 		Key:   key,

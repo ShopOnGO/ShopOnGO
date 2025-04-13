@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/configs"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/kafkaService"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
+	"github.com/ShopOnGO/ShopOnGO/configs"
+	"github.com/ShopOnGO/ShopOnGO/pkg/kafkaService"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/middleware"
+	"github.com/ShopOnGO/ShopOnGO/pkg/res"
 	"github.com/gorilla/mux"
 )
 
@@ -31,7 +31,7 @@ func NewQuestionHandler(router *mux.Router, deps QuestionHandlerDeps) {
 		Kafka:  deps.Kafka,
 	}
 
-	router.Handle("/question", middleware.IsAuthed(handler.AddQuestion(), deps.Config)).Methods("POST")
+	router.Handle("/question", handler.AddQuestion()).Methods("POST")
 	router.Handle("/question/{id}", middleware.IsAuthed(handler.AnswerQuestion(), deps.Config)).Methods("PUT")
 	router.Handle("/question/{id}", middleware.IsAuthed(handler.DeleteQuestion(), deps.Config)).Methods("DELETE")	
 }

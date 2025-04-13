@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/configs"
-	_ "github.com/ShopOnGO/ShopOnGO/prod/docs"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/event"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/middleware"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/req"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
+	"github.com/ShopOnGO/ShopOnGO/configs"
+	_ "github.com/ShopOnGO/ShopOnGO/docs"
+	"github.com/ShopOnGO/ShopOnGO/pkg/event"
+	"github.com/ShopOnGO/ShopOnGO/pkg/middleware"
+	"github.com/ShopOnGO/ShopOnGO/pkg/req"
+	"github.com/ShopOnGO/ShopOnGO/pkg/res"
 	"github.com/gorilla/mux"
 )
 

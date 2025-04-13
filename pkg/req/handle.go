@@ -3,7 +3,7 @@ package req
 import (
 	"net/http"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/res"
+	"github.com/ShopOnGO/ShopOnGO/pkg/res"
 )
 
 func HandleBody[T any](w *http.ResponseWriter, r *http.Request) (*T, error) {

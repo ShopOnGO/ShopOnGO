@@ -1,4 +1,4 @@
-module github.com/ShopOnGO/ShopOnGO/prod
+module github.com/ShopOnGO/ShopOnGO
 
 go 1.23.3
 

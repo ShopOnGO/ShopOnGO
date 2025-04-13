@@ -3,7 +3,7 @@ package redisdb
 import (
 	"context"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/configs"
+	"github.com/ShopOnGO/ShopOnGO/configs"
 	"github.com/go-redis/redis/v8"
 )
 

@@ -3,12 +3,12 @@ package di
 import (
 	"time"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/brand"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/cart"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/product"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/review"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
+	"github.com/ShopOnGO/ShopOnGO/internal/brand"
+	"github.com/ShopOnGO/ShopOnGO/internal/cart"
+	"github.com/ShopOnGO/ShopOnGO/internal/category"
+	"github.com/ShopOnGO/ShopOnGO/internal/product"
+	"github.com/ShopOnGO/ShopOnGO/internal/review"
+	"github.com/ShopOnGO/ShopOnGO/internal/user"
 )
 
 type IStatRepository interface {

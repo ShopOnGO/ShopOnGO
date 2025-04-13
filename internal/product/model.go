@@ -1,9 +1,10 @@
 package product
 
 import (
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/brand"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/category"
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/productVariant"
+	"github.com/ShopOnGO/ShopOnGO/internal/brand"
+	"github.com/ShopOnGO/ShopOnGO/internal/category"
+	"github.com/ShopOnGO/ShopOnGO/internal/productVariant"
+	"github.com/ShopOnGO/ShopOnGO/internal/review"
 	"gorm.io/gorm"
 )
 
@@ -28,6 +29,8 @@ type Product struct {
 	// 🔹 Дополнительные данные
 	Images   string `gorm:"type:json" json:"images"`            // Храним ссылки на изображения JSON-массивом
 	VideoURL string `gorm:"type:varchar(255)" json:"video_url"` // Видеообзор
+
+	Reviews []review.Review `gorm:"-" json:"reviews"`
 }
 
 //todo category_id (3)

@@ -3,8 +3,8 @@ package smtp
 import (
 	"fmt"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/email"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/email"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 	"github.com/go-gomail/gomail"
 )
 

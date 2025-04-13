@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 )
 
 func CheckRole(next http.Handler, requiredRole string) http.Handler {

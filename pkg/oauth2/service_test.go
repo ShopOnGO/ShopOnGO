@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/configs"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/oauth2"
+	"github.com/ShopOnGO/ShopOnGO/configs"
+	"github.com/ShopOnGO/ShopOnGO/pkg/oauth2"
 )
 
 type RefreshTokenData struct {

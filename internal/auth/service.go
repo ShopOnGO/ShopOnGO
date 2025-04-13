@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/user"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/di"
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/internal/user"
+	"github.com/ShopOnGO/ShopOnGO/pkg/di"
+	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 	"gorm.io/gorm"
 
 	"golang.org/x/crypto/bcrypt"

@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/ShopOnGO/ShopOnGO/prod/internal/cart"
+	"github.com/ShopOnGO/ShopOnGO/internal/cart"
 	"gorm.io/gorm"
 )
 

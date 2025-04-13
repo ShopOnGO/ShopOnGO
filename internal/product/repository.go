@@ -3,7 +3,8 @@ package product
 import (
 	"errors"
 
-	"github.com/ShopOnGO/ShopOnGO/prod/pkg/db"
+	"github.com/ShopOnGO/ShopOnGO/internal/review"
+	"github.com/ShopOnGO/ShopOnGO/pkg/db"
 )
 
 type ProductRepository struct {
@@ -76,6 +77,43 @@ func (repo *ProductRepository) GetFeaturedProducts(amount uint, random bool) ([]
 
 	return products, result.Error
 }
+
+func (repo *ProductRepository) GetProductWithReviewsByID(productID uint) (*Product, error) {
+	if productID == 0 {
+		return nil, errors.New("product ID is required")
+	}
+
+	var product Product
+
+	// Шаг 1: Загружаем продукт с вариантами
+	err := repo.Database.DB.
+		Preload("Variants").
+		First(&product, productID).
+		Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Шаг 2: Собираем все Variant.ID
+	variantIDs := make([]uint, 0, len(product.Variants))
+	for _, v := range product.Variants {
+		variantIDs = append(variantIDs, v.ID)
+	}
+
+	// Шаг 3: Загружаем отзывы по этим variant_id
+	var reviews []review.Review
+	err = repo.Database.DB.
+		Where("product_variant_id IN ?", variantIDs).
+		Preload("User"). // если хочешь подгружать пользователей
+		Find(&reviews).Error
+	if err != nil {
+		return nil, err
+	}
+
+	product.Reviews = reviews
+	return &product, nil
+}
+
 
 func (repo *ProductRepository) Update(product *Product) (*Product, error) {
 	if product.ID == 0 {
