@@ -43,18 +43,11 @@ func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		// Извлекаем user_id из контекста (например, установленного middleware)
-		userID, ok := r.Context().Value(middleware.ContextUserIDKey).(uint)
-		if !ok || req.ProductVariantID == 0 || req.QuestionText == "" {
-			http.Error(w, "product_variant_id, user_id and question_text are required", http.StatusBadRequest)
-			return
-		}
-
+		
 		// Формирование события
 		event := map[string]interface{}{
 			"action":             "created",
 			"product_variant_id": req.ProductVariantID,
-			"user_id":            userID,
 			"question_text":      req.QuestionText,
 		}
 

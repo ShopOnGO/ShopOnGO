@@ -42,19 +42,24 @@ func (rh *ReviewHandler) AddReview() http.HandlerFunc {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		userID := r.Context().Value(middleware.ContextUserIDKey)
+		userID, ok := r.Context().Value(middleware.ContextUserIDKey).(uint)
+		if !ok {
+			http.Error(w, "invalid user_id", http.StatusBadRequest)
+			return
+		}
+		
 		if req.ProductVariantID == 0 || userID == 0 {
 			http.Error(w, "product_variant_id and user_id are required", http.StatusBadRequest)
 			return
 		}
 		
-		event := map[string]interface{}{
-			"action":             "created",
-			"product_variant_id": req.ProductVariantID,
-			"user_id":            userID,
-			"rating":             req.Rating,
-			"comment":            req.Comment,
+		event := reviewCreatedEvent{
+			Action: "create",
+			Review: req,
+			UserID: userID,
 		}
+		logger.Info(event)
+
 		eventBytes, err := json.Marshal(event)
 		if err != nil {
 			http.Error(w, "error processing event", http.StatusInternalServerError)
@@ -87,7 +92,7 @@ func (rh *ReviewHandler) UpdateReview() http.HandlerFunc {
 			return
 		}
 		event := map[string]interface{}{
-			"action":    "updated",
+			"action":    "update",
 			"review_id": reviewID,
 		}
 		// Добавляем только переданные поля
@@ -121,7 +126,7 @@ func (rh *ReviewHandler) DeleteReview() http.HandlerFunc {
 			return
 		}
 		event := map[string]interface{}{
-			"action":    "deleted",
+			"action":    "delete",
 			"review_id": reviewID,
 		}
 		eventBytes, err := json.Marshal(event)
