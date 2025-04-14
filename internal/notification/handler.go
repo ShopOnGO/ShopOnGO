@@ -2,6 +2,7 @@ package notification
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/ShopOnGO/ShopOnGO/configs"
@@ -40,11 +41,11 @@ func (h *NotificationHandler) AddNotification() http.HandlerFunc {
 			return
 		}
 		userID := r.Context().Value(middleware.ContextUserIDKey)
-		if req.Category == "" || req.UserID == 0 {
+
+		if req.Category == "" || userID == 0 {
 			http.Error(w, "category and user_id are required", http.StatusBadRequest)
 			return
 		}
-
 		event := map[string]interface{}{
 			"action":   "create",
 			"category": req.Category,
@@ -59,7 +60,7 @@ func (h *NotificationHandler) AddNotification() http.HandlerFunc {
 			return
 		}
 
-		key := []byte("notification-AddNote")
+		key := []byte(fmt.Sprintf("notification-AddNote:%v", userID))
 		if err := h.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
 			logger.Errorf("Error producing Kafka message: %v", err)
 			http.Error(w, "failed to send message to kafka", http.StatusInternalServerError)
