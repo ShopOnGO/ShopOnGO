@@ -31,9 +31,9 @@ func NewQuestionHandler(router *mux.Router, deps QuestionHandlerDeps) {
 		Kafka:  deps.Kafka,
 	}
 
-	router.Handle("/question", handler.AddQuestion()).Methods("POST")
-	router.Handle("/question/{id}", middleware.IsAuthed(handler.AnswerQuestion(), deps.Config)).Methods("PUT")
-	router.Handle("/question/{id}", middleware.IsAuthed(handler.DeleteQuestion(), deps.Config)).Methods("DELETE")	
+	router.Handle("/questions", handler.AddQuestion()).Methods("POST")
+	router.Handle("/questions/{id}", middleware.IsAuthed(handler.AnswerQuestion(), deps.Config)).Methods("PUT")
+	router.Handle("/questions/{id}", middleware.IsAuthed(handler.DeleteQuestion(), deps.Config)).Methods("DELETE")	
 }
 
 func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
@@ -43,18 +43,11 @@ func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		// Извлекаем user_id из контекста (например, установленного middleware)
-		userID, ok := r.Context().Value(middleware.ContextUserIDKey).(uint)
-		if !ok || req.ProductVariantID == 0 || req.QuestionText == "" {
-			http.Error(w, "product_variant_id, user_id and question_text are required", http.StatusBadRequest)
-			return
-		}
-
+		
 		// Формирование события
 		event := map[string]interface{}{
 			"action":             "created",
 			"product_variant_id": req.ProductVariantID,
-			"user_id":            userID,
 			"question_text":      req.QuestionText,
 		}
 
