@@ -133,6 +133,10 @@ func App() http.Handler {
 		Kafka:  kafkaProducers["notifications"],
 		Config: conf,
 	})
+	product.NewProductHandler(router, product.ProductHandlerDeps{
+		Kafka: kafkaProducers["products"],
+		Config: conf,
+	})
 	admin.NewAdminHandler(router)
 
 	// swagger
