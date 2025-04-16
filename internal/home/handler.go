@@ -1,12 +1,12 @@
 package home
 
 import (
+	"html/template"
 	"net/http"
 
 	"github.com/ShopOnGO/ShopOnGO/configs"
 	_ "github.com/ShopOnGO/ShopOnGO/docs"
 	"github.com/ShopOnGO/ShopOnGO/pkg/middleware"
-	"github.com/ShopOnGO/ShopOnGO/pkg/res"
 	"github.com/gorilla/mux"
 )
 
@@ -44,16 +44,32 @@ func NewHomeHandler(router *mux.Router, deps HomeHandlerDeps) {
 // @Produce       json
 // @Success       200 {object} HomeData
 // @Router        /home [get]
-func (h *HomeHandler) GetHomePage() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) { //ctx
+// GetHomePage возвращает главную страницу магазина с использованием шаблона
+// @Summary        Главная страница
+// @Description    Получает информацию о популярных товарах, категориях и акциях и отображает их через HTML-шаблон
+// @Tags          home
+// @Router        /home [get]
 
-		homeData, err := h.HomeService.GetHomeData()
+func (h *HomeHandler) GetHomePage() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Данные, которые будут переданы в шаблон
+		userID := r.Context().Value(middleware.ContextUserIDKey)
+
+		// Путь к шаблону
+		tmplPath := "static/templates/home.html"
+
+		// Загружаем и рендерим шаблон
+		tmpl, err := template.ParseFiles(tmplPath)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Ошибка загрузки шаблона: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		res.Json(w, homeData, 200)
+
+		// Рендерим шаблон и передаем данные
+		err = tmpl.Execute(w, userID)
+		if err != nil {
+			http.Error(w, "Ошибка рендеринга шаблона: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
-
-//Generate

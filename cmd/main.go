@@ -134,7 +134,7 @@ func App() http.Handler {
 		Config: conf,
 	})
 	product.NewProductHandler(router, product.ProductHandlerDeps{
-		Kafka: kafkaProducers["products"],
+		Kafka:  kafkaProducers["products"],
 		Config: conf,
 	})
 	admin.NewAdminHandler(router)
@@ -150,6 +150,10 @@ func App() http.Handler {
 		middleware.CORS,
 		middleware.Logging,
 	)
+
+	// Обработка статических файлов (например, /static/js/notifications.js)
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
 	return stack(router)
 }
 
