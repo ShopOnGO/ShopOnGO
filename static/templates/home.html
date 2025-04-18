@@ -20,7 +20,7 @@
   <script>
     // Получение userID из Go-шаблона или вручную
     const userID = {{ if . }}{{ . }}{{ else }}1{{ end }};
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ4MTk3MDAsInJvbGUiOiJidXllciIsInVzZXJfaWQiOjF9.ff_DINj3tG2JJ-1aevAlbOoJm6MI2KRgaPSmg-U6mfM'; // 🔐 access_token при необходимости
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ5NzMxNzIsInJvbGUiOiJidXllciIsInVzZXJfaWQiOjF9.rZElqYOsaeI3D46XsjtPVmw-6ASkb2YWib2HEo8M2aA';
 
     function connectToSSEWithToken(userID, token) {
       if (!userID) {

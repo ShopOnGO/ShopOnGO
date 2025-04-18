@@ -51,6 +51,7 @@ func (h *NotificationHandler) AddNotification() http.HandlerFunc {
 			"category": req.Category,
 			"subtype":  req.Subtype,
 			"userID":   userID,
+			"wasInDlq": false,
 			"payload":  req.Payload,
 		}
 
