@@ -72,7 +72,7 @@ func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
 func (qh *QuestionHandler) AnswerQuestion() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Ожидается, что URL имеет вид /question/{id}
-		idStr := strings.TrimPrefix(r.URL.Path, "/question/")
+		idStr := strings.TrimPrefix(r.URL.Path, "/questions/")
 		questionID, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil || questionID == 0 {
 			http.Error(w, "invalid question id", http.StatusBadRequest)
@@ -114,7 +114,7 @@ func (qh *QuestionHandler) AnswerQuestion() http.HandlerFunc {
 
 func (qh *QuestionHandler) DeleteQuestion() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		idStr := strings.TrimPrefix(r.URL.Path, "/question/")
+		idStr := strings.TrimPrefix(r.URL.Path, "/questions/")
 		questionID, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil || questionID == 0 {
 			http.Error(w, "invalid question id", http.StatusBadRequest)
