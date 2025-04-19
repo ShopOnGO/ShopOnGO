@@ -58,7 +58,7 @@ func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
 		}
 
 		// Ключ сообщения можно задать, например, так:
-		key := []byte("question-AddQuestion")
+		key := []byte("question")
 		if err := qh.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
 			logger.Errorf("Error producing Kafka message: %v", err)
 			http.Error(w, "failed to send message to kafka", http.StatusInternalServerError)
@@ -101,7 +101,7 @@ func (qh *QuestionHandler) AnswerQuestion() http.HandlerFunc {
 			return
 		}
 
-		key := []byte("question-answer-" + strconv.FormatUint(questionID, 10))
+		key := []byte("question")
 		if err := qh.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
 			logger.Errorf("Error producing Kafka message: %v", err)
 			http.Error(w, "failed to send message to kafka", http.StatusInternalServerError)
@@ -132,7 +132,7 @@ func (qh *QuestionHandler) DeleteQuestion() http.HandlerFunc {
 			return
 		}
 
-		key := []byte("question-delete-" + strconv.FormatUint(questionID, 10))
+		key := []byte("question")
 		if err := qh.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
 			logger.Errorf("Error producing Kafka message: %v", err)
 			http.Error(w, "failed to send message to kafka", http.StatusInternalServerError)
