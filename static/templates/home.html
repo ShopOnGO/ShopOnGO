@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Уведомления</title>
+  <script src="/static/js/notifications.js"></script>
+  <style>
+    .notification {
+      padding: 10px;
+      margin-bottom: 5px;
+      border: 1px solid #ccc;
+      background-color: #f8f8f8;
+    }
+  </style>
+</head>
+<body>
+  <h1>Добро пожаловать на главную страницу!</h1>
+  <div id="notifications"></div>
+
+  <script>
+    // Получение userID из Go-шаблона или вручную
+    const userID = {{ if . }}{{ . }}{{ else }}1{{ end }};
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ5NzMxNzIsInJvbGUiOiJidXllciIsInVzZXJfaWQiOjF9.rZElqYOsaeI3D46XsjtPVmw-6ASkb2YWib2HEo8M2aA';
+
+    function connectToSSEWithToken(userID, token) {
+      if (!userID) {
+        console.error("Нет userID для подключения к SSE");
+        return;
+      }
+
+      if (window.sseConnection) {
+        console.log("⚠️ SSE уже подключено");
+        return;
+      }
+
+      let sseUrl = `http://localhost:8079/sse/${userID}`;
+      if (token) {
+        sseUrl += `?access_token=${token}`;
+      }
+
+      console.log("🔌 Подключаемся к SSE:", sseUrl);
+      const sse = new EventSource(sseUrl);
+      window.sseConnection = sse;
+
+      sse.onmessage = function(event) {
+        console.log("🔔 Сообщение:", event.data);
+    };
+
+
+      sse.onerror = function(err) {
+        console.error("SSE ошибка:", err);
+        sse.close();
+        window.sseConnection = null;
+      };
+    }
+
+    connectToSSEWithToken(userID, token);
+  </script>
+</body>
+</html>

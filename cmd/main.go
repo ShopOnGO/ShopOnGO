@@ -21,9 +21,6 @@ package main
 
 import (
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/ShopOnGO/ShopOnGO/configs"
 	_ "github.com/ShopOnGO/ShopOnGO/docs"
@@ -35,6 +32,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/internal/home"
 	"github.com/ShopOnGO/ShopOnGO/internal/link"
+	"github.com/ShopOnGO/ShopOnGO/internal/notification"
 	"github.com/ShopOnGO/ShopOnGO/internal/product"
 	"github.com/ShopOnGO/ShopOnGO/internal/question"
 	"github.com/ShopOnGO/ShopOnGO/internal/review"
@@ -66,18 +64,8 @@ func App() http.Handler {
 	router := mux.NewRouter()
 	eventBus := event.NewEventBus() // передаем как зависимость в handle
 	smtp := smtp.NewSMTPSender(conf.SMTP.Name, conf.SMTP.From, conf.SMTP.Pass, conf.SMTP.Host, conf.SMTP.Port)
-	
-	kafkaProducer := kafkaService.NewProducer(
-		conf.Kafka.Brokers,
-		conf.Kafka.Topic,
-	)
-	go func() {
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-		<-c
-		kafkaProducer.Close()
-		os.Exit(0)
-	}()
+
+	kafkaProducers := kafkaService.InitKafkaProducers(conf)
 
 	// REPOSITORIES
 	linkRepository := link.NewLinkRepository(db)
@@ -134,11 +122,19 @@ func App() http.Handler {
 		Config:       conf,
 	})
 	review.NewReviewHandler(router, review.ReviewHandlerDeps{
-		Kafka: kafkaProducer,
+		Kafka:  kafkaProducers["reviews"],
 		Config: conf,
 	})
 	question.NewQuestionHandler(router, question.QuestionHandlerDeps{
-		Kafka: kafkaProducer,
+		Kafka:  kafkaProducers["reviews"],
+		Config: conf,
+	})
+	notification.NewNotificationHandler(router, notification.NotificationHandlerDeps{
+		Kafka:  kafkaProducers["notifications"],
+		Config: conf,
+	})
+	product.NewProductHandler(router, product.ProductHandlerDeps{
+		Kafka:  kafkaProducers["products"],
 		Config: conf,
 	})
 	admin.NewAdminHandler(router)
@@ -154,6 +150,10 @@ func App() http.Handler {
 		middleware.CORS,
 		middleware.Logging,
 	)
+
+	// Обработка статических файлов (например, /static/js/notifications.js)
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
 	return stack(router)
 }
 

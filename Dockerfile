@@ -46,6 +46,8 @@ RUN dos2unix /app/wait-for-db.sh
 
 # 🔥 Копируем папку docs для Swagger
 COPY --from=builder /app/docs /app/docs
+# 🔥 Копируем шаблоны и статику
+COPY --from=builder /app/static /app/static
 
 # Запуск приложения
 CMD ["/app/shop_on_go"]
