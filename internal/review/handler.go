@@ -66,7 +66,7 @@ func (rh *ReviewHandler) AddReview() http.HandlerFunc {
 			return
 		}
 
-		key := []byte("review-AddReview")
+		key := []byte("review")
 		if err := rh.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
 			logger.Errorf("Error producing Kafka message: %v", err)
 			http.Error(w, "failed to send message to kafka", http.StatusInternalServerError)
@@ -107,7 +107,7 @@ func (rh *ReviewHandler) UpdateReview() http.HandlerFunc {
 			http.Error(w, "error processing event", http.StatusInternalServerError)
 			return
 		}
-		key := []byte("review-id-" + strconv.FormatUint(reviewID, 10))
+		key := []byte("review")
 		if err := rh.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
 			logger.Errorf("Error producing Kafka message: %v", err)
 			http.Error(w, "failed to send message to kafka", http.StatusInternalServerError)
@@ -134,7 +134,7 @@ func (rh *ReviewHandler) DeleteReview() http.HandlerFunc {
 			http.Error(w, "error processing event", http.StatusInternalServerError)
 			return
 		}
-		key := []byte("review-id-" + strconv.FormatUint(reviewID, 10))
+		key := []byte("review")
 		if err := rh.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
 			logger.Errorf("Error producing Kafka message: %v", err)
 			http.Error(w, "failed to send message to kafka", http.StatusInternalServerError)
