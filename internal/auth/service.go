@@ -7,9 +7,8 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/internal/user"
 	"github.com/ShopOnGO/ShopOnGO/pkg/di"
 	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
-	"gorm.io/gorm"
-
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type AuthService struct {
@@ -27,27 +26,27 @@ func (service *AuthService) Register(email, password, name string) (uint, error)
 	existedUser, err := service.UserRepository.FindByEmail(email)
 
 	if err != nil && err != gorm.ErrRecordNotFound {
-        return 0, err
-    }
+		return 0, err
+	}
 
-    if existedUser != nil {
-        // Если пользователь найден, проверяем его провайдера
-        if existedUser.Provider == "google" || existedUser.PasswordHash == "" {
-            return 0, errors.New(ErrGoogleAuthToLocalFailed) // У Google-юзеров нет пароля
-        }
-        return 0, errors.New(ErrUserExists) // Пользователь с таким email уже существует
-    }
+	if existedUser != nil {
+		// Если пользователь найден, проверяем его провайдера
+		if existedUser.Provider == "google" || existedUser.PasswordHash == "" {
+			return 0, errors.New(ErrGoogleAuthToLocalFailed) // У Google-юзеров нет пароля
+		}
+		return 0, errors.New(ErrUserExists) // Пользователь с таким email уже существует
+	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost) //дефолтная cost даёт 2^10 раундов шифрования
 	if err != nil {
 		return 0, err
 	}
 	user := &user.User{
-		Email:    email,
+		Email:        email,
 		PasswordHash: string(hashedPassword),
-		Name:     name,
-		Role: "buyer",
-		Provider: "local",
+		Name:         name,
+		Role:         "buyer",
+		Provider:     "local",
 	}
 
 	_, err = service.UserRepository.Create(user)
@@ -105,35 +104,35 @@ func (service *AuthService) GetOrCreateUserByGoogle(userInfo GoogleUserInfo) (*u
 }
 
 func (service *AuthService) UpdateUser(data *ChangeRoleRequest) error {
-    userData, err := service.UserRepository.FindByEmail(data.Email)
-    if err != nil {
-        return fmt.Errorf(ErrFailedToFindUser+": %w", err)
-    }
-    if userData == nil {
-        return errors.New(ErrUserNotFound)
-    }
+	userData, err := service.UserRepository.FindByEmail(data.Email)
+	if err != nil {
+		return fmt.Errorf(ErrFailedToFindUser+": %w", err)
+	}
+	if userData == nil {
+		return errors.New(ErrUserNotFound)
+	}
 
-    userData.Role = data.NewRole
+	userData.Role = data.NewRole
 	userData.Phone = data.Phone
-    if data.NewRole == "seller" {
-        userData.StoreName = &data.StoreName
-        userData.StoreAddress = &data.StoreAddress
-        userData.StorePhone = &data.StorePhone
-    }
-    userData.AcceptTerms = data.AcceptTerms
+	if data.NewRole == "seller" {
+		userData.StoreName = &data.StoreName
+		userData.StoreAddress = &data.StoreAddress
+		userData.StorePhone = &data.StorePhone
+	}
+	userData.AcceptTerms = data.AcceptTerms
 
 	_, err = service.UserRepository.Update(userData)
-    if err != nil {
-        return fmt.Errorf(ErrFailedToUpdateUserRole+": %w", err)
-    }
+	if err != nil {
+		return fmt.Errorf(ErrFailedToUpdateUserRole+": %w", err)
+	}
 
-    return nil
+	return nil
 }
 
 func (service *AuthService) GetUserRole(email string) (string, error) {
 	role, err := service.UserRepository.GetUserRoleByEmail(email)
-    if err != nil {
-        return "", err
-    }
-    return role, nil
+	if err != nil {
+		return "", err
+	}
+	return role, nil
 }
