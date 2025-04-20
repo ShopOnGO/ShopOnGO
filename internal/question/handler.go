@@ -2,6 +2,7 @@ package question
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -31,13 +32,20 @@ func NewQuestionHandler(router *mux.Router, deps QuestionHandlerDeps) {
 		Kafka:  deps.Kafka,
 	}
 
-	router.Handle("/questions", handler.AddQuestion()).Methods("POST")
+	router.Handle("/questions", middleware.AuthOrGuest(handler.AddQuestion(), deps.Config)).Methods("POST")
 	router.Handle("/questions/{id}", middleware.IsAuthed(handler.AnswerQuestion(), deps.Config)).Methods("PUT")
 	router.Handle("/questions/{id}", middleware.IsAuthed(handler.DeleteQuestion(), deps.Config)).Methods("DELETE")	
 }
 
 func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		userID, guestID, err := getUserOrGuestID(r)
+		// logger.Infof("user=%v, guest=%v", UserID, GuestID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error(err.Error())
+			return
+		}
 		var req addQuestionRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
@@ -45,10 +53,18 @@ func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
 		}
 		
 		// Формирование события
+		author := map[string]interface{}{}
+		if userID != nil {
+			author["user_id"] = *userID
+		} else {
+			author["guest_id"] = fmt.Sprintf("%x", guestID)
+		}
+
 		event := map[string]interface{}{
 			"action":             "created",
 			"product_variant_id": req.ProductVariantID,
 			"question_text":      req.QuestionText,
+			"author":             author,
 		}
 
 		eventBytes, err := json.Marshal(event)
@@ -71,8 +87,7 @@ func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
 
 func (qh *QuestionHandler) AnswerQuestion() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Ожидается, что URL имеет вид /question/{id}
-		idStr := strings.TrimPrefix(r.URL.Path, "/question/")
+		idStr := strings.TrimPrefix(r.URL.Path, "/questions/")
 		questionID, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil || questionID == 0 {
 			http.Error(w, "invalid question id", http.StatusBadRequest)
@@ -114,7 +129,7 @@ func (qh *QuestionHandler) AnswerQuestion() http.HandlerFunc {
 
 func (qh *QuestionHandler) DeleteQuestion() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		idStr := strings.TrimPrefix(r.URL.Path, "/question/")
+		idStr := strings.TrimPrefix(r.URL.Path, "/questions/")
 		questionID, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil || questionID == 0 {
 			http.Error(w, "invalid question id", http.StatusBadRequest)
@@ -141,4 +156,27 @@ func (qh *QuestionHandler) DeleteQuestion() http.HandlerFunc {
 
 		res.Json(w, map[string]string{"status": "question deletion event sent"}, http.StatusOK)
 	}
+}
+
+
+func getUserOrGuestID(r *http.Request) (*uint, []byte, error) {
+	userIDVal := r.Context().Value(middleware.ContextUserIDKey)
+	var userID *uint
+	if id, ok := userIDVal.(uint); ok && id != 0 {
+		userID = &id
+	}
+
+	guestIDVal := r.Context().Value(middleware.ContextGuestIDKey)
+	var guestID []byte
+	if id, ok := guestIDVal.([]byte); ok {
+		guestID = id
+	}
+
+	if userID == nil && len(guestID) == 0 {
+		return nil, nil, fmt.Errorf("не удалось определить пользователя: no user or guest ID in context")
+	}
+
+	logger.Infof("Raw guestID: %v", guestID)
+
+	return userID, guestID, nil
 }

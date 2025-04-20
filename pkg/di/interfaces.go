@@ -22,17 +22,16 @@ type IUserRepository interface {
 	Delete(id uint) error
 	UpdateUserPassword(id uint, newPassword string) error
 	GetUserRoleByEmail(email string) (string, error)
-	UpdateRole(user *user.User, newRole string) (error)
+	UpdateRole(user *user.User, newRole string) error
 }
 
-type IRedisResetRepository interface {
-    SaveToken(email, code string, expiresAt time.Time) error
-    GetToken(email string) (string, time.Time, error)
-    DeleteToken(email string) error
+type IRedisResetRepository interface { // not used on this project(redirected to notifications)
+	SaveToken(email, code string, expiresAt time.Time) error
+	GetToken(email string) (string, time.Time, error)
+	DeleteToken(email string) error
 	GetResetCodeCount(email string) (int, error)
 	IncrementResetCodeCount(email string, ttl time.Duration) error
 }
-
 
 type IProductRepository interface {
 	Create(product *product.Product) (*product.Product, error)

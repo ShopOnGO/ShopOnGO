@@ -41,7 +41,6 @@ import (
 
 	"github.com/ShopOnGO/ShopOnGO/migrations"
 	"github.com/ShopOnGO/ShopOnGO/pkg/db"
-	"github.com/ShopOnGO/ShopOnGO/pkg/email/smtp"
 	"github.com/ShopOnGO/ShopOnGO/pkg/event"
 	"github.com/ShopOnGO/ShopOnGO/pkg/kafkaService"
 	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
@@ -63,8 +62,6 @@ func App() http.Handler {
 	redis := redisdb.NewRedisDB(conf)
 	router := mux.NewRouter()
 	eventBus := event.NewEventBus() // передаем как зависимость в handle
-	smtp := smtp.NewSMTPSender(conf.SMTP.Name, conf.SMTP.From, conf.SMTP.Pass, conf.SMTP.Host, conf.SMTP.Port)
-
 	kafkaProducers := kafkaService.InitKafkaProducers(conf)
 
 	// REPOSITORIES
@@ -88,7 +85,7 @@ func App() http.Handler {
 	})
 
 	oauth2Service := oauth2.NewOAuth2Service(conf, refreshTokenRepository)
-	resetService := passwordreset.NewResetService(conf, smtp, resetPasswordRepository, userRepository)
+	resetService := passwordreset.NewResetService(conf, resetPasswordRepository, userRepository, kafkaProducers["reset"])
 
 	//Handlers
 	auth.NewAuthHandler(router, auth.AuthHandlerDeps{
