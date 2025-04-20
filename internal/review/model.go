@@ -9,10 +9,12 @@ import (
 
 type Review struct {
 	gorm.Model
-	UserID             uint      `gorm:"not null;uniqueIndex:idx_user_product" json:"user_id"`
-	ProductVariantID   uint      `gorm:"not null;uniqueIndex:idx_user_product" json:"product_variant_id"`
-	Rating             int16     `gorm:"not null;check:rating >= 1 AND rating <= 5" json:"rating"`
+	UserID             	uint    `gorm:"not null;uniqueIndex:idx_user_product" json:"user_id"`
+	ProductVariantID   	uint    `gorm:"not null;uniqueIndex:idx_user_product" json:"product_variant_id"`
+	Rating             	int16	`gorm:"not null;check:rating >= 1 AND rating <= 5" json:"rating"`
+	LikesCount			int    	`gorm:"default:0" json:"likes_count"`
+	Comment            	string	`gorm:"not null" json:"comment"`
 
-	User               user.User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user"`
-	ProductVariant     productVariant.ProductVariant `gorm:"foreignKey:ProductVariantID;constraint:OnDelete:CASCADE" json:"product_variant"`
+	User               user.User      					`gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user"`
+	ProductVariant     productVariant.ProductVariant	`gorm:"foreignKey:ProductVariantID;constraint:OnDelete:CASCADE" json:"product_variant"`
 }
