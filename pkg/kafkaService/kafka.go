@@ -85,6 +85,11 @@ func (k *KafkaService) Produce(ctx context.Context, key, value []byte) error {
 	return k.Writer.WriteMessages(ctx, msg)
 }
 
+// ProduceMessage позволяет передавать кастомный kafka.Message
+func (k *KafkaService) ProduceMessage(ctx context.Context, msg kafka.Message) error {
+	return k.Writer.WriteMessages(ctx, msg)
+}
+
 func waitForKafka(brokers []string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
