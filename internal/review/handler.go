@@ -42,12 +42,12 @@ func (rh *ReviewHandler) AddReview() http.HandlerFunc {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
+		
 		userID, ok := r.Context().Value(middleware.ContextUserIDKey).(uint)
 		if !ok {
 			http.Error(w, "invalid user_id", http.StatusBadRequest)
 			return
 		}
-		
 		if req.ProductVariantID == 0 || userID == 0 {
 			http.Error(w, "product_variant_id and user_id are required", http.StatusBadRequest)
 			return
@@ -79,7 +79,16 @@ func (rh *ReviewHandler) AddReview() http.HandlerFunc {
 
 func (rh *ReviewHandler) UpdateReview() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Извлечение идентификатора отзыва из URL ("/reviews/{id}")
+		userID, ok := r.Context().Value(middleware.ContextUserIDKey).(uint)
+		if !ok {
+			http.Error(w, "invalid user_id", http.StatusBadRequest)
+			return
+		}
+		if userID == 0 {
+			http.Error(w, "user_id is required", http.StatusBadRequest)
+			return
+		}
+
 		idStr := strings.TrimPrefix(r.URL.Path, "/reviews/")
 		reviewID, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil || reviewID == 0 {
@@ -94,19 +103,22 @@ func (rh *ReviewHandler) UpdateReview() http.HandlerFunc {
 		event := map[string]interface{}{
 			"action":    "update",
 			"review_id": reviewID,
+			"user_id":   userID,
 		}
-		// Добавляем только переданные поля
+
 		if req.Rating != 0 {
 			event["rating"] = req.Rating
 		}
 		if req.Comment != "" {
 			event["comment"] = req.Comment
 		}
+
 		eventBytes, err := json.Marshal(event)
 		if err != nil {
 			http.Error(w, "error processing event", http.StatusInternalServerError)
 			return
 		}
+
 		key := []byte("review")
 		if err := rh.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
 			logger.Errorf("Error producing Kafka message: %v", err)
