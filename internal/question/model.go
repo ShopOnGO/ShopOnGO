@@ -13,4 +13,5 @@ type Question struct {
 	ProductVariantID uint      `gorm:"not null" json:"product_variant_id"`
 	QuestionText     string    `gorm:"not null" json:"question_text"`
 	AnswerText       string    `json:"answer_text"`
+	LikesCount		 int       `gorm:"default:0" json:"likes_count"`
 }
