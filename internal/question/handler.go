@@ -34,7 +34,8 @@ func NewQuestionHandler(router *mux.Router, deps QuestionHandlerDeps) {
 
 	router.Handle("/questions", middleware.AuthOrGuest(handler.AddQuestion(), deps.Config)).Methods("POST")
 	router.Handle("/questions/{id}", middleware.IsAuthed(handler.AnswerQuestion(), deps.Config)).Methods("PUT")
-	router.Handle("/questions/{id}", middleware.IsAuthed(handler.DeleteQuestion(), deps.Config)).Methods("DELETE")	
+	router.Handle("/questions/{id}", middleware.IsAuthed(handler.DeleteQuestion(), deps.Config)).Methods("DELETE")
+	router.Handle("/questions/{id}/likes", middleware.IsAuthed(handler.AddLikeToQuestion(), deps.Config)).Methods("PUT")
 }
 
 func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
@@ -155,6 +156,47 @@ func (qh *QuestionHandler) DeleteQuestion() http.HandlerFunc {
 		}
 
 		res.Json(w, map[string]string{"status": "question deletion event sent"}, http.StatusOK)
+	}
+}
+
+
+func (qh *QuestionHandler) AddLikeToQuestion() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userIDVal := r.Context().Value(middleware.ContextUserIDKey)
+		userID, ok := userIDVal.(uint)
+		if !ok || userID == 0 {
+			http.Error(w, "only authenticated users can like questions", http.StatusForbidden)
+			return
+		}
+
+		vars := mux.Vars(r)
+		idStr := vars["id"]
+		questionID, err := strconv.ParseUint(idStr, 10, 64)
+		if err != nil || questionID == 0 {
+			http.Error(w, "invalid question id", http.StatusBadRequest)
+			return
+		}
+
+		event := map[string]interface{}{
+			"action":      "addLike",
+			"question_id": questionID,
+			"user_id":     userID,
+		}
+
+		eventBytes, err := json.Marshal(event)
+		if err != nil {
+			http.Error(w, "error processing like event", http.StatusInternalServerError)
+			return
+		}
+
+		key := []byte("question")
+		if err := qh.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
+			logger.Errorf("Error producing Kafka like event: %v", err)
+			http.Error(w, "failed to send like event to kafka", http.StatusInternalServerError)
+			return
+		}
+
+		res.Json(w, map[string]string{"status": "question like event sent"}, http.StatusOK)
 	}
 }
 

@@ -32,6 +32,7 @@ func NewReviewHandler(router *mux.Router, deps ReviewHandlerDeps){
 	router.Handle("/reviews", middleware.IsAuthed(handler.AddReview(), deps.Config)).Methods("POST")
 	router.Handle("/reviews/{id}", middleware.IsAuthed(handler.UpdateReview(), deps.Config)).Methods("PUT")
 	router.Handle("/reviews/{id}", middleware.IsAuthed(handler.DeleteReview(), deps.Config)).Methods("DELETE")
+	router.Handle("/reviews/{id}/likes", middleware.IsAuthed(handler.AddLikeToReview(), deps.Config)).Methods("PUT")
 }
 
 
@@ -153,5 +154,44 @@ func (rh *ReviewHandler) DeleteReview() http.HandlerFunc {
 			return
 		}
 		res.Json(w, map[string]string{"status": "review deletion event sent"}, http.StatusOK)
+	}
+}
+
+func (rh *ReviewHandler) AddLikeToReview() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := r.Context().Value(middleware.ContextUserIDKey).(uint)
+		if !ok || userID == 0 {
+			http.Error(w, "invalid or missing user_id", http.StatusBadRequest)
+			return
+		}
+
+		vars := mux.Vars(r)
+		idStr := vars["id"]
+		reviewID, err := strconv.ParseUint(idStr, 10, 64)
+		if err != nil || reviewID == 0 {
+			http.Error(w, "invalid review id", http.StatusBadRequest)
+			return
+		}
+
+		event := map[string]interface{}{
+			"action":    "addLike",
+			"review_id": reviewID,
+			"user_id":   userID,
+		}
+
+		eventBytes, err := json.Marshal(event)
+		if err != nil {
+			http.Error(w, "error marshalling event", http.StatusInternalServerError)
+			return
+		}
+
+		key := []byte("review")
+		if err := rh.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
+			logger.Errorf("Error producing Kafka like event: %v", err)
+			http.Error(w, "failed to send like event to kafka", http.StatusInternalServerError)
+			return
+		}
+
+		res.Json(w, map[string]string{"status": "review like event sent"}, http.StatusOK)
 	}
 }
