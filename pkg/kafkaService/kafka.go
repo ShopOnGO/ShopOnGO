@@ -23,12 +23,15 @@ func NewConsumer(brokers []string, topic, groupID, clientID string) *KafkaServic
 		Brokers:  brokers,
 		GroupID:  groupID,
 		Topic:    topic,
-		MinBytes: 10e3,
-		MaxBytes: 10e6,
-		Dialer: &kafka.Dialer{
-			Timeout:  10 * time.Second,
-			ClientID: clientID,
-		},
+		MinBytes: 1,   // получать сразу, даже маленькие
+		MaxBytes: 1e6, // до 1MB в batch
+		MaxWait:  10 * time.Millisecond,
+		// MinBytes: 10e3,// Для большого количества уведомлений
+		// MaxBytes: 10e6,
+		// Dialer: &kafka.Dialer{
+		// 	Timeout:  10 * time.Second,
+		// 	ClientID: clientID,
+		// },
 	})
 
 	return &KafkaService{
@@ -82,6 +85,11 @@ func (k *KafkaService) Produce(ctx context.Context, key, value []byte) error {
 		Key:   key,
 		Value: value,
 	}
+	return k.Writer.WriteMessages(ctx, msg)
+}
+
+// ProduceMessage позволяет передавать кастомный kafka.Message
+func (k *KafkaService) ProduceMessage(ctx context.Context, msg kafka.Message) error {
 	return k.Writer.WriteMessages(ctx, msg)
 }
 

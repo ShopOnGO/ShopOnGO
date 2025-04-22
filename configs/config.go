@@ -16,7 +16,6 @@ type Config struct {
 	OAuth  OAuthConfig
 	Google GoogleConfig
 	Code   CodeConfig
-	SMTP   SMTPConfig
 	Kafka  KafkaConfig
 }
 
@@ -40,14 +39,6 @@ type CodeConfig struct {
 	CodeTTL      time.Duration
 	MaxRequests  int
 	RateLimitTTL time.Duration
-}
-
-type SMTPConfig struct {
-	Name string
-	From string
-	Pass string
-	Host string
-	Port int
 }
 
 type GoogleConfig struct {
@@ -141,13 +132,6 @@ func LoadConfig() *Config {
 			CodeTTL:      codeTTL,
 			MaxRequests:  maxRequests,
 			RateLimitTTL: rateLimitTTL,
-		},
-		SMTP: SMTPConfig{
-			Name: os.Getenv("SMTP_NAME"),
-			From: os.Getenv("SMTP_FROM"),
-			Pass: os.Getenv("SMTP_PASS"),
-			Host: os.Getenv("SMTP_HOST"),
-			Port: 587, // TLS
 		},
 		Kafka: KafkaConfig{
 			Brokers: brokers,

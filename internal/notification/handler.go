@@ -40,16 +40,17 @@ func (h *NotificationHandler) AddNotification() http.HandlerFunc {
 			return
 		}
 		userID := r.Context().Value(middleware.ContextUserIDKey)
-		if req.Category == "" || req.UserID == 0 {
+
+		if req.Category == "" || userID == 0 {
 			http.Error(w, "category and user_id are required", http.StatusBadRequest)
 			return
 		}
-
 		event := map[string]interface{}{
 			"action":   "create",
 			"category": req.Category,
 			"subtype":  req.Subtype,
 			"userID":   userID,
+			"wasInDlq": false,
 			"payload":  req.Payload,
 		}
 
