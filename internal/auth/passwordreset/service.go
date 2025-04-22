@@ -117,7 +117,7 @@ func (service *ResetService) RequestReset(toEmail string) error {
 		return err
 	}
 
-	key := []byte(fmt.Sprintf("reset-%s", toEmail))
+	key := []byte("reset-")
 	if err := service.Kafka.Produce(context.Background(), key, eventBytes); err != nil {
 		logger.Errorf("❌ ошибка отправки сообщения в Kafka: %v", err)
 		return err

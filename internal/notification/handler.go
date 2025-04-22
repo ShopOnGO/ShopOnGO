@@ -2,7 +2,6 @@ package notification
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/ShopOnGO/ShopOnGO/configs"
@@ -61,7 +60,7 @@ func (h *NotificationHandler) AddNotification() http.HandlerFunc {
 			return
 		}
 
-		key := []byte(fmt.Sprintf("notification-AddNote:%v", userID))
+		key := []byte("notification-AddNote")
 		if err := h.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
 			logger.Errorf("Error producing Kafka message: %v", err)
 			http.Error(w, "failed to send message to kafka", http.StatusInternalServerError)

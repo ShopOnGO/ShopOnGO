@@ -23,12 +23,15 @@ func NewConsumer(brokers []string, topic, groupID, clientID string) *KafkaServic
 		Brokers:  brokers,
 		GroupID:  groupID,
 		Topic:    topic,
-		MinBytes: 10e3,
-		MaxBytes: 10e6,
-		Dialer: &kafka.Dialer{
-			Timeout:  10 * time.Second,
-			ClientID: clientID,
-		},
+		MinBytes: 1,   // получать сразу, даже маленькие
+		MaxBytes: 1e6, // до 1MB в batch
+		MaxWait:  10 * time.Millisecond,
+		// MinBytes: 10e3,// Для большого количества уведомлений
+		// MaxBytes: 10e6,
+		// Dialer: &kafka.Dialer{
+		// 	Timeout:  10 * time.Second,
+		// 	ClientID: clientID,
+		// },
 	})
 
 	return &KafkaService{
