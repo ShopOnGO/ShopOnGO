@@ -29,6 +29,17 @@ func NewProductHandler(router *mux.Router, deps ProductHandlerDeps) {
 	router.HandleFunc("/products", handler.AddProduct()).Methods("POST")
 }
 
+// AddProduct добавляет новый продукт.
+// @Summary      Добавление нового продукта
+// @Description  Добавляет новый продукт в каталог.
+// @Tags         product
+// @Accept       json
+// @Produce      json
+// @Param        body  body  addProductRequest  true  "Данные нового продукта (обязательно: name, price, category_id, brand_id)"
+// @Success      201   {object}  map[string]interface{}  "Продукт успешно создан и событие отправлено в Kafka"
+// @Failure      400   {string}  string  "Неверные входные данные"
+// @Failure      500   {string}  string  "Ошибка при обработке запроса"
+// @Router       /products [post]
 func (h *ProductHandler) AddProduct() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req addProductRequest
