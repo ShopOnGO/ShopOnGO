@@ -32,6 +32,18 @@ func NewProductVariantHandler(router *mux.Router, deps ProductVariantHandlerDeps
 	router.Handle("/product/{id}/product-variants", middleware.IsAuthed(handler.AddProductVariant(), deps.Config)).Methods("POST")
 }
 
+// AddProductVariant добавляет новый вариант продукта.
+// @Summary      Добавление варианта продукта
+// @Description  Добавляет новый вариант (SKU) к существующему продукту.
+// @Tags         product-variant
+// @Accept       json
+// @Produce      json
+// @Param        id    path    uint                true  "ID продукта, к которому добавляется вариант"
+// @Param        body  body    addProductVariantRequest  true  "Данные нового варианта продукта (обязательно: sku, price)"
+// @Success      201   {object}  map[string]interface{}  "Вариант продукта успешно создан и событие отправлено в Kafka"
+// @Failure      400   {string}  string  "Неверные входные данные"
+// @Failure      500   {string}  string  "Ошибка при обработке запроса"
+// @Router       /product/{id}/product-variants [post]
 func (h *ProductVariantHandler) AddProductVariant() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req addProductVariantRequest

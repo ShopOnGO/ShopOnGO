@@ -39,6 +39,18 @@ func NewQuestionHandler(router *mux.Router, deps QuestionHandlerDeps) {
 	router.Handle("/questions/{id}/unlikes", middleware.IsAuthed(handler.RemoveLikeToQuestion(), deps.Config)).Methods("PUT")
 }
 
+// AddQuestion добавляет новый вопрос для товара.
+// @Summary Добавить вопрос
+// @Description Пользователь или гость может задать вопрос о товаре.
+// @Tags questions
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param request body addQuestionRequest true "Данные вопроса"
+// @Success 200 {object} map[string]string "status: question creation event sent"
+// @Failure 400 {string} string "invalid request body"
+// @Failure 500 {string} string "error processing event / failed to send message to kafka"
+// @Router /questions [post]
 func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, guestID, err := getUserOrGuestID(r)
@@ -87,6 +99,19 @@ func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
 	}
 }
 
+// AnswerQuestion отвечает на существующий вопрос.
+// @Summary Ответить на вопрос
+// @Description Авторизованный пользователь отвечает на вопрос.
+// @Tags questions
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path uint64 true "ID вопроса"
+// @Param request body answerQuestionRequest true "Текст ответа"
+// @Success 200 {object} map[string]string "status: question answer event sent"
+// @Failure 400 {string} string "invalid question id / invalid request body"
+// @Failure 500 {string} string "error processing event / failed to send message to kafka"
+// @Router /questions/{id} [put]
 func (qh *QuestionHandler) AnswerQuestion() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idStr := strings.TrimPrefix(r.URL.Path, "/questions/")
@@ -129,6 +154,18 @@ func (qh *QuestionHandler) AnswerQuestion() http.HandlerFunc {
 	}
 }
 
+// DeleteQuestion удаляет вопрос.
+// @Summary Удалить вопрос
+// @Description Авторизованный пользователь удаляет вопрос по ID.
+// @Tags questions
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path uint64 true "ID вопроса"
+// @Success 200 {object} map[string]string "status: question deletion event sent"
+// @Failure 400 {string} string "invalid question id"
+// @Failure 500 {string} string "error processing event / failed to send message to kafka"
+// @Router /questions/{id} [delete]
 func (qh *QuestionHandler) DeleteQuestion() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idStr := strings.TrimPrefix(r.URL.Path, "/questions/")
@@ -161,6 +198,19 @@ func (qh *QuestionHandler) DeleteQuestion() http.HandlerFunc {
 }
 
 
+// AddLikeToQuestion добавляет лайк к вопросу.
+// @Summary Поставить лайк вопросу
+// @Description Авторизованный пользователь ставит лайк вопросу.
+// @Tags questions
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path uint64 true "ID вопроса"
+// @Success 200 {object} map[string]string "status: question like event sent"
+// @Failure 400 {string} string "invalid question id"
+// @Failure 403 {string} string "invalid or missing user_id"
+// @Failure 500 {string} string "error processing like event / failed to send like event to kafka"
+// @Router /questions/{id}/likes [put]
 func (qh *QuestionHandler) AddLikeToQuestion() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userIDVal := r.Context().Value(middleware.ContextUserIDKey)
@@ -201,6 +251,19 @@ func (qh *QuestionHandler) AddLikeToQuestion() http.HandlerFunc {
 	}
 }
 
+// RemoveLikeToQuestion убирает лайк с вопроса.
+// @Summary Убрать лайк с вопроса
+// @Description Авторизованный пользователь убирает лайк с вопроса.
+// @Tags questions
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path uint64 true "ID вопроса"
+// @Success 200 {object} map[string]string "status: question removelike event sent"
+// @Failure 400 {string} string "invalid question id"
+// @Failure 403 {string} string "invalid or missing user_id"
+// @Failure 500 {string} string "error marshalling event / failed to send removelike event to kafka"
+// @Router /questions/{id}/unlikes [put]
 func (qh *QuestionHandler) RemoveLikeToQuestion() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userIDVal := r.Context().Value(middleware.ContextUserIDKey)

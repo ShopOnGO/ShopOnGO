@@ -36,7 +36,18 @@ func NewReviewHandler(router *mux.Router, deps ReviewHandlerDeps){
 	router.Handle("/reviews/{id}/unlikes", middleware.IsAuthed(handler.RemoveLikeToReview(), deps.Config)).Methods("PUT")
 }
 
-
+// AddReview добавляет новый отзыв
+// @Summary Добавить отзыв
+// @Description Создание нового отзыва о товаре
+// @Tags Reviews
+// @Accept json
+// @Produce json
+// @Param review body addReviewRequest true "Данные для создания отзыва"
+// @Success 200 {object} map[string]string "status: review creation event sent"
+// @Failure 400 {string} string "invalid request body / invalid user_id / product_variant_id and user_id are required"
+// @Failure 500 {string} string "error processing event / failed to send message to kafka"
+// @Security BearerAuth
+// @Router /reviews [post]
 func (rh *ReviewHandler) AddReview() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req addReviewRequest
@@ -79,6 +90,19 @@ func (rh *ReviewHandler) AddReview() http.HandlerFunc {
 	}
 }
 
+// UpdateReview обновляет существующий отзыв
+// @Summary Обновить отзыв
+// @Description Обновление рейтинга или комментария отзыва
+// @Tags Reviews
+// @Accept json
+// @Produce json
+// @Param id path int true "ID отзыва"
+// @Param review body updateReviewRequest true "Данные для обновления отзыва"
+// @Success 200 {object} map[string]string "status: review update event sent"
+// @Failure 400 {string} string "invalid review id / invalid request body / invalid user_id"
+// @Failure 500 {string} string "error processing event / failed to send message to kafka"
+// @Security BearerAuth
+// @Router /reviews/{id} [put]
 func (rh *ReviewHandler) UpdateReview() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(middleware.ContextUserIDKey).(uint)
@@ -131,6 +155,18 @@ func (rh *ReviewHandler) UpdateReview() http.HandlerFunc {
 	}
 }
 
+// DeleteReview удаляет отзыв
+// @Summary Удалить отзыв
+// @Description Удаление отзыва по ID
+// @Tags Reviews
+// @Accept json
+// @Produce json
+// @Param id path int true "ID отзыва"
+// @Success 200 {object} map[string]string "status: review deletion event sent"
+// @Failure 400 {string} string "invalid review id"
+// @Failure 500 {string} string "error processing event / failed to send message to kafka"
+// @Security BearerAuth
+// @Router /reviews/{id} [delete]
 func (rh *ReviewHandler) DeleteReview() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		idStr := strings.TrimPrefix(r.URL.Path, "/reviews/")
@@ -158,6 +194,18 @@ func (rh *ReviewHandler) DeleteReview() http.HandlerFunc {
 	}
 }
 
+// AddLikeToReview добавляет лайк отзыву
+// @Summary Поставить лайк отзыву
+// @Description Добавление лайка к отзыву пользователем
+// @Tags Reviews
+// @Accept json
+// @Produce json
+// @Param id path int true "ID отзыва"
+// @Success 200 {object} map[string]string "status: review like event sent"
+// @Failure 400 {string} string "invalid review id / invalid or missing user_id"
+// @Failure 500 {string} string "error marshalling event / failed to send like event to kafka"
+// @Security BearerAuth
+// @Router /reviews/{id}/likes [put]
 func (rh *ReviewHandler) AddLikeToReview() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(middleware.ContextUserIDKey).(uint)
@@ -197,6 +245,18 @@ func (rh *ReviewHandler) AddLikeToReview() http.HandlerFunc {
 	}
 }
 
+// RemoveLikeToReview убирает лайк с отзыва
+// @Summary Убрать лайк с отзыва
+// @Description Удаление лайка отзыва пользователем
+// @Tags Reviews
+// @Accept json
+// @Produce json
+// @Param id path int true "ID отзыва"
+// @Success 200 {object} map[string]string "status: review removelike event sent"
+// @Failure 400 {string} string "invalid review id / invalid or missing user_id"
+// @Failure 500 {string} string "error marshalling event / failed to send removelike event to kafka"
+// @Security BearerAuth
+// @Router /reviews/{id}/unlikes [put]
 func (rh *ReviewHandler) RemoveLikeToReview() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(middleware.ContextUserIDKey).(uint)
