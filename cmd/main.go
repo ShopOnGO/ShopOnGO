@@ -63,7 +63,10 @@ func App() http.Handler {
 	redis := redisdb.NewRedisDB(conf)
 	router := mux.NewRouter()
 	eventBus := event.NewEventBus() // передаем как зависимость в handle
-	kafkaProducers := kafkaService.InitKafkaProducers(conf)
+	kafkaProducers := kafkaService.InitKafkaProducers(
+		conf.Kafka.Brokers,
+    	conf.Kafka.Topics,
+	)
 
 	// REPOSITORIES
 	linkRepository := link.NewLinkRepository(db)

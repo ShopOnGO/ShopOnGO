@@ -5,17 +5,15 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/ShopOnGO/ShopOnGO/configs"
 )
 
 type KafkaProducers map[string]*KafkaService
 
-func InitKafkaProducers(conf *configs.Config) KafkaProducers {
+func InitKafkaProducers(brokers []string, topics map[string]string) KafkaProducers {
 	producers := make(KafkaProducers)
 
-	for name, topic := range conf.Kafka.Topics {
-		producers[name] = NewProducer(conf.Kafka.Brokers, topic)
+	for name, topic := range topics {
+		producers[name] = NewProducer(brokers, topic)
 	}
 
 	go func() {
