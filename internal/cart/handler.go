@@ -12,12 +12,12 @@ import (
 )
 
 type CartHandlerDeps struct {
-	*configs.Config
-	*CartService
+	Config *configs.Config
+	CartService *CartService
 }
 type CartHandler struct {
-	*configs.Config
-	*CartService
+	Config *configs.Config
+	CartService *CartService
 }
 
 func NewCartHandler(router *mux.Router, deps CartHandlerDeps) {
