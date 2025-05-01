@@ -256,7 +256,7 @@ func (service *ResetService) ResendCode(toEmail string) error {
 		return err
 	}
 
-	key := []byte(fmt.Sprintf("reset-resend-%s", toEmail))
+	key := []byte("reset-") // ключ тот же, смысловой нагрузки другой не несет
 	if err := service.Kafka.Produce(context.Background(), key, eventBytes); err != nil {
 		logger.Errorf("❌ ошибка отправки сообщения в Kafka: %v", err)
 		return err

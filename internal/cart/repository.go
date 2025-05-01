@@ -3,6 +3,7 @@ package cart
 import (
 	"github.com/ShopOnGO/ShopOnGO/pkg/db"
 	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
+	"gorm.io/gorm"
 )
 
 type CartRepository struct {
@@ -17,8 +18,13 @@ func NewCartRepository(db *db.Db) *CartRepository {
 
 func (r *CartRepository) GetCartByUserID(userID *uint) (*Cart, error) {
 	var cart Cart
-	if err := r.Db.Preload("CartItems").Where("user_id = ?", userID).First(&cart).Error; err != nil {
-		return nil, err
+	if err := r.Db.
+    Preload("CartItems", func(db *gorm.DB) *gorm.DB {
+        return db.Preload("ProductVariant")
+    }).
+    Where("user_id = ?", userID).
+    First(&cart).Error; err != nil {
+    	return nil, err
 	}
 	return &cart, nil
 }
@@ -26,9 +32,14 @@ func (r *CartRepository) GetCartByUserID(userID *uint) (*Cart, error) {
 func (r *CartRepository) GetCartByGuestID(guestID []byte) (*Cart, error) {
 	var cart Cart
 
-	if err := r.Db.Preload("CartItems").Where("guest_id = ?", []byte(guestID)).First(&cart).Error; err != nil {
-		logger.Errorf("Cart not found for guestID: %v, error: %v", guestID, err)
-		return nil, err
+	if err := r.Db.
+    Preload("CartItems", func(db *gorm.DB) *gorm.DB {
+        return db.Preload("ProductVariant")
+		//.Preload("ProductVariant.Images") // можно еще например
+    }).
+    Where("guest_id = ?", []byte(guestID)).
+    First(&cart).Error; err != nil {
+    	return nil, err
 	}
 
 	logger.Infof("Cart found: %+v", cart)
