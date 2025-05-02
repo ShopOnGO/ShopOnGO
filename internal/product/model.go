@@ -5,6 +5,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/internal/productVariant"
 	"github.com/ShopOnGO/ShopOnGO/internal/review"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -27,8 +28,8 @@ type Product struct {
 	Variants []productVariant.ProductVariant `gorm:"foreignKey:ProductID"` // Ссылка на варианты продукта
 
 	// 🔹 Дополнительные данные
-	Images   string `gorm:"type:json" json:"images"`            // Храним ссылки на изображения JSON-массивом
-	VideoURL string `gorm:"type:varchar(255)" json:"video_url"` // Видеообзор
+	ImageURLs pq.StringArray `gorm:"type:text[]"`
+    VideoURLs pq.StringArray `gorm:"type:text[]"`
 
 	Reviews []review.Review `gorm:"-" json:"reviews"`
 }
