@@ -30,6 +30,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/internal/brand"
 	"github.com/ShopOnGO/ShopOnGO/internal/cart"
 	"github.com/ShopOnGO/ShopOnGO/internal/category"
+	"github.com/ShopOnGO/ShopOnGO/internal/chat"
 	"github.com/ShopOnGO/ShopOnGO/internal/home"
 	"github.com/ShopOnGO/ShopOnGO/internal/link"
 	"github.com/ShopOnGO/ShopOnGO/internal/notification"
@@ -68,6 +69,7 @@ func App() http.Handler {
 	linkRepository := link.NewLinkRepository(db)
 	userRepository := user.NewUserRepository(db)
 	statRepository := stat.NewStatRepository(db)
+	chatRepository := chat.NewChatRepository(db)
 	categoryRepository := category.NewCategoryRepository(db)
 	productRepository := product.NewProductRepository(db)
 	brandsRepository := brand.NewBrandRepository(db)
@@ -79,6 +81,7 @@ func App() http.Handler {
 	authService := auth.NewAuthService(userRepository)
 	homeService := home.NewHomeService(categoryRepository, productRepository, brandsRepository)
 	cartService := cart.NewCartService(cartRepository)
+	chatService := chat.NewChatService(chatRepository)
 	statService := stat.NewStatService(&stat.StatServiceDeps{
 		StatRepository: statRepository,
 		EventBus:       eventBus,
@@ -133,6 +136,10 @@ func App() http.Handler {
 	product.NewProductHandler(router, product.ProductHandlerDeps{
 		Kafka:  kafkaProducers["products"],
 		Config: conf,
+	})
+	chat.NewChatHandler(router, chat.ChatHandlerDeps{
+		ChatService: chatService,
+		Config:      conf,
 	})
 	admin.NewAdminHandler(router)
 
