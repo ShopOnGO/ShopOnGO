@@ -7,6 +7,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/internal/cart"
 	"github.com/ShopOnGO/ShopOnGO/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/internal/chat"
+	"github.com/ShopOnGO/ShopOnGO/internal/favorites"
 	"github.com/ShopOnGO/ShopOnGO/internal/link"
 	"github.com/ShopOnGO/ShopOnGO/internal/product"
 	"github.com/ShopOnGO/ShopOnGO/internal/productVariant"
@@ -53,7 +54,7 @@ func RunMigrations() error {
 		&product.Product{}, &productVariant.ProductVariant{},
 		&category.Category{},
 		&brand.Brand{},
-		&cart.Cart{}, &cart.CartItem{},
+		&cart.Cart{}, &cart.CartItem{}, &favorites.Favorite{},
 		&review.Review{}, question.Question{},
 		&chat.Message{})
 

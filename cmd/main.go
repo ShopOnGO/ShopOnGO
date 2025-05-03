@@ -35,6 +35,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/internal/link"
 	"github.com/ShopOnGO/ShopOnGO/internal/notification"
 	"github.com/ShopOnGO/ShopOnGO/internal/product"
+	"github.com/ShopOnGO/ShopOnGO/internal/productVariant"
 	"github.com/ShopOnGO/ShopOnGO/internal/question"
 	"github.com/ShopOnGO/ShopOnGO/internal/review"
 	"github.com/ShopOnGO/ShopOnGO/internal/stat"
@@ -63,7 +64,10 @@ func App() http.Handler {
 	redis := redisdb.NewRedisDB(conf)
 	router := mux.NewRouter()
 	eventBus := event.NewEventBus() // передаем как зависимость в handle
-	kafkaProducers := kafkaService.InitKafkaProducers(conf)
+	kafkaProducers := kafkaService.InitKafkaProducers(
+		conf.Kafka.Brokers,
+		conf.Kafka.Topics,
+	)
 
 	// REPOSITORIES
 	linkRepository := link.NewLinkRepository(db)
@@ -121,6 +125,7 @@ func App() http.Handler {
 		ResetService: resetService,
 		Config:       conf,
 	})
+
 	review.NewReviewHandler(router, review.ReviewHandlerDeps{
 		Kafka:  kafkaProducers["reviews"],
 		Config: conf,
@@ -137,6 +142,11 @@ func App() http.Handler {
 		Kafka:  kafkaProducers["products"],
 		Config: conf,
 	})
+	productVariant.NewProductVariantHandler(router, productVariant.ProductVariantHandlerDeps{
+		Kafka:  kafkaProducers["productVariants"],
+		Config: conf,
+	})
+
 	chat.NewChatHandler(router, chat.ChatHandlerDeps{
 		ChatService: chatService,
 		Config:      conf,
