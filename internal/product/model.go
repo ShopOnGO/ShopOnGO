@@ -33,5 +33,3 @@ type Product struct {
 
 	Reviews []review.Review `gorm:"-" json:"reviews"`
 }
-
-//todo category_id (3)
