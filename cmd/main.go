@@ -23,7 +23,6 @@ import (
 	"net/http"
 
 	"github.com/ShopOnGO/ShopOnGO/configs"
-	_ "github.com/ShopOnGO/ShopOnGO/docs"
 	"github.com/ShopOnGO/ShopOnGO/internal/admin"
 	"github.com/ShopOnGO/ShopOnGO/internal/auth"
 	"github.com/ShopOnGO/ShopOnGO/internal/auth/passwordreset"
@@ -52,6 +51,7 @@ import (
 	"github.com/gorilla/mux"
 
 	httpSwagger "github.com/swaggo/http-swagger"
+	_ "github.com/ShopOnGO/ShopOnGO/docs"
 )
 
 func App() http.Handler {
@@ -154,7 +154,7 @@ func App() http.Handler {
 	admin.NewAdminHandler(router)
 
 	// swagger
-	router.Handle("/swagger/", httpSwagger.WrapHandler)
+	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	//обработчик подписки ( бесконечно сидит отдельно и ждёт пока не придут сообщения)
 	go statService.AddClick()
