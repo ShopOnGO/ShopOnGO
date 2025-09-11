@@ -10,8 +10,8 @@ type addProductRequest struct {
 	CategoryID 	uint   `json:"category_id"`
 	BrandID    	uint   `json:"brand_id"`
 
-	Images   	string `json:"images"`
-	VideoURL 	string `json:"video_url"`
+	ImageKeys  []string `json:"image_keys"`
+	VideoKeys  []string `json:"video_keys"`
 }
 
 type productCreatedEvent struct {
