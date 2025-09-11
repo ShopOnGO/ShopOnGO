@@ -51,16 +51,17 @@ func NewAuthHandler(router *mux.Router, deps AuthHandlerDeps) {
 }
 
 // Login аутентифицирует пользователя и выдает JWT токен
-// @Summary        Вход в систему
-// @Description    Аутентифицирует пользователя по email и паролю, возвращает JWT токен
-// @Tags          auth
-// @Accept        json
-// @Produce       json
-// @Param         body body LoginRequest true "Данные для входа"
-// @Success       200 {object} LoginResponse "Успешный вход, возвращает JWT токен"
-// @Failure       401 {string} string "Неверные учетные данные"
-// @Failure       500 {string} string "Ошибка сервера при создании токена"
-// @Router        /auth/login [post]
+// @Summary  Вход в систему
+// @Description Принимает email и пароль пользователя для аутентификации. В случае успеха возвращает JWT access-токен в теле ответа и устанавливает refresh-токен в HTTP-cookie.
+// @Tags auth
+// @Accept  json
+// @Produce json
+// @Param  body body LoginRequest true "Данные для входа в систему"
+// @Success 200 {object} LoginResponse "Успешная аутентификация"
+// @Failure  400 {object} res.ErrorResponse "Некорректный JSON или невалидные данные"
+// @Failure 401 {object} res.ErrorResponse "Неверные учетные данные (email или пароль)"
+// @Failure  500 {object} res.ErrorResponse "Ошибка сервера при обработке запроса"
+// @Router  /auth/login [post]
 func (h *AuthHandler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[LoginRequest](&w, r)
@@ -102,17 +103,17 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 }
 
 // Register регистрирует нового пользователя и возвращает JWT токен
-// @Summary        Регистрация нового пользователя
-// @Description    Создает учетную запись пользователя и возвращает JWT токен для аутентификации
-// @Tags          auth
-// @Accept        json
-// @Produce       json
-// @Param         body body RegisterRequest true "Данные для регистрации"
-// @Success       201 {object} LoginResponse "Успешная регистрация, возвращает JWT токен"
-// @Failure       400 {string} string "Некорректные данные для регистрации"
-// @Failure       409 {string} string "Пользователь с таким email уже существует"
-// @Failure       500 {string} string "Ошибка сервера при создании токена"
-// @Router        /auth/register [post]
+// @Summary Регистрация нового пользователя
+// @Description Создает новую учетную запись с указанными email, паролем и именем. Возвращает JWT access-токен в теле ответа и устанавливает refresh-токен в HTTP-cookie.
+// @Tags  auth
+// @Accept  json
+// @Produce json
+// @Param body body RegisterRequest true "Данные для регистрации"
+// @Success 201 {object} LoginResponse "Успешная регистрация и аутентификация"
+// @Failure 400 {object} res.ErrorResponse "Некорректный JSON или невалидные данные"
+// @Failure 409 {object} res.ErrorResponse "Пользователь с таким email уже существует"
+// @Failure 500 {object} res.ErrorResponse "Ошибка сервера при обработке запроса"
+// @Router  /auth/register [post]
 func (h *AuthHandler) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := req.HandleBody[RegisterRequest](&w, r)
@@ -154,15 +155,15 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 }
 
 // GoogleLogin выполняет аутентификацию пользователя через Google OAuth2
-// @Summary        Авторизация через Google
-// @Description    Перенаправляет пользователя на страницу авторизации Google, затем получает токены и информацию о пользователе
-// @Tags           auth
-// @Accept         json
-// @Produce        json
-// @Param          code query string false "Код авторизации от Google (автоматически передается после редиректа)"
-// @Success        200 {object} map[string]string "JWT access-токен"
-// @Failure        500 {string} string "Ошибка при обмене кода на токен или получении данных пользователя"
-// @Router         /oauth/google/login [get]
+// @Summary Авторизация через Google
+// @Description Первый шаг: перенаправляет пользователя на страницу согласия Google. После получения кода авторизации (на втором шаге) обменивает его на токены и получает информацию о пользователе. Регистрирует/аутентифицирует пользователя и возвращает JWT access-токен.
+// @Tags  auth
+// @Accept  json
+// @Produce json
+// @Param code query string false "Код авторизации от Google (автоматически передается после редиректа)"
+// @Success 200 {object} LoginResponse "Успешная авторизация, возвращает JWT access-токен"
+// @Failure 500 {object} res.ErrorResponse "Ошибка при обмене кода на токен или получении данных пользователя"
+// @Router  /oauth/google/login [get]
 func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 
 	googleOauthConfig := &googleOAuth2.Config{
@@ -235,15 +236,16 @@ func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // Logout завершает сеанс пользователя и удаляет refresh-токен из cookie
-// @Summary        Завершение сеанса пользователя
-// @Description    Удаляет refresh-токен из хранилища и очищает cookie
-// @Tags          auth
-// @Accept        json
-// @Produce       json
-// @Success       200 {object} map[string]string "Успешный выход, refresh-токен удален"
-// @Failure       401 {string} string "Refresh-токен не найден"
-// @Failure       500 {string} string "Ошибка сервера при выходе"
-// @Router        /auth/logout [post]
+// @Summary Завершение сеанса пользователя
+// @Description Удаляет refresh-токен из хранилища и очищает соответствующую HTTP-cookie. Требует авторизации с помощью JWT access-токена.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} map[string]string "Успешный выход, refresh-токен удален"
+// @Failure 401 {object} res.ErrorResponse "Неавторизован: JWT access-токен не предоставлен или недействителен"
+// @Failure 500 {object} res.ErrorResponse "Ошибка сервера при выходе"
+// @Router /auth/logout [post]
 func (h *AuthHandler) Logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := r.Context().Value(middleware.ContextUserIDKey).(uint)

@@ -39,14 +39,14 @@ func NewQuestionHandler(router *mux.Router, deps QuestionHandlerDeps) {
 	router.Handle("/questions/{id}/unlikes", middleware.IsAuthed(handler.RemoveLikeToQuestion(), deps.Config)).Methods("PUT")
 }
 
-// AddQuestion добавляет новый вопрос для товара.
-// @Summary Добавить вопрос
-// @Description Пользователь или гость может задать вопрос о товаре.
+// AddQuestion adds a new question for a product.
+// @Summary Add Question
+// @Description A user or guest can ask a question about a product.
 // @Tags questions
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
-// @Param request body addQuestionRequest true "Данные вопроса"
+// @Param request body addQuestionRequest true "Question data"
 // @Success 200 {object} map[string]string "status: question creation event sent"
 // @Failure 400 {string} string "invalid request body"
 // @Failure 500 {string} string "error processing event / failed to send message to kafka"
@@ -65,7 +65,7 @@ func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		
+
 		// Формирование события
 		author := map[string]interface{}{}
 		if userID != nil {
@@ -99,15 +99,15 @@ func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
 	}
 }
 
-// AnswerQuestion отвечает на существующий вопрос.
-// @Summary Ответить на вопрос
-// @Description Авторизованный пользователь отвечает на вопрос.
+// AnswerQuestion answers an existing question.
+// @Summary Answer Question
+// @Description An authenticated user answers a question.
 // @Tags questions
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
-// @Param id path uint64 true "ID вопроса"
-// @Param request body answerQuestionRequest true "Текст ответа"
+// @Param id path uint64 true "Question ID"
+// @Param request body answerQuestionRequest true "Answer text"
 // @Success 200 {object} map[string]string "status: question answer event sent"
 // @Failure 400 {string} string "invalid question id / invalid request body"
 // @Failure 500 {string} string "error processing event / failed to send message to kafka"
@@ -154,14 +154,14 @@ func (qh *QuestionHandler) AnswerQuestion() http.HandlerFunc {
 	}
 }
 
-// DeleteQuestion удаляет вопрос.
-// @Summary Удалить вопрос
-// @Description Авторизованный пользователь удаляет вопрос по ID.
+// DeleteQuestion deletes a question.
+// @Summary Delete Question
+// @Description An authenticated user deletes a question by ID.
 // @Tags questions
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
-// @Param id path uint64 true "ID вопроса"
+// @Param id path uint64 true "Question ID"
 // @Success 200 {object} map[string]string "status: question deletion event sent"
 // @Failure 400 {string} string "invalid question id"
 // @Failure 500 {string} string "error processing event / failed to send message to kafka"
@@ -197,15 +197,14 @@ func (qh *QuestionHandler) DeleteQuestion() http.HandlerFunc {
 	}
 }
 
-
-// AddLikeToQuestion добавляет лайк к вопросу.
-// @Summary Поставить лайк вопросу
-// @Description Авторизованный пользователь ставит лайк вопросу.
+// AddLikeToQuestion adds a like to a question.
+// @Summary Like Question
+// @Description An authenticated user likes a question.
 // @Tags questions
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
-// @Param id path uint64 true "ID вопроса"
+// @Param id path uint64 true "Question ID"
 // @Success 200 {object} map[string]string "status: question like event sent"
 // @Failure 400 {string} string "invalid question id"
 // @Failure 403 {string} string "invalid or missing user_id"
@@ -251,14 +250,14 @@ func (qh *QuestionHandler) AddLikeToQuestion() http.HandlerFunc {
 	}
 }
 
-// RemoveLikeToQuestion убирает лайк с вопроса.
-// @Summary Убрать лайк с вопроса
-// @Description Авторизованный пользователь убирает лайк с вопроса.
+// RemoveLikeToQuestion removes a like from a question.
+// @Summary Remove Like From Question
+// @Description An authenticated user removes a like from a question.
 // @Tags questions
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
-// @Param id path uint64 true "ID вопроса"
+// @Param id path uint64 true "Question ID"
 // @Success 200 {object} map[string]string "status: question removelike event sent"
 // @Failure 400 {string} string "invalid question id"
 // @Failure 403 {string} string "invalid or missing user_id"
@@ -303,7 +302,6 @@ func (qh *QuestionHandler) RemoveLikeToQuestion() http.HandlerFunc {
 		res.Json(w, map[string]string{"status": "question removelike event sent"}, http.StatusOK)
 	}
 }
-
 
 func getUserOrGuestID(r *http.Request) (*uint, []byte, error) {
 	userIDVal := r.Context().Value(middleware.ContextUserIDKey)
