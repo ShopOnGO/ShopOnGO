@@ -1,9 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
@@ -13,10 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Checkout review-proto
-        run: git submodule update --init --recursive
       - name: Install dependencies
-        run: make install
+        run: go mod tidy
       - name: Build
         run: |
           docker-compose build
@@ -26,8 +21,6 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v3
-      - name: Checkout review-proto
-        run: git submodule update --init --recursive
       - name: Install dependencies
         run: go mod tidy
       - name: Test
