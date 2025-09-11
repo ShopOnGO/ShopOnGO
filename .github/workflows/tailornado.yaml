@@ -16,7 +16,7 @@ jobs:
       - name: Checkout review-proto
         run: git submodule update --init --recursive
       - name: Install dependencies
-        run: make install
+        run: go mod tidy
       - name: Build
         run: |
           docker-compose build
