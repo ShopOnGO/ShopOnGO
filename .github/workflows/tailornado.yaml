@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: go mod download
 
+      - name: Create .env
+        run: echo "${{ secrets.APP_ENV_FILE }}" > .env
+
       - name: Set up Docker buildx
         uses: docker/setup-buildx-action@v3
 
