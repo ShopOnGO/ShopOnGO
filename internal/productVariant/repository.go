@@ -136,10 +136,9 @@ func (repo *ProductVariantRepository) Update(variant *ProductVariant) (*ProductV
 			"discount":       variant.Discount,
 			"reserved_stock": variant.ReservedStock,
 			"stock":          variant.Stock,
-			"material":       variant.Material,
 			"barcode":        variant.Barcode,
 			"is_active":      variant.IsActive,
-			"images":         variant.Images,
+			"images":         variant.ImageURLs,
 			"min_order":      variant.MinOrder,
 			"dimensions":     variant.Dimensions,
 			"updated_at":     time.Now(),
@@ -170,29 +169,27 @@ func (repo *ProductVariantRepository) GetAvailableStock(variantID uint) (uint32,
 	return available.Available, result.Error
 }
 
-// GetByFilters поиск с фильтрами
-func (repo *ProductVariantRepository) GetByFilters(filters map[string]interface{}, limit, offset int) ([]ProductVariant, error) {
-	var variants []ProductVariant
-	query := repo.Database.DB.Model(&ProductVariant{})
+// // GetByFilters поиск с фильтрами
+// func (repo *ProductVariantRepository) GetByFilters(filters map[string]interface{}, limit, offset int) ([]ProductVariant, error) {
+// 	var variants []ProductVariant
+// 	query := repo.Database.DB.Model(&ProductVariant{})
 
-	for key, value := range filters {
-		switch key {
-		case "min_price":
-			query = query.Where("price >= ?", value)
-		case "max_price":
-			query = query.Where("price <= ?", value)
-		case "sizes":
-			query = query.Where("JSON_CONTAINS(sizes, ?)", value)
-		case "colors":
-			query = query.Where("JSON_CONTAINS(colors, ?)", value)
-		case "material":
-			query = query.Where("material = ?", value)
-		}
-	}
+// 	for key, value := range filters {
+// 		switch key {
+// 		case "min_price":
+// 			query = query.Where("price >= ?", value)
+// 		case "max_price":
+// 			query = query.Where("price <= ?", value)
+// 		case "sizes":
+// 			query = query.Where("JSON_CONTAINS(sizes, ?)", value)
+// 		case "colors":
+// 			query = query.Where("JSON_CONTAINS(colors, ?)", value)
+// 		}
+// 	}
 
-	result := query.Limit(limit).Offset(offset).Find(&variants)
-	return variants, result.Error
-}
+// 	result := query.Limit(limit).Offset(offset).Find(&variants)
+// 	return variants, result.Error
+// }
 
 // BulkUpdateStock массовое обновление стока
 func (repo *ProductVariantRepository) BulkUpdateStock(variantStocks map[uint]uint32) error {
