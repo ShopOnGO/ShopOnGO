@@ -46,7 +46,7 @@ func NewProductVariantHandler(router *mux.Router, deps ProductVariantHandlerDeps
 // @Router       /product/{id}/product-variants [post]
 func (h *ProductVariantHandler) AddProductVariant() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req addProductVariantRequest
+		var req AddProductVariantRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return

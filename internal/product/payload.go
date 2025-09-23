@@ -1,17 +1,22 @@
 package product
 
-type addProductRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Price       int64  `json:"price"`
-	Discount    int64  `json:"discount"`
-	IsActive    bool   `json:"is_active"`
+import (
+	"github.com/ShopOnGO/ShopOnGO/internal/productVariant"
+)
 
-	CategoryID 	uint   `json:"category_id"`
-	BrandID    	uint   `json:"brand_id"`
+type addProductRequest struct {
+	Name        string 	`json:"name"`
+	Description string 	`json:"description"`
+	Material    string 	`gorm:"type:varchar(200)"`
+	IsActive    bool   	`json:"is_active"`
+
+	CategoryID 	uint   	`json:"category_id"`
+	BrandID    	uint   	`json:"brand_id"`
 
 	ImageKeys  []string `json:"image_keys"`
 	VideoKeys  []string `json:"video_keys"`
+
+	Variants []productVariant.AddProductVariantRequest `json:"variants"`
 }
 
 type productCreatedEvent struct {

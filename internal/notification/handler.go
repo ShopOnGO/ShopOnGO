@@ -32,6 +32,17 @@ func NewNotificationHandler(router *mux.Router, deps NotificationHandlerDeps) {
 	//router.Handle("/notifications/{id}", middleware.IsAuthed(handler.DeleteReview(), deps.Config)).Methods("DELETE")
 }
 
+// AddNotification создает новое уведомление
+// @Summary      Создание уведомления
+// @Description  Создает событие для отправки уведомления, отправляя его в Kafka.
+// @Tags         notifications
+// @Accept       json
+// @Produce      json
+// @Param        notification body AddNotificationRequest true "Тело запроса для создания уведомления"
+// @Success      200 {object} NotificationResponse "Успешная отправка события"
+// @Failure      400 {object} res.ErrorResponse "Некорректное тело запроса или отсутствуют обязательные поля"
+// @Failure      500 {object} res.ErrorResponse "Внутренняя ошибка сервера"
+// @Router       /notifications [post]
 func (h *NotificationHandler) AddNotification() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req AddNotification

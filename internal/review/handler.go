@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
 	"github.com/gorilla/mux"
 
 	"github.com/ShopOnGO/ShopOnGO/configs"
@@ -16,18 +17,18 @@ import (
 
 type ReviewHandlerDeps struct {
 	Config *configs.Config
-	Kafka *kafkaService.KafkaService
+	Kafka  *kafkaService.KafkaService
 }
 
 type ReviewHandler struct {
 	Config *configs.Config
-	Kafka *kafkaService.KafkaService
+	Kafka  *kafkaService.KafkaService
 }
 
-func NewReviewHandler(router *mux.Router, deps ReviewHandlerDeps){
+func NewReviewHandler(router *mux.Router, deps ReviewHandlerDeps) {
 	handler := &ReviewHandler{
-		Config:     deps.Config,
-		Kafka: 		deps.Kafka,
+		Config: deps.Config,
+		Kafka:  deps.Kafka,
 	}
 	router.Handle("/reviews", middleware.IsAuthed(handler.AddReview(), deps.Config)).Methods("POST")
 	router.Handle("/reviews/{id}", middleware.IsAuthed(handler.UpdateReview(), deps.Config)).Methods("PUT")
@@ -55,7 +56,7 @@ func (rh *ReviewHandler) AddReview() http.HandlerFunc {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
-		
+
 		userID, ok := r.Context().Value(middleware.ContextUserIDKey).(uint)
 		if !ok {
 			http.Error(w, "invalid user_id", http.StatusBadRequest)
@@ -65,7 +66,7 @@ func (rh *ReviewHandler) AddReview() http.HandlerFunc {
 			http.Error(w, "product_variant_id and user_id are required", http.StatusBadRequest)
 			return
 		}
-		
+
 		event := reviewCreatedEvent{
 			Action: "create",
 			Review: req,

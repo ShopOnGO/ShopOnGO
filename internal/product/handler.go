@@ -30,16 +30,16 @@ func NewProductHandler(router *mux.Router, deps ProductHandlerDeps) {
 }
 
 // AddProduct добавляет новый продукт.
-// @Summary      Добавление нового продукта
-// @Description  Добавляет новый продукт в каталог.
-// @Tags         product
-// @Accept       json
-// @Produce      json
-// @Param        body  body  addProductRequest  true  "Данные нового продукта (обязательно: name, price, category_id, brand_id)"
-// @Success      201   {object}  map[string]interface{}  "Продукт успешно создан и событие отправлено в Kafka"
-// @Failure      400   {string}  string  "Неверные входные данные"
-// @Failure      500   {string}  string  "Ошибка при обработке запроса"
-// @Router       /products [post]
+// @Summary Добавление нового продукта
+// @Description Добавляет новый продукт в каталог.
+// @Tags product
+// @Accept json
+// @Produce json
+// @Param body body addProductRequest true "Данные нового продукта (обязательно: name, price, category_id, brand_id)"
+// @Success 201 {object} map[string]interface{} "Продукт успешно создан и событие отправлено в Kafka"
+// @Failure 400 {string} string "Неверные входные данные"
+// @Failure 500 {string} string "Ошибка при обработке запроса"
+// @Router /products [post]
 func (h *ProductHandler) AddProduct() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req addProductRequest
@@ -48,13 +48,18 @@ func (h *ProductHandler) AddProduct() http.HandlerFunc {
 			return
 		}
 
-		if req.Name == "" || req.Price <= 0 || req.CategoryID == 0 || req.BrandID == 0 {
+		if len(req.Variants) == 0 {
+			http.Error(w, "invalid request body, variants are required", http.StatusBadRequest)
+			return
+		}
+
+		if req.Name == "" || req.CategoryID == 0 || req.BrandID == 0 {
 			http.Error(w, "missing or invalid required fields", http.StatusBadRequest)
 			return
 		}
 
 		event := productCreatedEvent{
-			Action: "create",
+			Action:  "create",
 			Product: req,
 		}
 
@@ -64,7 +69,9 @@ func (h *ProductHandler) AddProduct() http.HandlerFunc {
 			return
 		}
 
-		if err := h.Kafka.Produce(r.Context(), []byte("product-create"), eventBytes); err != nil {
+		key := []byte("product-create")
+		
+		if err := h.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
 			logger.Errorf("Kafka produce error: %v", err)
 			http.Error(w, "failed to send Kafka message", http.StatusInternalServerError)
 			return
@@ -76,4 +83,3 @@ func (h *ProductHandler) AddProduct() http.HandlerFunc {
 		}, http.StatusCreated)
 	}
 }
-

@@ -30,16 +30,17 @@ func NewResetHandler(router *mux.Router, deps ResetHandlerDeps) {
 	router.Handle("/auth/reset/resend", handler.ResendCode()).Methods("POST")
 }
 
-// Reset инициирует процедуру сброса пароля, генерирует код и отправляет его на указанный email
-// @Summary      Запрос на сброс пароля
-// @Description  Генерирует код сброса пароля и отправляет его на email пользователя
+// Reset initiates the password reset process.
+// It generates a reset code and sends it to the provided email address.
+// @Summary      Request Password Reset
+// @Description  Generates a password reset code and sends it to the user's email.
 // @Tags         auth
 // @Accept       json
 // @Produce      json
-// @Param        body  body  ResetRequest  true  "Данные для запроса сброса пароля"
-// @Success      200   {string}  string  "Сброс пароля успешно инициирован"
-// @Failure      400   {string}  string  "Неверные данные"
-// @Failure      500   {string}  string  "Ошибка сервера при инициировании сброса пароля"
+// @Param        body  body  ResetRequest  true  "Data for password reset request"
+// @Success      200   {string}  string  "Password reset successfully initiated"
+// @Failure      400   {string}  string  "Invalid input data"
+// @Failure      500   {string}  string  "Server error during password reset initiation"
 // @Router       /auth/reset [post]
 func (h *ResetHandler) Reset() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -64,16 +65,16 @@ func (h *ResetHandler) Reset() http.HandlerFunc {
 	}
 }
 
-// VerifyCode проверяет корректность кода, отправленного пользователю для сброса пароля
-// @Summary      Верификация кода сброса пароля
-// @Description  Проверяет, соответствует ли указанный код сохраненному для email, и подтверждает запрос сброса пароля
+// VerifyCode checks the validity of the reset code sent to the user.
+// @Summary      Verify Reset Code
+// @Description  Validates the provided reset code against the one stored for the email and confirms the reset request.
 // @Tags         auth
 // @Accept       json
 // @Produce      json
-// @Param        body  body  VerifyCodeRequest  true  "Данные для верификации кода"
-// @Success      200   {string}  string  "Код подтвержден"
-// @Failure      400   {string}  string  "Неверные данные"
-// @Failure      401   {string}  string  "Неверный или просроченный код"
+// @Param        body  body  VerifyCodeRequest  true  "Data for code verification"
+// @Success      200   {string}  string  "Code verified successfully"
+// @Failure      400   {string}  string  "Invalid input data"
+// @Failure      401   {string}  string  "Invalid or expired code"
 // @Router       /auth/reset/verify [post]
 func (h *ResetHandler) VerifyCode() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -93,17 +94,17 @@ func (h *ResetHandler) VerifyCode() http.HandlerFunc {
 	}
 }
 
-// ResetPassword обновляет пароль пользователя после проверки кода сброса пароля.
-// @Summary      Обновление пароля
-// @Description  Проверяет предоставленный код сброса и, при корректном совпадении, обновляет пароль пользователя.
+// ResetPassword updates the user's password after successful code verification.
+// @Summary      Update Password
+// @Description  Verifies the provided reset code and, if valid, updates the user's password.
 // @Tags         auth
 // @Accept       json
 // @Produce      json
-// @Param        body  body  ResetPasswordRequest  true  "Данные для обновления пароля"
-// @Success      200   {string} string  "Пароль успешно обновлен"
-// @Failure      400   {string} string  "Неверные данные"
-// @Failure      401   {string} string  "Неверный или просроченный код"
-// @Failure      500   {string} string  "Ошибка сервера при обновлении пароля"
+// @Param        body  body  ResetPasswordRequest  true  "Data for password update"
+// @Success      200   {string} string  "Password successfully updated"
+// @Failure      400   {string} string  "Invalid input data"
+// @Failure      401   {string} string  "Invalid or expired code"
+// @Failure      500   {string} string  "Server error during password update"
 // @Router       /auth/reset/password [post]
 func (h *ResetHandler) ResetPassword() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -127,16 +128,16 @@ func (h *ResetHandler) ResetPassword() http.HandlerFunc {
 	}
 }
 
-// ResendCode генерирует и отправляет повторно код для сброса пароля пользователю.
-// @Summary      Повторная отправка кода сброса пароля
-// @Description  Генерирует новый код сброса пароля и отправляет его на указанный email пользователя.
+// ResendCode generates and resends the password reset code to the user.
+// @Summary      Resend Reset Code
+// @Description  Generates a new password reset code and sends it to the user's email address.
 // @Tags         auth
 // @Accept       json
 // @Produce      json
-// @Param        body  body  ResetRequest  true  "Данные для запроса повторной отправки кода"
-// @Success      200   {string} string  "Код успешно отправлен повторно"
-// @Failure      400   {string} string  "Неверные данные"
-// @Failure      500   {string} string  "Ошибка сервера при отправке кода"
+// @Param        body  body  ResetRequest  true  "Data for resending code request"
+// @Success      200   {string} string  "Code successfully resent"
+// @Failure      400   {string} string  "Invalid input data"
+// @Failure      500   {string} string  "Server error during code resend"
 // @Router       /auth/reset/resend [post]
 func (h *ResetHandler) ResendCode() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

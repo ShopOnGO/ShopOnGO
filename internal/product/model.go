@@ -14,8 +14,7 @@ type Product struct {
 
 	Name        string `gorm:"type:varchar(255);not null" json:"name"`
 	Description string `gorm:"type:text" json:"description"`
-	Price       int64  `gorm:"not null" json:"price"`
-	Discount    int64  `gorm:"default:0" json:"discount"`
+	Material    string `gorm:"type:varchar(200)"`
 	IsActive    bool   `gorm:"default:true" json:"is_active"`
 
 	// 🔹 Внешние ключи
@@ -25,7 +24,7 @@ type Product struct {
 	BrandID uint        `gorm:"not null" json:"brand_id"`
 	Brand   brand.Brand `gorm:"foreignKey:BrandID;constraint:OnDelete:CASCADE"`
 
-	Variants []productVariant.ProductVariant `gorm:"foreignKey:ProductID"` // Ссылка на варианты продукта
+	Variants []productVariant.ProductVariant `gorm:"foreignKey:ProductID"`
 
 	// 🔹 Дополнительные данные
 	ImageURLs pq.StringArray `gorm:"type:text[]"`
