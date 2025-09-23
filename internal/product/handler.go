@@ -48,7 +48,12 @@ func (h *ProductHandler) AddProduct() http.HandlerFunc {
 			return
 		}
 
-		if req.Name == "" || req.Price <= 0 || req.CategoryID == 0 || req.BrandID == 0 {
+		if len(req.Variants) == 0 {
+			http.Error(w, "invalid request body, variants are required", http.StatusBadRequest)
+			return
+		}
+
+		if req.Name == "" || req.CategoryID == 0 || req.BrandID == 0 {
 			http.Error(w, "missing or invalid required fields", http.StatusBadRequest)
 			return
 		}
@@ -64,7 +69,9 @@ func (h *ProductHandler) AddProduct() http.HandlerFunc {
 			return
 		}
 
-		if err := h.Kafka.Produce(r.Context(), []byte("product-create"), eventBytes); err != nil {
+		key := []byte("product-create")
+		
+		if err := h.Kafka.Produce(r.Context(), key, eventBytes); err != nil {
 			logger.Errorf("Kafka produce error: %v", err)
 			http.Error(w, "failed to send Kafka message", http.StatusInternalServerError)
 			return
