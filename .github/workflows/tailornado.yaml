@@ -44,6 +44,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Create .env
+        run: echo "${{ secrets.APP_ENV_FILE }}" > .env
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -63,5 +66,5 @@ jobs:
         run: go mod download
 
       - name: Run tests inside container
-        run: |
-          docker compose -f docker-compose.ci.yml --env-file .env run --rm shop_on_go_container go test ./...
+        run: docker compose -f docker-compose.ci.yml --env-file .env run --rm shop_on_go_container go test ./...
+
