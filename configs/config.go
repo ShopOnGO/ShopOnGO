@@ -53,10 +53,15 @@ type KafkaConfig struct {
 }
 
 func LoadConfig() *Config {
-	err := godotenv.Load() //loading from .env
-	if err != nil {
-		logger.Error("Error loading .env file, using default config", err.Error())
-	}
+	if _, err := os.Stat(".env"); err == nil {
+        // Локально есть .env → загружаем
+        if loadErr := godotenv.Load(); loadErr != nil {
+            logger.Error("Failed to load .env file", loadErr.Error())
+        }
+    } else {
+        // В контейнере файла нет → просто идём дальше
+        logger.Info(".env not found, using environment variables only")
+    }
 
 	ttlStr := os.Getenv("REFRESH_TOKEN_TTL")
 	if ttlStr == "" {
