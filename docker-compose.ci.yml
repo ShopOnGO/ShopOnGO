@@ -3,6 +3,8 @@ services:
 
   shop_on_go_container:
     container_name: shop_on_go_container
+    env_file:
+      - .env
     build: ./
     command: ./wait-for-db.sh ./shop_on_go "migrate"
     depends_on:

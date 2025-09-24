@@ -32,7 +32,7 @@ WORKDIR /app
 # Устанавливаем postgresql-client и dos2unix
 RUN apk add --no-cache postgresql-client dos2unix
 
-COPY .env /app/.env
+# COPY .env /app/.env
 
 # Копируем бинарный файл из предыдущего этапа
 COPY --from=builder /app/shop_on_go /app/shop_on_go
