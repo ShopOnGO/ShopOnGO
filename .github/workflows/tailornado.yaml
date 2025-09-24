@@ -66,5 +66,5 @@ jobs:
         run: go mod download
 
       - name: Run tests inside container
-        run: docker compose -f docker-compose.ci.yml --env-file .env run --rm shop_on_go_container go test ./...
+        run: docker compose -f docker-compose.ci.yml run --rm test
 
