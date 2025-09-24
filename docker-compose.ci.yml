@@ -1,0 +1,96 @@
+version: "3.8"
+services:
+
+  shop_on_go_container:
+    container_name: shop_on_go_container
+    build: ./
+    command: ./wait-for-db.sh ./shop_on_go "migrate"
+    depends_on:
+      - postgres
+      - kafka
+    ports:
+      - "8081:8081"
+    networks:
+      - shopongo_default
+
+  postgres:
+    container_name: go_shop_postgres
+    image: postgres:16.4
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - shopongo_default
+
+  redis:
+    container_name: redis_container
+    image: redis:latest
+    restart: always
+    environment:
+    - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+    networks:
+      - shopongo_default
+
+  zookeeper:
+    restart: always
+    container_name: kafka-zookeeper
+    image: docker.io/bitnami/zookeeper:3.8
+    ports:
+      - "2181:2181"
+    volumes:
+      - "zookeeper-volume:/bitnami"
+      - ./pkg/kafkaService/logback.xml:/opt/bitnami/zookeeper/conf/logback.xml:ro
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+      - ZOO_LOG4J_PROP=ERROR,CONSOLE
+    networks:
+      - shopongo_default
+
+  kafka:
+    restart: always
+    container_name: kafka
+    image: docker.io/bitnami/kafka:3.3
+    ports:
+      - "9093:9093"
+    volumes:
+      - "kafka-volume:/bitnami"
+      - ./pkg/kafkaService/log4j.properties:/opt/bitnami/kafka/config/log4j.properties:ro
+    environment:
+      - KAFKA_CFG_LOG4J_LOGGERS=root=ERROR,org.apache.kafka=ERROR
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://localhost:9093
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=CLIENT
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+    depends_on:
+      - zookeeper
+    networks:
+      - shopongo_default
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./pkg/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - shop_on_go_container
+    networks:
+      - shopongo_default
+
+# networks:
+#   shopongo_default:
+#     external: true
+    
+volumes:
+  kafka-volume:
+  zookeeper-volume:
