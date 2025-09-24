@@ -87,8 +87,8 @@ services:
     networks:
       - shopongo_default
 
-# networks:
-#   shopongo_default:
+networks:
+  shopongo_default:
 #     external: true
     
 volumes:
