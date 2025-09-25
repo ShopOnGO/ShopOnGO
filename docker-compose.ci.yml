@@ -6,7 +6,7 @@ services:
     container_name: shop_on_go_container
     command: ./wait-for-db.sh ./shop_on_go "migrate"
     depends_on:
-      - postgres
+      # - postgres
       - kafka
     env_file:
       - .env
@@ -27,17 +27,17 @@ services:
     networks:
       - shopongo_default
 
-  postgres:
-    image: postgres:16.4
-    container_name: go_shop_postgres
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - PGDATA=/data/postgres
-    ports:
-      - "5432:5432"
-    networks:
-      - shopongo_default
+  # postgres:
+  #   image: postgres:16.4
+  #   container_name: go_shop_postgres
+  #   environment:
+  #     # - POSTGRES_USER=${POSTGRES_USER}
+  #     # - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+  #     - PGDATA=/data/postgres
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+      # - shopongo_default
 
   redis:
     image: redis:latest
