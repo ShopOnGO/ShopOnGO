@@ -1,10 +1,9 @@
 package review
 
 type addReviewRequest struct {
-	ProductVariantID uint   `json:"product_variant_id"`
-	Rating           int16  `json:"rating"`
-	LikesCount		 int    `gorm:"default:0" json:"likes_count"`
-	Comment          string `json:"comment"`
+	ProductID 	uint   `json:"product_id"`
+	Rating      int16  `json:"rating"`
+	Comment     string `json:"comment"`
 }
 
 type reviewCreatedEvent struct {

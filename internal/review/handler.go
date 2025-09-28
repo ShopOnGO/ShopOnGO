@@ -61,8 +61,8 @@ func (rh *ReviewHandler) AddReview() http.HandlerFunc {
 			http.Error(w, "invalid user_id", http.StatusBadRequest)
 			return
 		}
-		if req.ProductVariantID == 0 || userID == 0 {
-			http.Error(w, "product_variant_id and user_id are required", http.StatusBadRequest)
+		if req.ProductID == 0 || userID == 0 {
+			http.Error(w, "product_id or user_id are required", http.StatusBadRequest)
 			return
 		}
 		
