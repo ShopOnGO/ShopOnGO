@@ -6,25 +6,18 @@ import (
 
 type HomeService struct {
 	CategoryRepository di.ICategoryRepository
-	ProductsRepository di.IProductRepository
 	BrandRepository    di.IBrandRepository
 	//promoRepo PromotionRepository
 }
 
-func NewHomeService(categoryRepository di.ICategoryRepository, productsRepository di.IProductRepository, brandRepository di.IBrandRepository) *HomeService {
+func NewHomeService(categoryRepository di.ICategoryRepository, brandRepository di.IBrandRepository) *HomeService {
 	return &HomeService{
 		CategoryRepository: categoryRepository,
-		ProductsRepository: productsRepository,
 		BrandRepository:    brandRepository}
 }
 func (s *HomeService) GetHomeData() (*HomeData, error) {
 
 	categories, err := s.CategoryRepository.GetFeaturedCategories(5)
-	if err != nil {
-		return nil, err
-	}
-
-	featuredProducts, err := s.ProductsRepository.GetFeaturedProducts(10, true) // ONLY TRUE WHILE POPULARITY IS UNDEF
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +33,6 @@ func (s *HomeService) GetHomeData() (*HomeData, error) {
 
 	return &HomeData{
 		Categories:       categories,
-		FeaturedProducts: featuredProducts,
 		Brands:           brands,
 		//Promotions: promotions,
 	}, nil

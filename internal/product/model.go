@@ -4,8 +4,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/internal/brand"
 	"github.com/ShopOnGO/ShopOnGO/internal/category"
 	"github.com/ShopOnGO/ShopOnGO/internal/productVariant"
-	"github.com/ShopOnGO/ShopOnGO/internal/question"
-	"github.com/ShopOnGO/ShopOnGO/internal/review"
+	
 	"github.com/lib/pq"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
@@ -35,7 +34,4 @@ type Product struct {
 	// 🔹 Дополнительные данные
 	ImageURLs 		pq.StringArray 		`gorm:"type:text[]"`
     VideoURLs 		pq.StringArray 		`gorm:"type:text[]"`
-
-	Reviews 		[]review.Review 	`gorm:"-" json:"reviews"`
-	Questions 		[]question.Question `gorm:"-" json:"questions"`
 }
