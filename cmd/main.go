@@ -75,7 +75,6 @@ func App() http.Handler {
 	statRepository := stat.NewStatRepository(db)
 	chatRepository := chat.NewChatRepository(db)
 	categoryRepository := category.NewCategoryRepository(db)
-	productRepository := product.NewProductRepository(db)
 	brandsRepository := brand.NewBrandRepository(db)
 	cartRepository := cart.NewCartRepository(db)
 	refreshTokenRepository := oauth2.NewRedisRefreshTokenRepository(redis)
@@ -83,7 +82,7 @@ func App() http.Handler {
 
 	// Services
 	authService := auth.NewAuthService(userRepository)
-	homeService := home.NewHomeService(categoryRepository, productRepository, brandsRepository)
+	homeService := home.NewHomeService(categoryRepository, brandsRepository)
 	cartService := cart.NewCartService(cartRepository)
 	chatService := chat.NewChatService(chatRepository)
 	statService := stat.NewStatService(&stat.StatServiceDeps{
