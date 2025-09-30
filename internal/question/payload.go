@@ -1,7 +1,7 @@
 package question
 
 type addQuestionRequest struct {
-	ProductVariantID uint   `json:"product_variant_id"`
+	ProductID uint   `json:"product_id"`
 	QuestionText     string `json:"question_text"`
 }
 

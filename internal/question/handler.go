@@ -75,10 +75,10 @@ func (qh *QuestionHandler) AddQuestion() http.HandlerFunc {
 		}
 
 		event := map[string]interface{}{
-			"action":             "created",
-			"product_variant_id": req.ProductVariantID,
-			"question_text":      req.QuestionText,
-			"author":             author,
+			"action":           "create",
+			"product_id": 		req.ProductID,
+			"question_text":    req.QuestionText,
+			"author":           author,
 		}
 
 		eventBytes, err := json.Marshal(event)
@@ -132,7 +132,7 @@ func (qh *QuestionHandler) AnswerQuestion() http.HandlerFunc {
 		}
 
 		event := map[string]interface{}{
-			"action":      "answered",
+			"action":      "answer",
 			"question_id": questionID,
 			"answer_text": req.AnswerText,
 		}
@@ -176,7 +176,7 @@ func (qh *QuestionHandler) DeleteQuestion() http.HandlerFunc {
 		}
 
 		event := map[string]interface{}{
-			"action":      "deleted",
+			"action":      "delete",
 			"question_id": questionID,
 		}
 
