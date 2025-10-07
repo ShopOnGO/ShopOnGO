@@ -12,10 +12,12 @@ import (
 var sessionIDCounter uint64
 
 type Session struct {
-	ID      uint // Уникальный ID сессии
-	User    *Client
-	Manager *Client
-	History []*Message
+	ID          uint // Уникальный ID сессии\
+	UserID      uint
+	UserClients map[*Client]bool
+	Manager     *Client
+	History     []*Message
+	mu          sync.RWMutex
 }
 
 type Hub struct {
@@ -66,39 +68,32 @@ func (h *Hub) handleNewClient(c *Client) {
 		return
 	}
 
+	// Ищем сессию по ID пользователя
 	session, exists := h.sessions[c.ID]
-	if exists {
-		fmt.Println("существует")
-		// Завершаем старое соединение пользователя (больше нигде не вычищаются старые клиенты или сессии)
-		if session.User != nil {
-			oldClient := session.User
-			// Закрыть старое соединение
-			oldClient.Conn.Close()
-
-			// Удалить старого клиента из clients
-			delete(h.clients, oldClient)
+	if !exists {
+		// Сессии нет - создаем новую
+		session = &Session{
+			ID:          generateUniqueID(),
+			UserID:      c.ID,
+			UserClients: make(map[*Client]bool),
+			History:     []*Message{},
 		}
-		// Переподключаем нового клиента к старой сессии
-		fmt.Println("Переподключаем нового клиента к старой сессии")
-		if session.Manager != nil {
-			fmt.Println("with manager")
+		session.UserClients[c] = true
+		h.sessions[c.ID] = session
 
-		}
-		session.User = c
-		sendHistoryToClient(c, session.History)
-
-		//WARN МОЖЕТ БЫТЬ ОШИБКА
-		//TODO нужно ли здесь подгружать сообщения?
-		// да нужно, строкой выше, но только пока у нас нет фронтенда, потом историю стоит грузить на фронте а не канал
-	} else {
-		// Если сессии нет, создаём новую
-		h.sessions[c.ID] = &Session{User: c}
-		err := h.LoadLastMessages(c.ID, h.sessions[c.ID], 50)
+		// Загружаем историю сообщений для новой сессии
+		err := h.LoadLastMessages(c.ID, session, 50)
 		if err != nil {
 			logger.Error("LoadLastMessages failed", err)
 		}
-		sendHistoryToClient(c, h.sessions[c.ID].History)
+
+	} else {
+		// Сессия уже существует - просто добавляем нового клиента в пул
+		session.mu.Lock()
+		session.UserClients[c] = true
+		session.mu.Unlock()
 	}
+	sendHistoryToClient(c, session.History)
 }
 
 func (h *Hub) removeClient(c *Client) {
@@ -114,30 +109,42 @@ func (h *Hub) removeClient(c *Client) {
 		// Обработка отключения менеджера
 		if sessions, ok := h.managerSessions[c.ID]; ok {
 			for _, session := range sessions {
-				if session.User != nil {
+				if session.UserID != 0 {
 					// Возвращаем пользователя в очередь ожидания
-					h.waitingUsers[session.User.ID] = true
+					h.waitingUsers[session.UserID] = true
 
 					// Отправляем уведомление пользователю
-					h.sendSuccess(session.User, "Manager disconnected", nil) // ЖДИТЕ НООВОГО МЕНЕДЖЕРА ТИПА
+					for client := range session.UserClients {
+						h.sendSuccess(client, "Manager disconnected", nil) // ЖДИТЕ НООВОГО МЕНЕДЖЕРА ТИПА
+					}
 
 				}
 			}
 			delete(h.managerSessions, c.ID) // Удаляем все сессии менеджера
 		}
 	} else {
-		// Обработка отключения обычного пользователя
+		// Логика отключения пользователя
 		if session, ok := h.sessions[c.ID]; ok {
-			// Уведомляем менеджера, если он есть
-			if session.Manager != nil {
+			session.mu.Lock()
+			// Удаляем конкретное соединение из пула сессии
+			delete(session.UserClients, c)
+			session.mu.Unlock()
+
+			// Если у пользователя не осталось активных соединений,
+			// уведомляем менеджера.
+			session.mu.RLock()
+			shouldNotifyManager := len(session.UserClients) == 0 && session.Manager != nil
+			session.mu.RUnlock()
+			if shouldNotifyManager {
 				payload, _ := json.Marshal(map[string]interface{}{
-					"event":   "user_disconnected",
+					"event":   "user_disconnected_all", // Новый, более точный event
 					"user_id": c.ID,
+					"message": "User has closed all connections.",
 				})
 				safeSend(session.Manager, payload)
-
 			}
-			//Не удаляем сессии! Пользователь мог быть в очереди до подключения
+			// ВАЖНО: саму сессию (h.sessions[c.ID]) мы не удаляем.
+			// Она хранит историю чата и может быть возобновлена.
 		}
 	}
 }
@@ -184,6 +191,14 @@ func (h *Hub) handleUserMessage(user *Client, message []byte) {
 		}
 
 	}
+
+	//  Отправляем сообщение всем активным клиентам этого пользователя
+	// Это гарантирует, что сообщение появится на всех его вкладках/устройствах.
+	session.mu.RLock()
+	for client := range session.UserClients {
+		safeSend(client, data)
+	}
+	session.mu.RUnlock()
 }
 
 func (h *Hub) handleManagerMessage(manager *Client, message []byte) {
@@ -204,15 +219,15 @@ func (h *Hub) handleManagerMessage(manager *Client, message []byte) {
 }
 
 func (h *Hub) handleManagerTextMessage(manager *Client, message []byte) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
 	var msg ManagerMessage
 	if err := json.Unmarshal(message, &msg); err != nil {
 		logger.Warn("Failed to parse manager text message", err)
 		h.sendError(manager, "Invalid message format")
 		return
 	}
+	h.mu.RLock() // Используем блокировку на чтение, т.к. только ищем сессию
 	session := h.findSessionForManager(manager.ID, msg.UserID)
+	h.mu.RUnlock()
 	if session == nil {
 		h.sendError(manager, "No active session with this user")
 		return
@@ -220,12 +235,26 @@ func (h *Hub) handleManagerTextMessage(manager *Client, message []byte) {
 	// Сохраняем и отправляем сообщение
 	messageObj := &Message{
 		FromID:  manager.ID,
-		ToID:    session.User.ID,
+		ToID:    session.UserID,
 		Content: msg.Content,
 	}
 	h.saveMessageAndAppendToHistory(session, messageObj)
 	msgData, _ := json.Marshal(messageObj)
-	safeSend(session.User, msgData)
+
+	// --- Ключевое изменение: получаем список клиентов и отпускаем блокировки ---
+
+	// Создаем локальную копию списка клиентов, чтобы не держать блокировку во время отправки
+	var clientsToSend []*Client
+	session.mu.RLock()
+	for client := range session.UserClients {
+		clientsToSend = append(clientsToSend, client)
+	}
+	session.mu.RUnlock() // Разблокируем сессию сразу после копирования
+
+	// Отправляем сообщение всем активным клиентам пользователя, итерируясь по локальной копии
+	for _, client := range clientsToSend {
+		safeSend(client, msgData)
+	}
 	//session.User.Send <- msgData
 }
 
@@ -259,7 +288,11 @@ func (h *Hub) assignManagerToUser(manager *Client, userID uint) {
 	}
 
 	h.sendSuccess(manager, fmt.Sprintf("Session %d started with user %d", userSession.ID, userID), nil)
-	h.sendSuccess(userSession.User, "A manager has joined your chat.", nil)
+	userSession.mu.RLock()
+	for client := range userSession.UserClients {
+		h.sendSuccess(client, "A manager has joined your chat.", nil)
+	}
+	userSession.mu.RUnlock()
 }
 
 func (h *Hub) listWaitingUsers(manager *Client) {
@@ -285,7 +318,7 @@ func (h *Hub) closeSession(manager *Client, userID uint) {
 
 	sessions := h.managerSessions[manager.ID]
 	for i, s := range sessions {
-		if s.User != nil && s.User.ID == userID {
+		if s.UserID == userID {
 			h.managerSessions[manager.ID] = append(sessions[:i], sessions[i+1:]...)
 			break
 		}
@@ -330,22 +363,22 @@ func (h *Hub) sendError(client *Client, message string) {
 	h.sendResponse(client, "error", message, nil)
 }
 
-// Уведомление об отключении клиента
-func (h *Hub) notifyClientDisconnected(client *Client) {
-	// Отправка уведомления всем менеджерам о том, что клиент отключился
-	for _, session := range h.sessions {
-		if session.Manager != nil && session.User == client {
-			safeSend(session.Manager, []byte(fmt.Sprintf("User %d has disconnected.", client.ID)))
+// // Уведомление об отключении клиента
+// func (h *Hub) notifyClientDisconnected(client *Client) {
+// 	// Отправка уведомления всем менеджерам о том, что клиент отключился
+// 	for _, session := range h.sessions {
+// 		if session.Manager != nil && session.User == client {
+// 			safeSend(session.Manager, []byte(fmt.Sprintf("User %d has disconnected.", client.ID)))
 
-		}
-	}
-}
+// 		}
+// 	}
+// }
 
 // Новая функция поиска сессии:
 func (h *Hub) findSessionForManager(managerID, userID uint) *Session {
 
 	for _, session := range h.managerSessions[managerID] {
-		if session.User.ID == userID {
+		if session.UserID == userID {
 			return session
 		}
 	}
@@ -357,8 +390,10 @@ func (h *Hub) saveMessageAndAppendToHistory(session *Session, msg *Message) {
 		logger.Error("failed to save message:", err)
 	}
 
+	// Блокируем сессию на запись перед изменением истории
+	session.mu.Lock()
 	session.History = append(session.History, msg)
-	// не думаю что сессия будет настолько огромной, что история даст лаги или тормоз
+	session.mu.Unlock()
 }
 
 func (h *Hub) listActiveSessions(manager *Client) {
@@ -370,11 +405,11 @@ func (h *Hub) listActiveSessions(manager *Client) {
 	response := make([]map[string]interface{}, 0, len(sessions))
 
 	for _, s := range sessions {
-		if s.User == nil {
+		if s.UserID == 0 {
 			continue
 		}
 		response = append(response, map[string]interface{}{
-			"user_id": s.User.ID,
+			"user_id": s.UserID,
 		})
 	}
 
@@ -389,7 +424,7 @@ func (h *Hub) loadPreviousMessages(session *Session, limit int) { //TODO выз�
 	firstMsg := session.History[0]
 
 	// Загружаем сообщения из базы, отправленные ПЕРЕД первым в истории
-	messages, err := h.ChatRepository.GetMessagesBefore(session.User.ID, firstMsg.ID, limit)
+	messages, err := h.ChatRepository.GetMessagesBefore(session.UserID, firstMsg.ID, limit)
 	if err != nil {
 		logger.Error("failed to load previous messages:", err)
 		return
@@ -426,7 +461,7 @@ func (h *Hub) GetSessionHistoryForManager(managerID, userID uint) []*Message {
 	defer h.mu.RUnlock()
 
 	for _, session := range h.managerSessions[managerID] {
-		if session.User != nil && session.User.ID == userID {
+		if session.UserID == userID {
 			return session.History
 		}
 	}
