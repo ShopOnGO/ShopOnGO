@@ -91,6 +91,6 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ toLower(github.repository_owner) }}/auth-service:latest
-            ghcr.io/${{ toLower(github.repository_owner) }}/auth-service:${{ github.sha }}
+            ghcr.io/tailornado/auth-service:latest
+            ghcr.io/tailornado/auth-service:${{ github.sha }}
 
