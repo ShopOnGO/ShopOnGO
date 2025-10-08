@@ -91,5 +91,6 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/service-auth:latest
-            ghcr.io/${{ github.repository_owner }}/service-auth:${{ github.sha }}
+            ghcr.io/${{ toLower(github.repository_owner) }}/auth-service:latest
+            ghcr.io/${{ toLower(github.repository_owner) }}/auth-service:${{ github.sha }}
+
