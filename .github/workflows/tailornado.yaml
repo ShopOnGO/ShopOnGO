@@ -98,6 +98,6 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/tailornado/auth-service:latest
-            ghcr.io/tailornado/auth-service:${{ github.sha }}
+            ghcr.io/shopongo/auth-service:latest
+            ghcr.io/shopongo/auth-service:${{ github.sha }}
 
