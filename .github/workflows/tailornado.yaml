@@ -13,4 +13,4 @@ jobs:
       service_name: auth-service
       dockerfile_path: ./Dockerfile
       docker_context: .
-      env_secret: ${{ secrets.APP_ENV_FILE }}
+      env_file_content: ${{ secrets.APP_ENV_FILE }}
