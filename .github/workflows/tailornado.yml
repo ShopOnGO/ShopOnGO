@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  call-reusable:
+  CI:
     uses: ShopOnGO/ShopOnGO/.github/workflows/template.yml@main
     with:
       service_name: auth-service
