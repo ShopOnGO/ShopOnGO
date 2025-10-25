@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 type KafkaProducers map[string]*KafkaService
@@ -13,7 +14,25 @@ func InitKafkaProducers(brokers []string, topics map[string]string) KafkaProduce
 	producers := make(KafkaProducers)
 
 	for name, topic := range topics {
-		producers[name] = NewProducer(brokers, topic)
+		var producer *KafkaService
+
+		// до 10 попыток подключения к Kafka
+		for i := 1; i <= 10; i++ {
+			producer = NewProducer(brokers, topic)
+			if producer != nil {
+				fmt.Printf("✅ Kafka producer для %s подключен (попытка %d)\n", name, i)
+				break
+			}
+			fmt.Printf("⚠️ Kafka producer для %s не готов, попытка %d/10\n", name, i)
+			time.Sleep(5 * time.Second)
+		}
+
+		if producer == nil {
+			fmt.Printf("❌ Не удалось подключиться к Kafka для %s после 10 попыток\n", name)
+			continue
+		}
+
+		producers[name] = producer
 	}
 
 	go func() {
