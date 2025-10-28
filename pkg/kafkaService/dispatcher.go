@@ -2,6 +2,7 @@ package kafkaService
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -21,8 +22,15 @@ func (d *Dispatcher) Register(key string, handler func(msg kafka.Message) error)
 
 func (d *Dispatcher) Dispatch(msg kafka.Message) error {
 	key := string(msg.Key)
-	if handler, ok := d.handlers[key]; ok {
-		return handler(msg)
+
+	// Итерируемся по всем зарегистрированным префиксам
+	for prefix, handler := range d.handlers {
+		// Если ключ сообщения начинается с префикса
+		if strings.HasPrefix(key, prefix) {
+			return handler(msg) // Вызываем нужный обработчик
+		}
 	}
+
+	// Если ни один префикс не подошел
 	return fmt.Errorf("no handler for key %q", key)
 }
