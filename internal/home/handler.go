@@ -38,18 +38,12 @@ func NewHomeHandler(router *mux.Router, deps HomeHandlerDeps) {
 // }
 
 // GetHomePage возвращает данные для главной страницы магазина
-// @Summary        Главная страница
-// @Description    Получает информацию о популярных товарах, категориях потом и акциях
-// @Tags          home
-// @Produce       json
-// @Success       200 {object} HomeData
-// @Router        /home [get]
-// GetHomePage возвращает главную страницу магазина с использованием шаблона
-// @Summary        Главная страница
-// @Description    Получает информацию о популярных товарах, категориях и акциях и отображает их через HTML-шаблон
-// @Tags          home
-// @Router        /home [get]
-
+// @Summary Главная страница
+// @Description Получает информацию о популярных товарах, категориях и акциях и отображает их через HTML-шаблон.
+// @Tags home
+// @Produce html
+// @Success 200 {object} HomeData
+// @Router /home [get]
 func (h *HomeHandler) GetHomePage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Данные, которые будут переданы в шаблон

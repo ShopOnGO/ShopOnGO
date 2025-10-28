@@ -8,24 +8,25 @@ services:
     build: ./
     command: ./wait-for-db.sh ./shop_on_go "migrate"
     depends_on:
-      - postgres
+      #- postgres
       - kafka
     ports:
       - "8081:8081"
     networks:
       - shopongo_default
 
-  postgres:
-    container_name: go_shop_postgres
-    image: postgres:16.4
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - PGDATA=/data/postgres
-    ports:
-      - "5432:5432"
-    networks:
-      - shopongo_default
+  # postgres:
+  #   container_name: go_shop_postgres
+  #   image: postgres:16.4
+  #   environment:
+  #     - DSN=${DSN}
+  #     # - POSTGRES_USER=${POSTGRES_USER}
+  #     # - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+  #     - PGDATA=/data/postgres
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - shopongo_default
 
   redis:
     container_name: redis_container
@@ -91,7 +92,7 @@ services:
 networks:
   shopongo_default:
     external: true
-    
+
 volumes:
   kafka-volume:
   zookeeper-volume:

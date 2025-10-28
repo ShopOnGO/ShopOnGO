@@ -12,11 +12,11 @@ import (
 )
 
 type CartHandlerDeps struct {
-	Config *configs.Config
+	Config      *configs.Config
 	CartService *CartService
 }
 type CartHandler struct {
-	Config *configs.Config
+	Config      *configs.Config
 	CartService *CartService
 }
 
@@ -29,18 +29,17 @@ func NewCartHandler(router *mux.Router, deps CartHandlerDeps) {
 	router.Handle("/cart/item", middleware.AuthOrGuest(handler.AddCartItem(), deps.Config)).Methods("POST")
 	router.Handle("/cart/item", middleware.AuthOrGuest(handler.UpdateCartItem(), deps.Config)).Methods("PUT")
 	router.Handle("/cart/item", middleware.AuthOrGuest(handler.RemoveCartItem(), deps.Config)).Methods("DELETE")
-	router.Handle("/cart", middleware.AuthOrGuest(handler.ClearCart(), deps.Config)).Methods("DELETE")	
+	router.Handle("/cart", middleware.AuthOrGuest(handler.ClearCart(), deps.Config)).Methods("DELETE")
 }
 
-
-// GetCart возвращает корзину пользователя или гостя.
-// @Summary      Получение корзины
-// @Description  Возвращает корзину для авторизованного пользователя или гостя.
-// @Tags         cart
-// @Produce      json
-// @Success      200  {object}  Cart   "Корзина пользователя"
-// @Failure      500  {string}  string "Ошибка при получении корзины"
-// @Router       /cart [get]
+// GetCart returns the user's or guest's cart.
+// @Summary Get Cart
+// @Description Retrieves the cart for an authenticated user or guest.
+// @Tags cart
+// @Produce json
+// @Success 200 {object} Cart "User's cart"
+// @Failure 500 {string} string "Error retrieving cart"
+// @Router /cart [get]
 func (h *CartHandler) GetCart() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, guestID, err := getUserOrGuestID(r)
@@ -66,17 +65,17 @@ func (h *CartHandler) GetCart() http.HandlerFunc {
 	}
 }
 
-// AddCartItem добавляет товар в корзину пользователя или гостя.
-// @Summary      Добавление товара в корзину
-// @Description  Добавляет товар в корзину на основе данных из запроса.
-// @Tags         cart
-// @Accept       json
-// @Produce      json
-// @Param        body  body  CartItem  true  "Данные товара для добавления"
-// @Success      201   {string}  string  "Товар успешно добавлен"
-// @Failure      400   {string}  string  "Неверные входные данные"
-// @Failure      500   {string}  string  "Ошибка при добавлении товара в корзину"
-// @Router       /cart/item [post]
+// AddCartItem adds a product to the user's or guest's cart.
+// @Summary Add Item to Cart
+// @Description Adds a product to the cart based on the request data.
+// @Tags cart
+// @Accept json
+// @Produce json
+// @Param body body AddCartItemRequest true "Product data for adding to cart"
+// @Success 201 {string} string "Item successfully added to cart"
+// @Failure 400 {string} string "Invalid input data"
+// @Failure 500 {string} string "Error adding item to cart"
+// @Router /cart/item [post]
 func (h *CartHandler) AddCartItem() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 1. Декодируем запрос в структуру AddCartItemRequest
@@ -97,7 +96,7 @@ func (h *CartHandler) AddCartItem() http.HandlerFunc {
 			logger.Error(err.Error())
 			return
 		}
-		
+
 		item := CartItem{
 			ProductVariantID: req.ProductVariantID,
 			Quantity:         req.Quantity,
@@ -112,17 +111,17 @@ func (h *CartHandler) AddCartItem() http.HandlerFunc {
 	}
 }
 
-// UpdateCartItem обновляет количество товара в корзине.
-// @Summary      Обновление количества товара в корзине
-// @Description  Обновляет количество товара в корзине для авторизованного пользователя или гостя.
-// @Tags         cart
-// @Accept       json
-// @Produce      json
-// @Param        body  body  CartItem  true  "Данные товара для обновления (обязательно должен быть указан product_variant_id и новое количество)"
-// @Success      200   {string}  string  "Количество товара успешно обновлено"
-// @Failure      400   {string}  string  "Неверные входные данные"
-// @Failure      500   {string}  string  "Ошибка при обновлении количества товара"
-// @Router       /cart/item [put]
+// UpdateCartItem updates the quantity of a product in the cart.
+// @Summary Update Cart Item Quantity
+// @Description Updates the quantity of a product in the cart for an authenticated user or guest.
+// @Tags cart
+// @Accept json
+// @Produce json
+// @Param body body UpdateCartItemRequest true "Product data for updating (must include product_variant_id and new quantity)"
+// @Success 200 {string} string "Item quantity successfully updated"
+// @Failure 400 {string} string "Invalid input data"
+// @Failure 500 {string} string "Error updating item quantity"
+// @Router /cart/item [put]
 func (h *CartHandler) UpdateCartItem() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req UpdateCartItemRequest
@@ -157,17 +156,17 @@ func (h *CartHandler) UpdateCartItem() http.HandlerFunc {
 	}
 }
 
-// RemoveCartItem удаляет товар из корзины пользователя или гостя.
-// @Summary      Удаление товара из корзины
-// @Description  Удаляет товар из корзины по данным, указанным в запросе.
-// @Tags         cart
-// @Accept       json
-// @Produce      json
-// @Param        body  body  CartItem  true  "Данные товара для удаления (обязательно должен быть указан product_variant_id)"
-// @Success      200   {string}  string  "Товар успешно удален из корзины"
-// @Failure      400   {string}  string  "Неверные входные данные"
-// @Failure      500   {string}  string  "Ошибка при удалении товара из корзины"
-// @Router       /cart/item [delete]
+// RemoveCartItem removes a product from the user's or guest's cart.
+// @Summary Remove Item from Cart
+// @Description Removes a product from the cart based on the data provided in the request.
+// @Tags cart
+// @Accept json
+// @Produce json
+// @Param body body RemoveCartItemRequest true "Product data for removal (must include product_variant_id)"
+// @Success 200 {string} string "Item successfully removed from cart"
+// @Failure 400 {string} string "Invalid input data"
+// @Failure 500 {string} string "Error removing item from cart"
+// @Router /cart/item [delete]
 func (h *CartHandler) RemoveCartItem() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req RemoveCartItemRequest
@@ -200,14 +199,14 @@ func (h *CartHandler) RemoveCartItem() http.HandlerFunc {
 	}
 }
 
-// ClearCart очищает корзину пользователя или гостя, удаляя все товары и саму корзину.
-// @Summary      Очистка корзины
-// @Description  Очищает корзину, удаляя все товары, а затем и саму корзину для авторизованного пользователя или гостя.
-// @Tags         cart
-// @Produce      json
-// @Success      200   {string}  string  "Корзина успешно очищена"
-// @Failure      500   {string}  string  "Ошибка при очистке корзины"
-// @Router       /cart [delete]
+// ClearCart clears the user's or guest's cart, removing all items and the cart itself.
+// @Summary Clear Cart
+// @Description Clears the cart by removing all items and then the cart itself for an authenticated user or guest.
+// @Tags cart
+// @Produce json
+// @Success 200 {string} string "Cart successfully cleared"
+// @Failure 500 {string} string "Error clearing cart"
+// @Router /cart [delete]
 func (h *CartHandler) ClearCart() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, guestID, err := getUserOrGuestID(r)
@@ -247,4 +246,3 @@ func getUserOrGuestID(r *http.Request) (*uint, []byte, error) {
 
 	return userID, guestID, nil
 }
-
