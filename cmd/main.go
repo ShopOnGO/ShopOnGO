@@ -50,8 +50,8 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/pkg/redisdb"
 	"github.com/gorilla/mux"
 
-	httpSwagger "github.com/swaggo/http-swagger"
 	_ "github.com/ShopOnGO/ShopOnGO/docs"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func App() http.Handler {
@@ -60,6 +60,12 @@ func App() http.Handler {
 	migrations.CheckForMigrations()
 
 	conf := configs.LoadConfig()
+
+	consoleLvl := conf.LogLevel
+	fileLvl := conf.FileLogLevel
+	logger.InitLogger(consoleLvl, fileLvl)
+	logger.EnableFileLogging("TailorNado_main")
+
 	db := db.NewDB(conf)
 	redis := redisdb.NewRedisDB(conf)
 	router := mux.NewRouter()

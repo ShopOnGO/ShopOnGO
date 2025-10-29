@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -11,12 +12,14 @@ import (
 )
 
 type Config struct {
-	Db     DbConfig
-	Redis  RedisConfig
-	OAuth  OAuthConfig
-	Google GoogleConfig
-	Code   CodeConfig
-	Kafka  KafkaConfig
+	Db           DbConfig
+	Redis        RedisConfig
+	OAuth        OAuthConfig
+	Google       GoogleConfig
+	Code         CodeConfig
+	Kafka        KafkaConfig
+	LogLevel     logger.LogLevel
+	FileLogLevel logger.LogLevel
 }
 
 type DbConfig struct {
@@ -54,14 +57,14 @@ type KafkaConfig struct {
 
 func LoadConfig() *Config {
 	if _, err := os.Stat(".env"); err == nil {
-        // Локально есть .env → загружаем
-        if loadErr := godotenv.Load(); loadErr != nil {
-            logger.Error("Failed to load .env file", loadErr.Error())
-        }
-    } else {
-        // В контейнере файла нет → просто идём дальше
-        logger.Info(".env not found, using environment variables only")
-    }
+		// Локально есть .env → загружаем
+		if loadErr := godotenv.Load(); loadErr != nil {
+			logger.Error("Failed to load .env file", loadErr.Error())
+		}
+	} else {
+		// В контейнере файла нет → просто идём дальше
+		logger.Info(".env not found, using environment variables only")
+	}
 
 	ttlStr := os.Getenv("REFRESH_TOKEN_TTL")
 	if ttlStr == "" {
@@ -112,6 +115,17 @@ func LoadConfig() *Config {
 	}
 	brokersRaw := os.Getenv("KAFKA_BROKERS")
 	brokers := strings.Split(brokersRaw, ",")
+	// logger
+	logLevelStr := os.Getenv("MAIN_SERVICE_LOG_LEVEL")
+	if logLevelStr == "" {
+		logLevelStr = "INFO"
+	}
+	LogLevel := ParseLogLevel(logLevelStr)
+	fileLogLevelStr := os.Getenv("MAIN_SERVICE_FILE_LOG_LEVEL")
+	if fileLogLevelStr == "" {
+		fileLogLevelStr = "INFO"
+	}
+	FileLogLevel := ParseLogLevel(fileLogLevelStr)
 
 	return &Config{
 		Db: DbConfig{
@@ -142,6 +156,8 @@ func LoadConfig() *Config {
 			Brokers: brokers,
 			Topics:  parseKafkaTopics(os.Getenv("KAFKA_TOPICS")),
 		},
+		LogLevel:     LogLevel,
+		FileLogLevel: FileLogLevel,
 	}
 
 }
@@ -155,4 +171,23 @@ func parseKafkaTopics(s string) map[string]string {
 		}
 	}
 	return topics
+}
+
+// parseLogLevel преобразует строку в LogLevel.
+func ParseLogLevel(s string) logger.LogLevel {
+	switch s {
+	case "DEBUG":
+		return logger.DEBUG
+	case "INFO":
+		return logger.INFO
+	case "WARN":
+		return logger.WARN
+	case "ERROR":
+		return logger.ERROR
+	case "FATAL":
+		return logger.FATAL
+	default:
+		log.Printf("WARN: [Config] Неизвестный LOG_LEVEL '%s', дефолт: INFO.", s)
+		return logger.INFO
+	}
 }
