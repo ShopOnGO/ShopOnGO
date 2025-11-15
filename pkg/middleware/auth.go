@@ -46,6 +46,7 @@ func IsAuthed(next http.Handler, config *configs.Config) http.Handler {
 		}
 		logger.Info("✅ Token is valid for:", data.UserID)
 		ctx := context.WithValue(r.Context(), ContextUserIDKey, data.UserID)
+		logger.Info("Role:", data.Role)
 		ctx = context.WithValue(ctx, ContextRolesKey, data.Role)
 		req := r.WithContext(ctx) // для передачи контекста необходимо пересоздать запроc
 		next.ServeHTTP(w, req)    //все handlers теперь обогащены необходимым контекстом

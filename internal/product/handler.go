@@ -27,7 +27,12 @@ func NewProductHandler(router *mux.Router, deps ProductHandlerDeps) {
 		Config: deps.Config,
 		Kafka:  deps.Kafka,
 	}
-	router.Handle("/products", middleware.IsAuthed(handler.AddProduct(), deps.Config)).Methods("POST")
+
+	protectedAddProduct := middleware.IsAuthed(
+		middleware.CheckRole(handler.AddProduct(), []string{"seller", "admin"}),
+		deps.Config,
+	)
+	router.Handle("/products", protectedAddProduct).Methods("POST")
 }
 
 // AddProduct добавляет новый продукт.
@@ -64,6 +69,17 @@ func (h *ProductHandler) AddProduct() http.HandlerFunc {
         if id, ok := userIDVal.(uint); ok && id != 0 {
             userID = id
         }
+
+		roleVal := r.Context().Value(middleware.ContextRolesKey)
+		var role string
+		if id, ok := roleVal.(string); ok && id != "" {
+			role = id
+		}
+
+		if role == "buyer" {
+			http.Error(w, "unauthorized, only sellers and admins can create products", http.StatusUnauthorized)
+			return
+		}
 
 		event := productCreatedEvent{
 			Action:  "create",
