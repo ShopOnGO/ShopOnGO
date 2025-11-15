@@ -7,6 +7,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/configs"
 	"github.com/ShopOnGO/ShopOnGO/pkg/kafkaService"
 	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/pkg/res"
 	"github.com/gorilla/mux"
 )
@@ -26,7 +27,12 @@ func NewProductHandler(router *mux.Router, deps ProductHandlerDeps) {
 		Config: deps.Config,
 		Kafka:  deps.Kafka,
 	}
-	router.HandleFunc("/products", handler.AddProduct()).Methods("POST")
+
+	protectedAddProduct := middleware.IsAuthed(
+		middleware.CheckRole(handler.AddProduct(), []string{"seller", "admin"}),
+		deps.Config,
+	)
+	router.Handle("/products", protectedAddProduct).Methods("POST")
 }
 
 // AddProduct добавляет новый продукт.
@@ -58,8 +64,26 @@ func (h *ProductHandler) AddProduct() http.HandlerFunc {
 			return
 		}
 
+		userIDVal := r.Context().Value(middleware.ContextUserIDKey)
+        var userID uint
+        if id, ok := userIDVal.(uint); ok && id != 0 {
+            userID = id
+        }
+
+		roleVal := r.Context().Value(middleware.ContextRolesKey)
+		var role string
+		if id, ok := roleVal.(string); ok && id != "" {
+			role = id
+		}
+
+		if role == "buyer" {
+			http.Error(w, "unauthorized, only sellers and admins can create products", http.StatusUnauthorized)
+			return
+		}
+
 		event := productCreatedEvent{
 			Action:  "create",
+			UserID:  userID,
 			Product: req,
 		}
 
