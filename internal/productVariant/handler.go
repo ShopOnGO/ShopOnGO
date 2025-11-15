@@ -29,7 +29,11 @@ func NewProductVariantHandler(router *mux.Router, deps ProductVariantHandlerDeps
 		Config: deps.Config,
 		Kafka:  deps.Kafka,
 	}
-	router.Handle("/product/{id}/product-variants", middleware.IsAuthed(handler.AddProductVariant(), deps.Config)).Methods("POST")
+	protectedAddProductVariant := middleware.IsAuthed(
+		middleware.CheckRole(handler.AddProductVariant(), []string{"seller", "admin"}),
+		deps.Config,
+	)
+	router.Handle("/product/{id}/product-variants", protectedAddProductVariant).Methods("POST")
 }
 
 // AddProductVariant добавляет новый вариант продукта.
@@ -75,6 +79,17 @@ func (h *ProductVariantHandler) AddProductVariant() http.HandlerFunc {
 		var userID uint
 		if id, ok := userIDVal.(uint); ok && id != 0 {
 			userID = id
+		}
+
+		roleVal := r.Context().Value(middleware.ContextRolesKey)
+		var role string
+		if id, ok := roleVal.(string); ok && id != "" {
+			role = id
+		}
+
+		if role == "buyer" {
+			http.Error(w, "unauthorized, only sellers and admins can create products", http.StatusUnauthorized)
+			return
 		}
 
 		event := productVariantCreatedEvent{
