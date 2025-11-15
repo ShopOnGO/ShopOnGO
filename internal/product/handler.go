@@ -7,6 +7,7 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/configs"
 	"github.com/ShopOnGO/ShopOnGO/pkg/kafkaService"
 	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
+	"github.com/ShopOnGO/ShopOnGO/pkg/middleware"
 	"github.com/ShopOnGO/ShopOnGO/pkg/res"
 	"github.com/gorilla/mux"
 )
@@ -26,7 +27,7 @@ func NewProductHandler(router *mux.Router, deps ProductHandlerDeps) {
 		Config: deps.Config,
 		Kafka:  deps.Kafka,
 	}
-	router.HandleFunc("/products", handler.AddProduct()).Methods("POST")
+	router.Handle("/products", middleware.IsAuthed(handler.AddProduct(), deps.Config)).Methods("POST")
 }
 
 // AddProduct добавляет новый продукт.
@@ -58,8 +59,15 @@ func (h *ProductHandler) AddProduct() http.HandlerFunc {
 			return
 		}
 
+		userIDVal := r.Context().Value(middleware.ContextUserIDKey)
+        var userID uint
+        if id, ok := userIDVal.(uint); ok && id != 0 {
+            userID = id
+        }
+
 		event := productCreatedEvent{
 			Action:  "create",
+			UserID:  userID,
 			Product: req,
 		}
 

@@ -21,5 +21,6 @@ type addProductRequest struct {
 
 type productCreatedEvent struct {
 	Action  string         	   `json:"action"`
+	UserID  uint           	   `json:"user_id"`
 	Product addProductRequest  `json:"product"`
 }
