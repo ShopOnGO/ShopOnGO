@@ -95,8 +95,15 @@ func (h *AuthHandler) Login() http.HandlerFunc {
 			Expires:  time.Now().Add(h.Config.Redis.RefreshTokenTTL),
 		})
 
+		name, err := h.AuthService.GetUserNameByID(userID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		data := LoginResponse{
 			Token: jwtToken,
+			Name:  name,
 		}
 		res.Json(w, data, 200)
 	}
