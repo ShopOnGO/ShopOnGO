@@ -160,6 +160,8 @@ func App() http.Handler {
 
 	// swagger
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+	//chat
+	router.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads/"))))
 
 	//обработчик подписки ( бесконечно сидит отдельно и ждёт пока не придут сообщения)
 	go statService.AddClick()
