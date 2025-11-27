@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 )
@@ -167,33 +168,52 @@ func (h *Hub) handleUserMessage(user *Client, message []byte) {
 		return
 	}
 
-	msg := &Message{
-		FromID:  user.ID,
-		ToID:    0, // 0 пока нет менеджера
-		Content: string(message),
+	var input IncomingUserMessage
+	if err := json.Unmarshal(message, &input); err != nil {
+		input = IncomingUserMessage{
+			Content: string(message),
+			Type:    MsgTypeText,
+		}
 	}
 
+	if input.Type == "" {
+		input.Type = MsgTypeText
+	}
+
+	// 1. Создаем структуру (добавляем время!)
+	msg := &Message{
+		FromID:    user.ID,
+		ToID:      0,
+		Content:   input.Content,
+		Type:      input.Type,
+		FileName:  input.FileName,
+		CreatedAt: time.Now(), // <--- ФИКС ВРЕМЕНИ
+	}
+
+	// Логика определения получателя
+	if session.Manager != nil {
+		msg.ToID = session.Manager.ID
+	} else {
+		if _, exists := h.waitingUsers[user.ID]; !exists {
+			h.waitingUsers[user.ID] = true
+		}
+	}
+
+	// 2. СНАЧАЛА СОХРАНЯЕМ (чтобы получить ID из базы)
+	h.saveMessageAndAppendToHistory(session, msg)
+
+	// 3. ТОЛЬКО ТЕПЕРЬ МАРШАЛИМ (теперь внутри msg есть реальный ID)
 	data, err := json.Marshal(msg)
 	if err != nil {
 		logger.Error("failed to marshal message:", err)
 		return
 	}
 
+	// 4. Отправляем
 	if session.Manager != nil {
-		msg.ToID = session.Manager.ID
-		h.saveMessageAndAppendToHistory(session, msg)
 		safeSend(session.Manager, data)
-
-	} else {
-		h.saveMessageAndAppendToHistory(session, msg)
-		if _, exists := h.waitingUsers[user.ID]; !exists {
-			h.waitingUsers[user.ID] = true
-		}
-
 	}
 
-	//  Отправляем сообщение всем активным клиентам этого пользователя
-	// Это гарантирует, что сообщение появится на всех его вкладках/устройствах.
 	session.mu.RLock()
 	for client := range session.UserClients {
 		safeSend(client, data)
@@ -225,26 +245,35 @@ func (h *Hub) handleManagerTextMessage(manager *Client, message []byte) {
 		h.sendError(manager, "Invalid message format")
 		return
 	}
+
+	if msg.Type == "" {
+		msg.Type = MsgTypeText
+	}
+
 	h.mu.RLock() // Используем блокировку на чтение, т.к. только ищем сессию
 	session := h.findSessionForManager(manager.ID, msg.UserID)
 	h.mu.RUnlock()
+
 	if session == nil {
 		h.sendError(manager, "No active session with this user")
 		return
 	}
-	// Сохраняем и отправляем сообщение
+
+	// Сохраняем и отправляем сообщение с учетом типа
 	messageObj := &Message{
-		FromID:  manager.ID,
-		ToID:    session.UserID,
-		Content: msg.Content,
+		FromID:   manager.ID,
+		ToID:     session.UserID,
+		Content:  msg.Content,
+		Type:     msg.Type,     // <--
+		FileName: msg.FileName, // <--
 	}
+
 	h.saveMessageAndAppendToHistory(session, messageObj)
 	msgData, _ := json.Marshal(messageObj)
 
-	// --- Ключевое изменение: получаем список клиентов и отпускаем блокировки ---
-
 	// Создаем локальную копию списка клиентов, чтобы не держать блокировку во время отправки
 	var clientsToSend []*Client
+
 	session.mu.RLock()
 	for client := range session.UserClients {
 		clientsToSend = append(clientsToSend, client)
