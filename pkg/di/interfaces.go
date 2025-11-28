@@ -23,6 +23,7 @@ type IUserRepository interface {
 	UpdateUserPassword(id uint, newPassword string) error
 	GetUserRoleByEmail(email string) (string, error)
 	UpdateRole(user *user.User, newRole string) error
+	GetNameByID(id uint) (string, error)
 }
 
 type IRedisResetRepository interface { // not used on this project(redirected to notifications)
