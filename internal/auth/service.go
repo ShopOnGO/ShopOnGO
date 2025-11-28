@@ -136,3 +136,11 @@ func (service *AuthService) GetUserRole(email string) (string, error) {
 	}
 	return role, nil
 }
+
+func (service *AuthService) GetUserNameByID(id uint) (string, error) {
+	name, err := service.UserRepository.GetNameByID(id)
+	if err != nil {
+		return "", err
+	}
+	return name, nil
+}

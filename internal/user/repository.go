@@ -95,3 +95,12 @@ func (repo *UserRepository) UpdateRole(user *User, newRole string) error {
 	result := repo.Database.DB.Model(&User{}).Where("id = ?", user.ID).Update("role", newRole)
     return result.Error
 }
+
+func (repo *UserRepository) GetNameByID(id uint) (string, error) {
+	name := ""
+	result := repo.Database.DB.Model(&User{}).Select("name").Where("id = ?", id).First(&name)
+	if result.Error != nil {
+        return "", result.Error
+    }
+	return name, nil
+}
