@@ -62,6 +62,10 @@ func (m *MockUserRepository) UpdateRole(user *user.User, role string) error {
 	return nil
 }
 
+func (m *MockUserRepository) GetNameByID(id uint) (string, error) {
+	return "", nil
+}
+
 func hashPassword(t *testing.T, password string) string {
 	// require прервет тест, если хеширование не удастся
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
