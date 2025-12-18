@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -10,12 +11,25 @@ import (
 	"github.com/ShopOnGO/ShopOnGO/pkg/logger"
 )
 
-type key string // делается чтобы не затирать другие значения в программе
+type key string
 
 const (
 	ContextUserIDKey key = "ContextUserIDKey"
-	ContextRolesKey key = "ContextRolesKey"
+	ContextRolesKey  key = "ContextRolesKey"
 )
+
+func ValidateToken(tokenString string, secret string) (uint, string, error) {
+	isValid, data, err := jwt.NewJWT(secret).Parse(tokenString)
+
+	if err != nil {
+		return 0, "", err
+	}
+	if !isValid {
+		return 0, "", errors.New("token is not valid")
+	}
+
+	return data.UserID, data.Role, nil
+}
 
 func IsAuthed(next http.Handler, config *configs.Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -25,31 +39,27 @@ func IsAuthed(next http.Handler, config *configs.Config) http.Handler {
 			writeUnauthed(w)
 			return
 		}
+
 		token := strings.TrimPrefix(authedHeader, "Bearer ")
-		isValid, data, err := jwt.NewJWT(config.OAuth.Secret).Parse(token)
-		logger.Error("Received token:", token)
+
+		userID, role, err := ValidateToken(token, config.OAuth.Secret)
+
 		if err != nil {
 			if strings.Contains(err.Error(), "expired") {
 				logger.Error("❌ Token expired:", err)
 				http.Error(w, "Token expired", http.StatusUnauthorized)
 				return
 			}
-			logger.Error("❌ Invalid token")
+			logger.Error("❌ Invalid token:", err)
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
-
-		if !isValid {
-			logger.Error("❌ Token is not valid")
-			writeUnauthed(w)
-			return
-		}
-		logger.Info("✅ Token is valid for:", data.UserID)
-		ctx := context.WithValue(r.Context(), ContextUserIDKey, data.UserID)
-		logger.Info("Role:", data.Role)
-		ctx = context.WithValue(ctx, ContextRolesKey, data.Role)
-		req := r.WithContext(ctx) // для передачи контекста необходимо пересоздать запроc
-		next.ServeHTTP(w, req)    //все handlers теперь обогащены необходимым контекстом
+		logger.Info("✅ Token is valid for:", userID)
+		ctx := context.WithValue(r.Context(), ContextUserIDKey, userID)
+		logger.Info("Role:", role)
+		ctx = context.WithValue(ctx, ContextRolesKey, role)
+		req := r.WithContext(ctx)
+		next.ServeHTTP(w, req)
 	})
 }
 
