@@ -38,6 +38,10 @@ func (repo *MockUserRepository) UpdateRole(user *user.User, role string) error {
 	return nil
 }
 
+func (repo *MockUserRepository) GetNameByID(id uint) (string, error) {
+	return "", nil
+}
+
 // Тест на регистрацию пользователя
 func TestRegisterSuccess(t *testing.T) {
 	authService := auth.NewAuthService(&MockUserRepository{})
