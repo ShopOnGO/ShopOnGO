@@ -2,6 +2,7 @@ package chat
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,16 +23,16 @@ type ChatHandlerDeps struct {
 
 type ChatHandler struct {
 	service *ChatService
+	config  *configs.Config
 }
 
 func NewChatHandler(router *mux.Router, deps ChatHandlerDeps) {
 	h := &ChatHandler{
 		service: deps.ChatService,
+		config:  deps.Config,
 	}
-	router.Handle("/ws/chat", middleware.IsAuthed(
-		http.HandlerFunc(h.HandleWebSocket),
-		deps.Config,
-	)).Methods("GET")
+	router.Handle("/ws/chat",http.HandlerFunc(h.HandleWebSocket),
+	).Methods("GET")
 	router.Handle("/api/chat/upload", middleware.IsAuthed(
 		http.HandlerFunc(h.HandleFileUpload),
 		deps.Config,
@@ -40,9 +41,33 @@ func NewChatHandler(router *mux.Router, deps ChatHandlerDeps) {
 }
 
 func (h *ChatHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
-	h.service.ServeWS(w, r)
-}
+	token := r.URL.Query().Get("token")
 
+	if token == "" {
+		authHeader := r.Header.Get("Authorization")
+		if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+			token = authHeader[7:]
+		}
+	}
+
+	if token == "" {
+		http.Error(w, "Unauthorized: No token provided", http.StatusUnauthorized)
+		return
+	}
+
+	userID, role, err := middleware.ValidateToken(token, h.config.OAuth.Secret)
+	if err != nil {
+		logger.Error("WS Auth failed", err)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	ctx := r.Context()
+	ctx = context.WithValue(ctx, middleware.ContextUserIDKey, userID)
+	ctx = context.WithValue(ctx, middleware.ContextRolesKey, role)
+
+	h.service.ServeWS(w, r.WithContext(ctx))
+}
 func (h *ChatHandler) HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 	// 1. Получаем файл от клиента (ограничение 10МБ)
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
